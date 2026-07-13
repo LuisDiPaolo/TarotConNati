@@ -5,6 +5,8 @@ import { resolveBusinessForHostname } from "@/lib/business/resolve";
 import { getPublicBookingData } from "@/lib/operations/booking";
 import { buildBrandStyle } from "@/lib/theme/brand-style";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicHomePage() {
   const headerStore = await headers();
   const business = await resolveBusinessForHostname(headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "");

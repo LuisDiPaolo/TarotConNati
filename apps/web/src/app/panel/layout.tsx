@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { getPanelBusinessSettings } from "@/lib/operations/panel-settings";
 import { buildBrandStyle } from "@/lib/theme/brand-style";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Panel Turnos",
   description: "Panel operativo del negocio.",
