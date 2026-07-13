@@ -24,8 +24,8 @@ export type PanelServiceSettings = {
   arrivalInstructions: string;
   virtualInstructions: string;
   requiresManualConfirmation: boolean;
-  priceCents: number;
-  depositCents: number;
+  pricePesos: number;
+  depositPesos: number;
   paymentMode: "deposit" | "full" | "none";
   active: boolean;
   sortOrder: number;

@@ -28,8 +28,8 @@ export type PublicService = {
   arrivalInstructions: string;
   virtualInstructions: string;
   requiresManualConfirmation: boolean;
-  priceCents: number;
-  depositCents: number;
+  pricePesos: number;
+  depositPesos: number;
   paymentMode: "deposit" | "full" | "none";
   priceLabel: string;
   depositLabel: string;

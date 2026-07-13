@@ -36,7 +36,7 @@ export async function getPanelServices(): Promise<PanelServiceSettings[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("services")
-    .select("id, name, description, category, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_cents, deposit_cents, payment_mode, active, sort_order")
+    .select("id, name, description, category, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_pesos, deposit_pesos, payment_mode, active, sort_order")
     .eq("active", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -57,8 +57,8 @@ export async function getPanelServices(): Promise<PanelServiceSettings[]> {
     arrivalInstructions: service.arrival_instructions ?? "",
     virtualInstructions: service.virtual_instructions ?? "",
     requiresManualConfirmation: service.requires_manual_confirmation ?? false,
-    priceCents: service.price_cents,
-    depositCents: service.deposit_cents,
+    pricePesos: service.price_pesos,
+    depositPesos: service.deposit_pesos,
     paymentMode: service.payment_mode as PanelServiceSettings["paymentMode"],
     active: service.active,
     sortOrder: service.sort_order,

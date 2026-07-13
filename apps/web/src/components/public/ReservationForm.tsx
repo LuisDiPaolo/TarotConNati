@@ -16,7 +16,7 @@ type IntakeResponseValue = string | number | boolean | string[];
 
 function getPaymentRequirementLabel(service: PublicService) {
   if (service.paymentMode === "full") return `Pago total por adelantado: ${service.priceLabel}`;
-  if (service.paymentMode === "deposit" && service.depositCents > 0) return `Sena para reservar: ${service.depositLabel}`;
+  if (service.paymentMode === "deposit" && service.depositPesos > 0) return `Sena para reservar: ${service.depositLabel}`;
   return "Sin cobro online al reservar";
 }
 

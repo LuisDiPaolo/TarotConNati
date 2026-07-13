@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const { data: service, error: serviceError } = await supabase
     .from("services")
-    .select("id, name, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, requires_manual_confirmation, deposit_cents, price_cents, payment_mode")
+    .select("id, name, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, requires_manual_confirmation, deposit_pesos, price_pesos, payment_mode")
     .eq("business_id", business.id)
     .eq("id", serviceId)
     .eq("active", true)
@@ -125,10 +125,10 @@ export async function POST(request: NextRequest) {
   if (customerError || !createdCustomer) return apiError(500, "VALIDATION_ERROR", "No se pudo crear el cliente.");
 
   const paymentMode = service.payment_mode ?? "deposit";
-  const amountCents = paymentMode === "full"
-    ? Number(service.price_cents)
+  const amountPesos = paymentMode === "full"
+    ? Number(service.price_pesos)
     : paymentMode === "deposit"
-      ? Number(service.deposit_cents)
+      ? Number(service.deposit_pesos)
       : 0;
 
   const { data: appointment, error: appointmentError } = await supabase
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       ends_at: endsAtDate.toISOString(),
       calendar_starts_at: calendarRange.startsAt.toISOString(),
       calendar_ends_at: calendarRange.endsAt.toISOString(),
-      status: amountCents > 0 || service.requires_manual_confirmation ? "pending" : "confirmed",
+      status: amountPesos > 0 || service.requires_manual_confirmation ? "pending" : "confirmed",
       notes: customer.notes || null,
     })
     .select("id")
@@ -163,13 +163,13 @@ export async function POST(request: NextRequest) {
 
   let checkoutUrl: string | null = null;
 
-  if (amountCents > 0) {
+  if (amountPesos > 0) {
     const { data: payment, error: paymentError } = await supabase
       .from("payments")
       .insert({
         business_id: business.id,
         appointment_id: appointment.id,
-        amount_cents: amountCents,
+        amount_pesos: amountPesos,
         currency: business.currency,
         status: "pending",
         external_reference: appointment.id,
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
         accessToken,
         title: `${paymentMode === "full" ? "Pago total" : "Seña"} - ${String(service.name)}`,
         quantity: 1,
-        unitPrice: amountCents / 100,
+        unitPrice: amountPesos,
         externalReference: appointment.id,
         notificationUrl: `${origin}/api/webhooks/mercado-pago`,
         backUrls: {
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
     sourceId: appointment.id,
     surface: "panel",
     payload: {
-      title: amountCents > 0 ? "Reserva pendiente de pago" : "Nueva reserva",
+      title: amountPesos > 0 ? "Reserva pendiente de pago" : "Nueva reserva",
       body: `${String(service.name)} - ${customer.fullName}`,
       url: `/panel/turnos/${appointment.id}`,
       tag: "appointment-created",
@@ -222,6 +222,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     appointmentId: appointment.id,
     checkoutUrl,
-    status: amountCents > 0 ? "pending_payment" : "confirmed",
+    status: amountPesos > 0 ? "pending_payment" : "confirmed",
   });
 }

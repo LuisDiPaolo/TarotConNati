@@ -32,8 +32,8 @@ type ServiceRow = {
   arrival_instructions: string | null;
   virtual_instructions: string | null;
   requires_manual_confirmation: boolean | null;
-  price_cents: number;
-  deposit_cents: number;
+  price_pesos: number;
+  deposit_pesos: number;
   payment_mode: "deposit" | "full" | "none";
   sort_order: number;
 };
@@ -88,8 +88,8 @@ type IntakeFormLinkRow = {
   } | null;
 };
 
-function toMoneyLabel(cents: number) {
-  return formatARS(cents / 100);
+function toMoneyLabel(amountPesos: number) {
+  return formatARS(amountPesos);
 }
 
 function timeToMinutes(value: string) {
@@ -180,7 +180,7 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
   const [{ data: servicesData }, { data: schedulesData }, { data: overridesData }, { data: appointmentsData }, { data: intakeLinksData }] = await Promise.all([
     supabase
       .from("services")
-      .select("id, name, description, category, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_cents, deposit_cents, payment_mode, sort_order")
+      .select("id, name, description, category, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_pesos, deposit_pesos, payment_mode, sort_order")
       .eq("business_id", business.id)
       .eq("active", true)
       .order("sort_order", { ascending: true })
@@ -224,11 +224,11 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
     arrivalInstructions: service.arrival_instructions ?? "",
     virtualInstructions: service.virtual_instructions ?? "",
     requiresManualConfirmation: service.requires_manual_confirmation ?? false,
-    priceCents: service.price_cents,
-    depositCents: service.deposit_cents,
+    pricePesos: service.price_pesos,
+    depositPesos: service.deposit_pesos,
     paymentMode: service.payment_mode,
-    priceLabel: toMoneyLabel(service.price_cents),
-    depositLabel: toMoneyLabel(service.deposit_cents),
+    priceLabel: toMoneyLabel(service.price_pesos),
+    depositLabel: toMoneyLabel(service.deposit_pesos),
   }));
 
   const intakeFormsByService: Record<string, PublicIntakeForm[]> = {};

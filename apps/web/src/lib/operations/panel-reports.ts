@@ -38,13 +38,13 @@ export async function getPanelReports(): Promise<PanelReports> {
   const [{ data: appointmentsData }, { data: requestsData }, { data: paymentsData }] = await Promise.all([
     supabase.from("appointments").select("status").is("deleted_at", null),
     supabase.from("service_requests").select("status").is("deleted_at", null),
-    supabase.from("payments").select("status, amount_cents").eq("status", "approved").is("deleted_at", null),
+    supabase.from("payments").select("status, amount_pesos").eq("status", "approved").is("deleted_at", null),
   ]);
 
   const appointmentCounts = countByStatus((appointmentsData ?? []) as Array<{ status: string }>);
   const requestCounts = countByStatus((requestsData ?? []) as Array<{ status: string }>);
-  const approvedPayments = (paymentsData ?? []) as Array<{ status: string; amount_cents: number }>;
-  const approvedAmountCents = approvedPayments.reduce((total, payment) => total + Number(payment.amount_cents ?? 0), 0);
+  const approvedPayments = (paymentsData ?? []) as Array<{ status: string; amount_pesos: number }>;
+  const approvedAmountPesos = approvedPayments.reduce((total, payment) => total + Number(payment.amount_pesos ?? 0), 0);
 
   return {
     appointments: {
@@ -65,7 +65,7 @@ export async function getPanelReports(): Promise<PanelReports> {
     },
     payments: {
       approvedCount: approvedPayments.length,
-      approvedAmount: formatARS(approvedAmountCents / 100),
+      approvedAmount: formatARS(approvedAmountPesos),
     },
   };
 }

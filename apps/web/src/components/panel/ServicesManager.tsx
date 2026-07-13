@@ -53,8 +53,8 @@ function emptyService(): DraftService {
     arrivalInstructions: "",
     virtualInstructions: "",
     requiresManualConfirmation: false,
-    priceCents: 0,
-    depositCents: 0,
+    pricePesos: 0,
+    depositPesos: 0,
     paymentMode: "deposit",
     active: true,
     sortOrder: 0,
@@ -87,8 +87,8 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       arrivalInstructions: row.arrivalInstructions,
       virtualInstructions: row.virtualInstructions,
       requiresManualConfirmation: row.requiresManualConfirmation,
-      priceCents: row.priceCents,
-      depositCents: row.depositCents,
+      pricePesos: row.pricePesos,
+      depositPesos: row.depositPesos,
       paymentMode: row.paymentMode,
       active: row.active,
       sortOrder: row.sortOrder,
@@ -204,12 +204,12 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
 
           <div className="grid gap-3 md:grid-cols-5">
             <label className="grid gap-2 text-sm font-semibold">
-              Precio centavos
-              <input className="input-control" type="number" min={0} value={row.priceCents} onChange={(event) => updateRow(row.draftId, { priceCents: Number(event.target.value) })} />
+              Precio en pesos
+              <input className="input-control" type="number" min={0} step={1} value={row.pricePesos} onChange={(event) => updateRow(row.draftId, { pricePesos: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Sena centavos
-              <input className="input-control" type="number" min={0} value={row.depositCents} onChange={(event) => updateRow(row.draftId, { depositCents: Number(event.target.value) })} />
+              Sena en pesos
+              <input className="input-control" type="number" min={0} step={1} value={row.depositPesos} onChange={(event) => updateRow(row.draftId, { depositPesos: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
               Cobro al reservar

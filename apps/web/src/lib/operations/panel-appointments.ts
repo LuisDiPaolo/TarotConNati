@@ -42,7 +42,7 @@ type AppointmentQueryRow = {
   notes: string | null;
   customers: CustomerJoin | CustomerJoin[] | null;
   services: ServiceJoin | ServiceJoin[] | null;
-  payments: Array<{ status: string; amount_cents: number }> | null;
+  payments: Array<{ status: string; amount_pesos: number }> | null;
   appointment_intake_responses: AppointmentIntakeJoin[] | null;
 };
 
@@ -86,7 +86,7 @@ function mapAppointmentRow(appointment: AppointmentQueryRow): PanelAppointment {
     customerEmail: customer?.email ?? "",
     serviceName: service?.name ?? "Servicio",
     paymentStatus: payment?.status ?? "sin_pago",
-    paymentAmount: payment ? formatARS(payment.amount_cents / 100) : "-",
+    paymentAmount: payment ? formatARS(payment.amount_pesos) : "-",
     intakeResponses: mapIntakeResponses(appointment.appointment_intake_responses),
   };
 }
@@ -95,7 +95,7 @@ export async function getPanelAppointments(): Promise<PanelAppointment[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("appointments")
-    .select("id, starts_at, ends_at, status, notes, customers(full_name, phone, email), services(name), payments(status, amount_cents), appointment_intake_responses(form_snapshot, response)")
+    .select("id, starts_at, ends_at, status, notes, customers(full_name, phone, email), services(name), payments(status, amount_pesos), appointment_intake_responses(form_snapshot, response)")
     .is("deleted_at", null)
     .order("starts_at", { ascending: true })
     .limit(60);
@@ -109,7 +109,7 @@ export async function getPanelAppointmentDetail(appointmentId: string): Promise<
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("appointments")
-    .select("id, starts_at, ends_at, status, notes, customers(full_name, phone, email), services(name), payments(status, amount_cents), appointment_intake_responses(form_snapshot, response)")
+    .select("id, starts_at, ends_at, status, notes, customers(full_name, phone, email), services(name), payments(status, amount_pesos), appointment_intake_responses(form_snapshot, response)")
     .eq("id", appointmentId)
     .is("deleted_at", null)
     .maybeSingle();

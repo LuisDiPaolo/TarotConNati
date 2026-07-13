@@ -1,7 +1,7 @@
 import { apiError } from "@turnos/shared";
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
-import { getMercadoPagoPayment, toCents, verifyMercadoPagoWebhookSignature } from "@/lib/payments/mercado-pago";
+import { getMercadoPagoPayment, verifyMercadoPagoWebhookSignature } from "@/lib/payments/mercado-pago";
 import { sendTransactionalPush } from "@/lib/push/transactional";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -19,7 +19,7 @@ type PaymentRow = {
   id: string;
   business_id: string;
   appointment_id: string;
-  amount_cents: number;
+  amount_pesos: number;
   currency: string;
   status: string;
 };
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
-    .select("id, business_id, appointment_id, amount_cents, currency, status")
+    .select("id, business_id, appointment_id, amount_pesos, currency, status")
     .eq("business_id", business.id)
     .eq("appointment_id", appointmentId)
     .maybeSingle();
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
   }
 
   const typedPayment = payment as PaymentRow;
-  const amountMatches = typedPayment.amount_cents === toCents(mercadoPagoPayment.transaction_amount);
+  const amountMatches = typedPayment.amount_pesos === Math.round(mercadoPagoPayment.transaction_amount);
   const currencyMatches = typedPayment.currency === mercadoPagoPayment.currency_id;
 
   if (!amountMatches || !currencyMatches) {

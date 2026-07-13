@@ -32,13 +32,13 @@ export const serviceSettingsSchema = z.object({
   arrivalInstructions: z.string().trim().max(500).optional().or(z.literal("")),
   virtualInstructions: z.string().trim().max(500).optional().or(z.literal("")),
   requiresManualConfirmation: z.coerce.boolean().default(false),
-  priceCents: z.coerce.number().int().min(0).max(100_000_000),
-  depositCents: z.coerce.number().int().min(0).max(100_000_000),
+  pricePesos: z.coerce.number().int().min(0).max(100_000_000),
+  depositPesos: z.coerce.number().int().min(0).max(100_000_000),
   paymentMode: z.enum(["deposit", "full", "none"]),
   active: z.coerce.boolean(),
   sortOrder: z.coerce.number().int().min(0).max(10_000),
-}).refine((value) => value.depositCents <= value.priceCents || value.priceCents === 0, {
-  path: ["depositCents"],
+}).refine((value) => value.depositPesos <= value.pricePesos || value.pricePesos === 0, {
+  path: ["depositPesos"],
   message: "La sena no puede superar el precio.",
 }).refine((value) => value.schedulingPolicy === "scheduled" || !value.blocksCalendar, {
   path: ["blocksCalendar"],

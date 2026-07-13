@@ -99,8 +99,8 @@ insert into services (
   arrival_instructions,
   virtual_instructions,
   requires_manual_confirmation,
-  price_cents,
-  deposit_cents,
+  price_pesos,
+  deposit_pesos,
   payment_mode,
   active,
   sort_order
@@ -121,7 +121,7 @@ values
     '',
     'No es en vivo. La devolucion se envia por WhatsApp en formato texto, foto o video, segun corresponda.',
     true,
-    1800000,
+    18000,
     0,
     'full',
     true,
@@ -142,7 +142,7 @@ values
     '',
     'Enviar por WhatsApp la consulta y el contexto minimo. La respuesta se entrega de forma asincronica.',
     true,
-    2400000,
+    24000,
     0,
     'full',
     true,
@@ -163,7 +163,7 @@ values
     '',
     'No reemplaza asesoramiento profesional. Se envia una devolucion reflexiva por WhatsApp.',
     true,
-    2600000,
+    26000,
     0,
     'full',
     true,
@@ -184,7 +184,7 @@ values
     '',
     'La respuesta se envia por WhatsApp en texto o audio breve cuando queda lista.',
     true,
-    900000,
+    9000,
     0,
     'full',
     true,
@@ -357,7 +357,7 @@ insert into payments (
   appointment_id,
   provider,
   provider_payment_id,
-  amount_cents,
+  amount_pesos,
   currency,
   status,
   provider_preference_id,
@@ -365,10 +365,10 @@ insert into payments (
   external_reference
 )
 values
-  ('00000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000001', 'mercado_pago', null, 1800000, 'ARS', 'pending', 'demo-pref-001', null, '40000000-0000-4000-8000-000000000001'),
-  ('00000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000002', 'mercado_pago', 'demo-payment-002', 2600000, 'ARS', 'approved', 'demo-pref-002', null, '40000000-0000-4000-8000-000000000002'),
-  ('00000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000003', 'mercado_pago', 'demo-payment-003', 2400000, 'ARS', 'approved', 'demo-pref-003', null, '40000000-0000-4000-8000-000000000003'),
-  ('00000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000004', 'mercado_pago', null, 900000, 'ARS', 'cancelled', 'demo-pref-004', null, '40000000-0000-4000-8000-000000000004');
+  ('00000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000001', 'mercado_pago', null, 18000, 'ARS', 'pending', 'demo-pref-001', null, '40000000-0000-4000-8000-000000000001'),
+  ('00000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000002', 'mercado_pago', 'demo-payment-002', 26000, 'ARS', 'approved', 'demo-pref-002', null, '40000000-0000-4000-8000-000000000002'),
+  ('00000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000003', 'mercado_pago', 'demo-payment-003', 24000, 'ARS', 'approved', 'demo-pref-003', null, '40000000-0000-4000-8000-000000000003'),
+  ('00000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000004', 'mercado_pago', null, 9000, 'ARS', 'cancelled', 'demo-pref-004', null, '40000000-0000-4000-8000-000000000004');
 
 insert into appointment_intake_responses (business_id, appointment_id, form_id, form_snapshot, response)
 values
