@@ -53,12 +53,13 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
   return (
     <div className="surface overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
             <tr>
               <th className="px-4 py-3">Horario</th>
               <th className="px-4 py-3">Cliente</th>
               <th className="px-4 py-3">Servicio</th>
+              <th className="px-4 py-3">Info</th>
               <th className="px-4 py-3">Pago</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3 text-right">Acciones</th>
@@ -73,6 +74,22 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
                   <p className="text-xs text-slate-500">{appointment.customerPhone || appointment.customerEmail}</p>
                 </td>
                 <td className="px-4 py-3">{appointment.serviceName}</td>
+                <td className="px-4 py-3">
+                  {appointment.intakeResponses.length > 0 ? (
+                    <div className="grid max-w-[260px] gap-2 text-xs text-slate-600 dark:text-slate-300">
+                      {appointment.intakeResponses.map((response, responseIndex) => (
+                        <div className="grid gap-1" key={`${appointment.id}-${response.formName}-${responseIndex}`}>
+                          <p className="font-bold text-slate-900 dark:text-white">{response.formName}</p>
+                          {response.answers.slice(0, 4).map((answer, answerIndex) => (
+                            <p key={`${appointment.id}-${responseIndex}-${answer.label}-${answerIndex}`}>
+                              <span className="font-semibold">{answer.label}:</span> {answer.value}
+                            </p>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  ) : <span className="text-xs text-slate-400">-</span>}
+                </td>
                 <td className="px-4 py-3">
                   <p className="font-semibold">{appointment.paymentAmount}</p>
                   <p className="text-xs text-slate-500">{appointment.paymentStatus}</p>

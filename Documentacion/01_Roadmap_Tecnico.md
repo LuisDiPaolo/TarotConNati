@@ -216,7 +216,7 @@ El esquema de base de datos está diseñado para ser único y configurable. Cada
 
 • features - Módulos habilitados por flags booleanos.
 
-• services - Catálogo de servicios con precio, duración, seña y modo de pago.
+• services - Catálogo de servicios con precio, modalidad, política de agenda, duración operativa, buffers, seña y modo de pago.
 
 • schedules - Disponibilidad semanal base.
 
@@ -242,6 +242,14 @@ El esquema de base de datos está diseñado para ser único y configurable. Cada
 
 • analytics_snapshots - Métricas precalculadas para reportes.
 
+• intake_forms - Formularios configurables por negocio para pedir informacion adicional en reservas.
+
+• intake_form_fields - Campos, orden, tipo y validacion de cada formulario.
+
+• service_intake_forms - Asociacion entre servicios y formularios activos.
+
+• appointment_intake_responses - Respuestas guardadas con snapshot de formulario por turno.
+
 4.3 Control de módulos
 
 La tabla features contiene un flag booleano por módulo. El frontend consulta esta tabla al iniciar la aplicación y renderiza condicionalmente las secciones y menús. Si el módulo no está habilitado, el componente no se carga.
@@ -262,7 +270,7 @@ _Objetivo: que un profesional pueda recibir turnos y cobrar señas desde una apl
 
 • Configuración del negocio: nombre, logo, colores, descripción y datos de contacto.
 
-• Catálogo de servicios con precio, duración, categoría y modo de pago.
+• Catálogo de servicios con precio, categoría, modalidad, política de agenda, duración, buffers y modo de pago.
 
 • Agenda semanal configurable: días, horarios, pausas y excepciones.
 
@@ -285,6 +293,10 @@ Fase 2 - Gestión y datos
 _Objetivo: que el profesional pueda entender la actividad de su negocio a partir de los datos generados._
 
 • Ficha de cliente: historial de turnos, pagos y notas internas.
+
+• Formularios de admision configurables desde el panel y adjuntos a la reserva publica, con respuestas visibles en el detalle del turno.
+
+• Modelo avanzado de servicios y agenda: presencial con horario, virtual con hora pactada, virtual a demanda, solicitud/contacto, buffers y bloqueo real de disponibilidad.
 
 • Registro de ausencias y cancelaciones con motivo.
 
@@ -311,6 +323,8 @@ Fase 3 - Presencia digital
 • Módulo de promociones: precio especial o descuento porcentual con fechas de vigencia.
 
 • Asistente de configuración inicial (onboarding guiado).
+
+• Consultas y contacto: formulario publico, registro en bandeja admin, ruteo a WhatsApp y conversion manual a reserva/turno cuando corresponda.
 
 Fase 4 - Fidelización y comunicación
 

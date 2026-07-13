@@ -4,6 +4,7 @@ import { PanelPwaManager } from "@/components/pwa/PanelPwaManager";
 import { PublicPwaManager } from "@/components/pwa/PublicPwaManager";
 import { OrientationGuard } from "@/components/layout/OrientationGuard";
 import { ViewportRuntime } from "@/components/layout/ViewportRuntime";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "Turnos",
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{document.documentElement.style.setProperty('--app-height',window.innerHeight+'px');document.documentElement.style.setProperty('--app-width',window.innerWidth+'px');}catch(e){}})();`,
+            __html: `(function(){try{var root=document.documentElement;root.style.setProperty('--app-height',window.innerHeight+'px');root.style.setProperty('--app-width',window.innerWidth+'px');var stored=window.localStorage.getItem('turnos-theme');var theme=stored==='light'||stored==='dark'?stored:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');root.dataset.theme=theme;root.classList.toggle('dark',theme==='dark');root.style.colorScheme=theme;}catch(e){}})();`,
           }}
         />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <OrientationGuard />
         <PublicPwaManager />
         <PanelPwaManager />
+        <ThemeToggle />
         {children}
       </body>
     </html>

@@ -4,7 +4,7 @@ Fecha: 2026-07-13
 
 ## Alcance de este bloque
 
-Este bloque avanza Fase 1 sin incorporar modulos de fases futuras. Quedan fuera: analitica, portfolio, productos, promociones, push transaccional/campanas, consultas, WhatsApp API, multi-staff, multi-sucursal, waitlist y membresias.
+Este bloque avanza Fase 1 sin incorporar modulos de fases futuras. Quedan fuera: analitica, formularios de admision adjuntos a reservas, portfolio, productos, promociones, push transaccional/campanas, consultas, WhatsApp API, multi-staff, multi-sucursal, waitlist y membresias.
 
 ## Implementado
 

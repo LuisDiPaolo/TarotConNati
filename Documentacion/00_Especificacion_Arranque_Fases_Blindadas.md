@@ -206,6 +206,9 @@ La PWA pública (que instala el cliente final para ver/reservar turnos) y el pan
 
 **Se agrega:**
 - Cada tabla nueva de esta fase sigue el patrón RLS de la Fase 0 sin excepciones (analítica, reportes).
+- Formularios de admision configurables desde el panel admin para adjuntar informacion adicional a una reserva, documentados en `Documentacion/Fase_2_Formularios_Admision.md`.
+- Modelo avanzado de servicios y agenda, documentado en `Documentacion/Fase_2_Modelo_Servicios_Agenda.md`, para soportar presencial con horario, virtual con hora pactada, virtual a demanda y solicitudes/contacto sin turno confirmado.
+- Las respuestas de formularios se guardan con snapshot/version de la definicion usada al reservar, para que editar el formulario no modifique reservas historicas.
 - Los recordatorios por email (Resend) deben verificar SPF/DKIM/DMARC del dominio antes de considerarse "cerrada" la fase — sin esto, los recordatorios caen en spam y el módulo pierde el valor que promete.
 
 **Fuera de alcance:** módulo de consultas/WhatsApp (pasa a Fase 3, junto con portfolio, para agrupar todo lo de "presencia digital y contacto").
@@ -218,6 +221,7 @@ La PWA pública (que instala el cliente final para ver/reservar turnos) y el pan
 
 **Se agrega respecto al Roadmap original:**
 - El módulo de **consultas + ruteo a WhatsApp** (`inquiries_enabled`) entra acá, junto con portfolio y productos simples, porque comparten el mismo objetivo de "el negocio se muestra y se lo pueden contactar sin fricción".
+- Las consultas deben integrarse con servicios de modalidad `contact_request`: no crean un turno confirmado, pero si dejan registro en bandeja admin y pueden convertirse en reserva/turno si el prestador lo decide.
 - El link `wa.me` requiere que `business.whatsapp_phone` esté validado en formato E.164 antes de generarse — un teléfono mal formateado rompe el link silenciosamente, así que se valida en el formulario de configuración, no en el momento de generar el link.
 
 **Fuera de alcance:** campañas push masivas, cupones, gift cards, paquetes de sesiones — fase 4.

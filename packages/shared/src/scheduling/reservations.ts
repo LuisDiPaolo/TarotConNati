@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publicIntakeResponseSchema } from "../forms/intake-forms";
 
 export const publicReservationSchema = z.object({
   serviceId: z.string().uuid(),
@@ -9,6 +10,7 @@ export const publicReservationSchema = z.object({
     email: z.string().trim().email().max(160).optional().or(z.literal("")),
     notes: z.string().trim().max(500).optional().or(z.literal("")),
   }),
+  intakeResponses: publicIntakeResponseSchema.optional(),
 });
 
 export const appointmentStatusSchema = z.enum(["pending", "confirmed", "cancelled", "completed", "no_show"]);

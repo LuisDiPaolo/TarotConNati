@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { calculateAppointmentEnd, publicReservationSchema } from "@turnos/shared";
+import type { PublicIntakeResponseInput } from "@turnos/shared";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { getRequestBaseUrl } from "@/lib/http/base-url";
 import { createMercadoPagoPreference } from "@/lib/payments/mercado-pago";
@@ -30,12 +31,101 @@ function enforceRateLimit(key: string) {
   return true;
 }
 
-function overlaps(candidate: { startsAt: Date; endsAt: Date }, existing: Array<{ starts_at: string; ends_at: string }>) {
+function overlaps(candidate: { startsAt: Date; endsAt: Date }, existing: Array<{ starts_at: string; ends_at: string; calendar_starts_at?: string | null; calendar_ends_at?: string | null }>) {
   return existing.some((appointment) => {
-    const startsAt = new Date(appointment.starts_at);
-    const endsAt = new Date(appointment.ends_at);
+    const startsAt = new Date(appointment.calendar_starts_at ?? appointment.starts_at);
+    const endsAt = new Date(appointment.calendar_ends_at ?? appointment.ends_at);
     return candidate.startsAt < endsAt && startsAt < candidate.endsAt;
   });
+}
+
+function calculateCalendarRange(input: { startsAt: Date; durationMinutes: number; bufferBeforeMinutes: number; bufferAfterMinutes: number }) {
+  return {
+    startsAt: new Date(input.startsAt.getTime() - input.bufferBeforeMinutes * 60_000),
+    endsAt: new Date(input.startsAt.getTime() + (input.durationMinutes + input.bufferAfterMinutes) * 60_000),
+  };
+}
+
+type IntakeFieldRow = {
+  field_key: string;
+  label: string;
+  help_text: string | null;
+  field_type: "short_text" | "long_text" | "number" | "date" | "single_select" | "multi_select" | "boolean" | "consent";
+  required: boolean;
+  options: Array<{ value: string; label: string }> | null;
+  sort_order: number;
+};
+
+type IntakeLinkRow = {
+  form_id: string;
+  intake_forms: {
+    id: string;
+    name: string;
+    description: string | null;
+    active: boolean;
+    deleted_at: string | null;
+    intake_form_fields: IntakeFieldRow[] | null;
+  } | null;
+};
+
+function isEmptyResponse(value: unknown) {
+  return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
+}
+
+function validateFieldResponse(field: IntakeFieldRow, value: PublicIntakeResponseInput[string] | undefined) {
+  if (field.required && isEmptyResponse(value)) return false;
+  if (isEmptyResponse(value)) return true;
+
+  if (field.field_type === "number") return typeof value === "number" && Number.isFinite(value);
+  if (field.field_type === "boolean" || field.field_type === "consent") return typeof value === "boolean" && (!field.required || value === true);
+  if (field.field_type === "date") return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+  const allowedOptions = new Set((field.options ?? []).map((option) => option.value));
+  if (field.field_type === "single_select") return typeof value === "string" && allowedOptions.has(value);
+  if (field.field_type === "multi_select") return Array.isArray(value) && value.every((item) => allowedOptions.has(item));
+
+  return typeof value === "string" && value.length <= (field.field_type === "long_text" ? 1000 : 240);
+}
+
+function buildValidatedIntakePayload(forms: IntakeLinkRow[], responses: PublicIntakeResponseInput) {
+  const payload: Array<{ formId: string; formSnapshot: object; response: Record<string, PublicIntakeResponseInput[string]> }> = [];
+
+  for (const link of forms) {
+    const form = link.intake_forms;
+    if (!form || !form.active || form.deleted_at) continue;
+
+    const fields = (form.intake_form_fields ?? []).sort((a, b) => a.sort_order - b.sort_order);
+    const response: Record<string, PublicIntakeResponseInput[string]> = {};
+
+    for (const field of fields) {
+      const value = responses[field.field_key];
+      if (!validateFieldResponse(field, value)) return null;
+      if (!isEmptyResponse(value)) {
+        response[field.field_key] = value as PublicIntakeResponseInput[string];
+      }
+    }
+
+    payload.push({
+      formId: form.id,
+      formSnapshot: {
+        id: form.id,
+        name: form.name,
+        description: form.description ?? "",
+        fields: fields.map((field) => ({
+          fieldKey: field.field_key,
+          label: field.label,
+          helpText: field.help_text ?? "",
+          fieldType: field.field_type,
+          required: field.required,
+          options: field.options ?? [],
+          sortOrder: field.sort_order,
+        })),
+      },
+      response,
+    });
+  }
+
+  return payload;
 }
 
 export async function POST(request: NextRequest) {
@@ -57,25 +147,47 @@ export async function POST(request: NextRequest) {
 
   const { data: service, error: serviceError } = await supabase
     .from("services")
-    .select("id, name, duration_minutes, deposit_cents, price_cents, payment_mode")
+    .select("id, name, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, requires_manual_confirmation, deposit_cents, price_cents, payment_mode")
     .eq("business_id", business.id)
     .eq("id", serviceId)
     .eq("active", true)
     .maybeSingle();
 
   if (serviceError || !service) return apiError(404, "NOT_FOUND", "El servicio elegido no está disponible.");
+  if ((service.scheduling_policy ?? "scheduled") !== "scheduled") {
+    return apiError(400, "VALIDATION_ERROR", "Este servicio requiere coordinacion previa y no admite reserva automatica.");
+  }
+
+  const { data: intakeFormsData } = await supabase
+    .from("service_intake_forms")
+    .select("form_id, intake_forms(id, name, description, active, deleted_at, intake_form_fields(field_key, label, help_text, field_type, required, options, sort_order))")
+    .eq("business_id", business.id)
+    .eq("service_id", serviceId)
+    .eq("active", true);
+
+  const intakePayload = buildValidatedIntakePayload((intakeFormsData ?? []) as unknown as IntakeLinkRow[], parsed.data.intakeResponses ?? {});
+  if (!intakePayload) return apiError(400, "VALIDATION_ERROR", "Revisa la informacion adicional de la reserva.");
 
   const endsAtDate = calculateAppointmentEnd(startsAtDate, Number(service.duration_minutes));
+  const blocksCalendar = service.blocks_calendar ?? true;
+  const calendarRange = blocksCalendar
+    ? calculateCalendarRange({
+      startsAt: startsAtDate,
+      durationMinutes: Number(service.duration_minutes),
+      bufferBeforeMinutes: Number(service.buffer_before_minutes ?? 0),
+      bufferAfterMinutes: Number(service.buffer_after_minutes ?? 0),
+    })
+    : { startsAt: startsAtDate, endsAt: endsAtDate };
   const { data: existingAppointments } = await supabase
     .from("appointments")
-    .select("starts_at, ends_at")
+    .select("starts_at, ends_at, calendar_starts_at, calendar_ends_at")
     .eq("business_id", business.id)
     .is("deleted_at", null)
     .neq("status", "cancelled")
-    .lt("starts_at", endsAtDate.toISOString())
-    .gt("ends_at", startsAtDate.toISOString());
+    .lt("calendar_starts_at", calendarRange.endsAt.toISOString())
+    .gt("calendar_ends_at", calendarRange.startsAt.toISOString());
 
-  if (overlaps({ startsAt: startsAtDate, endsAt: endsAtDate }, existingAppointments ?? [])) {
+  if (blocksCalendar && overlaps(calendarRange, existingAppointments ?? [])) {
     return apiError(409, "VALIDATION_ERROR", "Ese horario acaba de ocuparse. Elegí otro turno.");
   }
 
@@ -101,13 +213,27 @@ export async function POST(request: NextRequest) {
       service_id: service.id,
       starts_at: startsAtDate.toISOString(),
       ends_at: endsAtDate.toISOString(),
-      status: Number(service.deposit_cents) > 0 ? "pending" : "confirmed",
+      calendar_starts_at: calendarRange.startsAt.toISOString(),
+      calendar_ends_at: calendarRange.endsAt.toISOString(),
+      status: Number(service.deposit_cents) > 0 || service.requires_manual_confirmation ? "pending" : "confirmed",
       notes: customer.notes || null,
     })
     .select("id")
     .single();
 
   if (appointmentError || !appointment) return apiError(500, "VALIDATION_ERROR", "No se pudo crear el turno.");
+
+  if (intakePayload.length > 0) {
+    const { error: intakeError } = await supabase.from("appointment_intake_responses").insert(intakePayload.map((item) => ({
+      business_id: business.id,
+      appointment_id: appointment.id,
+      form_id: item.formId,
+      form_snapshot: item.formSnapshot,
+      response: item.response,
+    })));
+
+    if (intakeError) return apiError(500, "VALIDATION_ERROR", "No se pudo guardar la informacion adicional.");
+  }
 
   const amountCents = Number(service.deposit_cents) > 0 ? Number(service.deposit_cents) : 0;
   let checkoutUrl: string | null = null;

@@ -1,4 +1,4 @@
-import { CalendarDays, ClipboardList, Settings, Wrench } from "lucide-react";
+import { CalendarDays, ClipboardList, FileText, Settings, Wrench } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import type { ComponentType, ReactNode } from "react";
@@ -14,6 +14,7 @@ const navItems: PanelNavItem[] = [
   { href: "/panel/configuracion", label: "Configuracion", icon: Settings },
   { href: "/panel/servicios", label: "Servicios", icon: Wrench },
   { href: "/panel/agenda", label: "Agenda", icon: ClipboardList },
+  { href: "/panel/formularios", label: "Formularios", icon: FileText },
 ];
 
 export function PanelShell({ children }: { children: ReactNode }) {

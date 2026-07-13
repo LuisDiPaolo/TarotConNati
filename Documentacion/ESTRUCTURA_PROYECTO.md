@@ -21,6 +21,7 @@ apps/web/
   src/app/panel/configuracion/ Configuracion de negocio y marca
   src/app/panel/servicios/     Catalogo editable de servicios
   src/app/panel/agenda/        Horarios semanales y excepciones por fecha
+  src/app/panel/formularios/   Formularios de admision para adjuntar a reservas (Fase 2)
   src/app/auth/          Callback y rutas de autenticacion
   src/app/install/       Instalacion de la PWA publica
   src/app/api/           Endpoints server de la plataforma
@@ -57,6 +58,7 @@ packages/shared/src/
   commerce/              Precios, promociones y cupones
   contact/               Utilidades de contacto externo como WhatsApp
   features/              Catalogo unico de feature flags
+  forms/                 Schemas reutilizables de formularios dinamicos (Fase 2)
   scheduling/            Horarios, ventanas y validaciones de turnos
   utils/                 Formato local: es-AR, ARS y zona horaria
 ```

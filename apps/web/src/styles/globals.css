@@ -28,13 +28,31 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --color-background: 15 23 42;
     --color-foreground: 248 250 252;
     --color-muted: 148 163 184;
     --color-surface: 30 41 59;
     --color-border: 51 65 85;
   }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-background: 248 250 252;
+  --color-foreground: 15 23 42;
+  --color-muted: 100 116 139;
+  --color-surface: 255 255 255;
+  --color-border: 226 232 240;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-background: 15 23 42;
+  --color-foreground: 248 250 252;
+  --color-muted: 148 163 184;
+  --color-surface: 30 41 59;
+  --color-border: 51 65 85;
 }
 
 *, *::before, *::after {
@@ -173,6 +191,70 @@ body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
 
 .panel-nav-link:hover {
   background: rgb(var(--brand-primary) / 0.1);
+}
+
+@keyframes studioEquisCreditPulse {
+  0%, 72%, 100% {
+    transform: scale(1);
+  }
+
+  36% {
+    transform: scale(1.05);
+  }
+}
+
+.studio-equis-credit-button {
+  animation: studioEquisCreditPulse 3.8s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.theme-toggle {
+  align-items: center;
+  background: rgb(var(--color-surface) / 0.78);
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.14);
+  color: rgb(var(--color-foreground));
+  cursor: pointer;
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  position: fixed;
+  right: max(12px, var(--safe-right));
+  top: calc(var(--safe-top) + 12px);
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+  width: 40px;
+  z-index: 60;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.theme-toggle:hover {
+  background: rgb(var(--color-surface) / 0.92);
+  transform: translateY(-1px);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid rgb(var(--brand-accent) / 0.7);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-equis-credit-button {
+    animation: none !important;
+  }
+
+  .theme-toggle {
+    transition: none;
+  }
+}
+
+@media print {
+  .theme-toggle,
+  .studio-equis-credit-button {
+    display: none !important;
+  }
 }
 
 @media (display-mode: standalone) {

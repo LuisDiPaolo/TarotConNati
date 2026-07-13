@@ -21,7 +21,7 @@ export default async function PublicHomePage() {
     );
   }
 
-  const { business: publicBusiness, services, slotsByService } = bookingData;
+  const { business: publicBusiness, services, slotsByService, intakeFormsByService } = bookingData;
 
   return (
     <main className="app-screen py-8 sm:py-12">
@@ -52,7 +52,7 @@ export default async function PublicHomePage() {
           </div>
         </div>
 
-        <ReservationForm services={services} slotsByService={slotsByService} />
+        <ReservationForm services={services} slotsByService={slotsByService} intakeFormsByService={intakeFormsByService} />
       </section>
     </main>
   );

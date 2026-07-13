@@ -3,7 +3,7 @@ import "server-only";
 import { calculateAppointmentEnd, formatARS, resolveEffectiveSchedulesForDate } from "@turnos/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { ResolvedBusiness } from "@/lib/business/resolve";
-import type { PublicBookingData, PublicService, PublicSlot } from "@/lib/operations/booking.types";
+import type { PublicBookingData, PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
 
 type BusinessRow = {
   id: string;
@@ -23,7 +23,15 @@ type ServiceRow = {
   name: string;
   description: string | null;
   category: string | null;
+  service_modality: PublicService["serviceModality"] | null;
+  scheduling_policy: PublicService["schedulingPolicy"] | null;
   duration_minutes: number;
+  buffer_before_minutes: number | null;
+  buffer_after_minutes: number | null;
+  blocks_calendar: boolean | null;
+  arrival_instructions: string | null;
+  virtual_instructions: string | null;
+  requires_manual_confirmation: boolean | null;
   price_cents: number;
   deposit_cents: number;
   payment_mode: "deposit" | "full" | "none";
@@ -56,8 +64,29 @@ type ScheduleOverrideRow = {
 type AppointmentRow = {
   starts_at: string;
   ends_at: string;
+  calendar_starts_at: string | null;
+  calendar_ends_at: string | null;
 };
 
+type IntakeFormLinkRow = {
+  service_id: string;
+  intake_forms: {
+    id: string;
+    name: string;
+    description: string | null;
+    active: boolean;
+    deleted_at: string | null;
+    intake_form_fields: Array<{
+      field_key: string;
+      label: string;
+      help_text: string | null;
+      field_type: PublicIntakeForm["fields"][number]["fieldType"];
+      required: boolean;
+      options: PublicIntakeForm["fields"][number]["options"] | null;
+      sort_order: number;
+    }> | null;
+  } | null;
+};
 
 function toMoneyLabel(cents: number) {
   return formatARS(cents / 100);
@@ -114,10 +143,17 @@ function zonedTimeToUtc(input: { year: number; month: number; day: number; hour:
 
 function overlaps(candidate: { startsAt: Date; endsAt: Date }, appointments: AppointmentRow[]) {
   return appointments.some((appointment) => {
-    const startsAt = new Date(appointment.starts_at);
-    const endsAt = new Date(appointment.ends_at);
+    const startsAt = new Date(appointment.calendar_starts_at ?? appointment.starts_at);
+    const endsAt = new Date(appointment.calendar_ends_at ?? appointment.ends_at);
     return candidate.startsAt < endsAt && startsAt < candidate.endsAt;
   });
+}
+
+function calculateCalendarRange(input: { startsAt: Date; durationMinutes: number; bufferBeforeMinutes: number; bufferAfterMinutes: number }) {
+  return {
+    startsAt: new Date(input.startsAt.getTime() - input.bufferBeforeMinutes * 60_000),
+    endsAt: new Date(input.startsAt.getTime() + (input.durationMinutes + input.bufferAfterMinutes) * 60_000),
+  };
 }
 
 async function getBusiness(businessId: string) {
@@ -141,10 +177,10 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
   const todayParts = getLocalDateParts(now, business.timezone);
   const untilParts = getLocalDateParts(new Date(now.getTime() + 13 * 24 * 60 * 60_000), business.timezone);
 
-  const [{ data: servicesData }, { data: schedulesData }, { data: overridesData }, { data: appointmentsData }] = await Promise.all([
+  const [{ data: servicesData }, { data: schedulesData }, { data: overridesData }, { data: appointmentsData }, { data: intakeLinksData }] = await Promise.all([
     supabase
       .from("services")
-      .select("id, name, description, category, duration_minutes, price_cents, deposit_cents, payment_mode, sort_order")
+      .select("id, name, description, category, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_cents, deposit_cents, payment_mode, sort_order")
       .eq("business_id", business.id)
       .eq("active", true)
       .order("sort_order", { ascending: true })
@@ -162,11 +198,16 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
       .lte("override_date", localDateKey(untilParts)),
     supabase
       .from("appointments")
-      .select("starts_at, ends_at")
+      .select("starts_at, ends_at, calendar_starts_at, calendar_ends_at")
       .eq("business_id", business.id)
       .is("deleted_at", null)
       .neq("status", "cancelled")
-      .gte("starts_at", now.toISOString()),
+      .gte("calendar_ends_at", now.toISOString()),
+    supabase
+      .from("service_intake_forms")
+      .select("service_id, intake_forms(id, name, description, active, deleted_at, intake_form_fields(field_key, label, help_text, field_type, required, options, sort_order))")
+      .eq("business_id", business.id)
+      .eq("active", true),
   ]);
 
   const services = ((servicesData ?? []) as ServiceRow[]).map((service) => ({
@@ -174,13 +215,55 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
     name: service.name,
     description: service.description ?? "",
     category: service.category ?? "General",
+    serviceModality: service.service_modality ?? "in_person",
+    schedulingPolicy: service.scheduling_policy ?? "scheduled",
     durationMinutes: service.duration_minutes,
+    bufferBeforeMinutes: service.buffer_before_minutes ?? 0,
+    bufferAfterMinutes: service.buffer_after_minutes ?? 0,
+    blocksCalendar: service.blocks_calendar ?? true,
+    arrivalInstructions: service.arrival_instructions ?? "",
+    virtualInstructions: service.virtual_instructions ?? "",
+    requiresManualConfirmation: service.requires_manual_confirmation ?? false,
     priceCents: service.price_cents,
     depositCents: service.deposit_cents,
     paymentMode: service.payment_mode,
     priceLabel: toMoneyLabel(service.price_cents),
     depositLabel: toMoneyLabel(service.deposit_cents),
   }));
+
+  const intakeFormsByService: Record<string, PublicIntakeForm[]> = {};
+  for (const link of (intakeLinksData ?? []) as unknown as IntakeFormLinkRow[]) {
+    if (!link.intake_forms || !link.intake_forms.active || link.intake_forms.deleted_at) continue;
+    const fields = (link.intake_forms.intake_form_fields ?? [])
+      .map((field) => ({
+        fieldKey: field.field_key,
+        label: field.label,
+        helpText: field.help_text ?? "",
+        fieldType: field.field_type,
+        required: field.required,
+        options: field.options ?? [],
+        sortOrder: field.sort_order,
+      }))
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((field) => ({
+        fieldKey: field.fieldKey,
+        label: field.label,
+        helpText: field.helpText,
+        fieldType: field.fieldType,
+        required: field.required,
+        options: field.options,
+      }));
+
+    intakeFormsByService[link.service_id] = [
+      ...(intakeFormsByService[link.service_id] ?? []),
+      {
+        id: link.intake_forms.id,
+        name: link.intake_forms.name,
+        description: link.intake_forms.description ?? "",
+        fields,
+      },
+    ];
+  }
 
   const schedules: EffectiveSchedule[] = ((schedulesData ?? []) as ScheduleRow[]).map((schedule) => ({
     weekday: schedule.weekday,
@@ -201,6 +284,11 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
   for (const service of services) {
     const slots: PublicSlot[] = [];
 
+    if (service.schedulingPolicy !== "scheduled") {
+      slotsByService[service.id] = slots;
+      continue;
+    }
+
     for (let dayOffset = 0; dayOffset < 14; dayOffset += 1) {
       const cursor = new Date(now.getTime() + dayOffset * 24 * 60 * 60_000);
       const localParts = getLocalDateParts(cursor, business.timezone);
@@ -220,7 +308,10 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
         const breakEnd = schedule.breakEndsAt ? timeToMinutes(schedule.breakEndsAt) : null;
 
         for (let minute = startMinutes; minute + service.durationMinutes <= endMinutes; minute += 30) {
-          if (breakStart !== null && breakEnd !== null && minute < breakEnd && minute + service.durationMinutes > breakStart) continue;
+          const blockStartMinute = service.blocksCalendar ? minute - service.bufferBeforeMinutes : minute;
+          const blockEndMinute = minute + service.durationMinutes + (service.blocksCalendar ? service.bufferAfterMinutes : 0);
+          if (blockStartMinute < startMinutes || blockEndMinute > endMinutes) continue;
+          if (breakStart !== null && breakEnd !== null && blockStartMinute < breakEnd && blockEndMinute > breakStart) continue;
 
           const startsAt = zonedTimeToUtc({
             ...localParts,
@@ -228,9 +319,16 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
             minute: minute % 60,
             timeZone: business.timezone,
           });
-          const endsAt = calculateAppointmentEnd(startsAt, service.durationMinutes);
+          const calendarRange = service.blocksCalendar
+            ? calculateCalendarRange({
+              startsAt,
+              durationMinutes: service.durationMinutes,
+              bufferBeforeMinutes: service.bufferBeforeMinutes,
+              bufferAfterMinutes: service.bufferAfterMinutes,
+            })
+            : { startsAt, endsAt: calculateAppointmentEnd(startsAt, service.durationMinutes) };
           if (startsAt <= now) continue;
-          if (overlaps({ startsAt, endsAt }, appointments)) continue;
+          if (service.blocksCalendar && overlaps(calendarRange, appointments)) continue;
 
           slots.push({ serviceId: service.id, startsAt: startsAt.toISOString(), label: formatSlotLabel(startsAt, business.timezone) });
           if (slots.length >= 12) break;
@@ -258,5 +356,6 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
     },
     services,
     slotsByService,
+    intakeFormsByService,
   };
 }

@@ -6,14 +6,53 @@ import type { PanelServiceSettings } from "@/lib/operations/panel-settings.types
 
 type DraftService = PanelServiceSettings & { draftId: string; isNew?: boolean };
 
+const modalityLabels: Record<PanelServiceSettings["serviceModality"], string> = {
+  in_person: "Presencial",
+  virtual_scheduled: "Virtual con hora",
+  virtual_on_demand: "Virtual a demanda",
+  contact_request: "Solicitud/contacto",
+};
+
+const policyLabels: Record<PanelServiceSettings["schedulingPolicy"], string> = {
+  scheduled: "Requiere horario",
+  day_request: "Pide dia/ventana",
+  manual_coordination: "Coordinacion manual",
+  no_calendar_block: "No bloquea agenda",
+};
+
+function createDraftId() {
+  return `new-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function normalizeSchedulingPatch(patch: Partial<DraftService>): Partial<DraftService> {
+  const nextPatch = { ...patch };
+  if (nextPatch.serviceModality === "contact_request") {
+    nextPatch.schedulingPolicy = "manual_coordination";
+    nextPatch.blocksCalendar = false;
+    nextPatch.requiresManualConfirmation = true;
+  }
+  if (nextPatch.schedulingPolicy && nextPatch.schedulingPolicy !== "scheduled") {
+    nextPatch.blocksCalendar = false;
+  }
+  return nextPatch;
+}
+
 function emptyService(): DraftService {
   return {
-    draftId: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    draftId: createDraftId(),
     id: "",
     name: "",
     description: "",
     category: "General",
+    serviceModality: "in_person",
+    schedulingPolicy: "scheduled",
     durationMinutes: 60,
+    bufferBeforeMinutes: 0,
+    bufferAfterMinutes: 0,
+    blocksCalendar: true,
+    arrivalInstructions: "",
+    virtualInstructions: "",
+    requiresManualConfirmation: false,
     priceCents: 0,
     depositCents: 0,
     paymentMode: "deposit",
@@ -28,7 +67,8 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
   const [message, setMessage] = useState("");
 
   function updateRow(draftId: string, patch: Partial<DraftService>) {
-    setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...patch } : row));
+    const normalizedPatch = normalizeSchedulingPatch(patch);
+    setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...normalizedPatch } : row));
   }
 
   async function saveRow(row: DraftService) {
@@ -37,7 +77,15 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       name: row.name,
       description: row.description,
       category: row.category,
+      serviceModality: row.serviceModality,
+      schedulingPolicy: row.schedulingPolicy,
       durationMinutes: row.durationMinutes,
+      bufferBeforeMinutes: row.bufferBeforeMinutes,
+      bufferAfterMinutes: row.bufferAfterMinutes,
+      blocksCalendar: row.blocksCalendar,
+      arrivalInstructions: row.arrivalInstructions,
+      virtualInstructions: row.virtualInstructions,
+      requiresManualConfirmation: row.requiresManualConfirmation,
       priceCents: row.priceCents,
       depositCents: row.depositCents,
       paymentMode: row.paymentMode,
@@ -72,7 +120,7 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       </div>
 
       {rows.map((row) => (
-        <article className="surface grid gap-4 p-5" key={row.draftId}>
+        <article className="surface grid gap-5 p-5" key={row.draftId}>
           <div className="grid gap-3 md:grid-cols-4">
             <label className="grid gap-2 text-sm font-semibold md:col-span-2">
               Nombre
@@ -90,23 +138,62 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
 
           <textarea className="input-control min-h-20 resize-y" value={row.description} onChange={(event) => updateRow(row.draftId, { description: event.target.value })} placeholder="Descripcion" />
 
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid gap-3 lg:grid-cols-3">
             <label className="grid gap-2 text-sm font-semibold">
-              Duracion
+              Modalidad
+              <select className="input-control" value={row.serviceModality} onChange={(event) => updateRow(row.draftId, { serviceModality: event.target.value as DraftService["serviceModality"] })}>
+                {Object.entries(modalityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-2 text-sm font-semibold">
+              Agenda
+              <select className="input-control" value={row.schedulingPolicy} onChange={(event) => updateRow(row.draftId, { schedulingPolicy: event.target.value as DraftService["schedulingPolicy"] })}>
+                {Object.entries(policyLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <label className="flex items-end gap-2 text-sm font-semibold">
+              <input type="checkbox" checked={row.requiresManualConfirmation} onChange={(event) => updateRow(row.draftId, { requiresManualConfirmation: event.target.checked })} />
+              Confirmacion manual
+            </label>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-4">
+            <label className="grid gap-2 text-sm font-semibold">
+              Duracion min.
               <input className="input-control" type="number" min={5} max={480} value={row.durationMinutes} onChange={(event) => updateRow(row.draftId, { durationMinutes: Number(event.target.value) })} />
             </label>
+            <label className="grid gap-2 text-sm font-semibold">
+              Buffer antes
+              <input className="input-control" type="number" min={0} max={480} value={row.bufferBeforeMinutes} onChange={(event) => updateRow(row.draftId, { bufferBeforeMinutes: Number(event.target.value) })} />
+            </label>
+            <label className="grid gap-2 text-sm font-semibold">
+              Buffer despues
+              <input className="input-control" type="number" min={0} max={480} value={row.bufferAfterMinutes} onChange={(event) => updateRow(row.draftId, { bufferAfterMinutes: Number(event.target.value) })} />
+            </label>
+            <label className="flex items-end gap-2 text-sm font-semibold">
+              <input type="checkbox" checked={row.blocksCalendar} disabled={row.schedulingPolicy !== "scheduled"} onChange={(event) => updateRow(row.draftId, { blocksCalendar: event.target.checked })} />
+              Bloquea agenda
+            </label>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <textarea className="input-control min-h-20 resize-y" value={row.arrivalInstructions} onChange={(event) => updateRow(row.draftId, { arrivalInstructions: event.target.value })} placeholder="Instrucciones presenciales o llegada anticipada" />
+            <textarea className="input-control min-h-20 resize-y" value={row.virtualInstructions} onChange={(event) => updateRow(row.draftId, { virtualInstructions: event.target.value })} placeholder="Instrucciones virtuales o de coordinacion" />
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-5">
             <label className="grid gap-2 text-sm font-semibold">
               Precio centavos
               <input className="input-control" type="number" min={0} value={row.priceCents} onChange={(event) => updateRow(row.draftId, { priceCents: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Seña centavos
+              Sena centavos
               <input className="input-control" type="number" min={0} value={row.depositCents} onChange={(event) => updateRow(row.draftId, { depositCents: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
               Pago
               <select className="input-control" value={row.paymentMode} onChange={(event) => updateRow(row.draftId, { paymentMode: event.target.value as DraftService["paymentMode"] })}>
-                <option value="deposit">Seña</option>
+                <option value="deposit">Sena</option>
                 <option value="full">Pago total</option>
                 <option value="none">Sin pago</option>
               </select>

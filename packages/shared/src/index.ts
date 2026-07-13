@@ -3,6 +3,7 @@ export * from "./commerce/pricing";
 export * from "./commerce/promotions";
 export * from "./contact/whatsapp";
 export * from "./features/feature-catalog";
+export * from "./forms/intake-forms";
 export * from "./scheduling/appointments";
 export * from "./scheduling/business-hours";
 export * from "./scheduling/configuration";
