@@ -1,0 +1,13 @@
+node_modules
+.next
+.turbo
+coverage
+playwright-report
+test-results
+.env
+.env.*
+!.env.example
+.vercel
+.DS_Store
+TEMPORAL 1/
+TEMPORAL 2/

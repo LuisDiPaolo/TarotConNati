@@ -1,0 +1,44 @@
+{
+  "name": "@turnos/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check:client-secrets": "node scripts/check-client-secrets.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.8.0",
+    "@supabase/supabase-js": "2.84.0",
+    "@turnos/shared": "workspace:*",
+    "clsx": "2.1.1",
+    "lucide-react": "0.561.0",
+    "next": "16.2.9",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "server-only": "0.0.1",
+    "tailwind-merge": "3.4.0",
+    "web-push": "3.6.7",
+    "zod": "4.1.13"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.57.0",
+    "@types/node": "22.13.14",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "@types/web-push": "3.6.4",
+    "autoprefixer": "10.4.21",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.2.9",
+    "postcss": "8.5.6",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.9.3",
+    "vitest": "4.0.15"
+  }
+}

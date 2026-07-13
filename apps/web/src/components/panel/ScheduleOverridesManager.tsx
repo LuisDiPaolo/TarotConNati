@@ -1,0 +1,115 @@
+"use client";
+
+import { Plus, Save } from "lucide-react";
+import { useState } from "react";
+import type { PanelScheduleOverrideSettings } from "@/lib/operations/panel-settings.types";
+
+type DraftOverride = PanelScheduleOverrideSettings & { draftId: string; isNew?: boolean };
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function emptyOverride(): DraftOverride {
+  return {
+    draftId: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    id: "",
+    overrideDate: todayKey(),
+    startsAt: "",
+    endsAt: "",
+    closed: true,
+    reason: "",
+    isNew: true,
+  };
+}
+
+export function ScheduleOverridesManager({ overrides }: { overrides: PanelScheduleOverrideSettings[] }) {
+  const [rows, setRows] = useState<DraftOverride[]>(overrides.map((override) => ({ ...override, draftId: override.id })));
+  const [message, setMessage] = useState("");
+
+  function updateRow(draftId: string, patch: Partial<DraftOverride>) {
+    setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...patch } : row));
+  }
+
+  async function saveRow(row: DraftOverride) {
+    setMessage("");
+    const payload = {
+      overrideDate: row.overrideDate,
+      startsAt: row.closed ? "" : row.startsAt,
+      endsAt: row.closed ? "" : row.endsAt,
+      closed: row.closed,
+      reason: row.reason,
+    };
+    const response = await fetch(row.isNew ? "/api/panel/schedule-overrides" : `/api/panel/schedule-overrides/${row.id}`, {
+      method: row.isNew ? "POST" : "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => null) as { id?: string } | null;
+
+    if (!response.ok) {
+      setMessage("No se pudo guardar la excepcion.");
+      return;
+    }
+
+    if (row.isNew && data?.id) {
+      updateRow(row.draftId, { id: data.id, draftId: data.id, isNew: false });
+    }
+    setMessage("Excepcion guardada.");
+  }
+
+  return (
+    <section className="grid gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xl font-black">Excepciones por fecha</h2>
+        <button className="primary-action" type="button" onClick={() => setRows((current) => [...current, emptyOverride()])}>
+          <Plus aria-hidden="true" className="h-4 w-4" />
+          Agregar excepcion
+        </button>
+      </div>
+
+      <div className="surface overflow-x-auto p-2">
+        <table className="w-full min-w-[760px] border-separate border-spacing-y-2 text-sm">
+          <thead className="text-left text-xs uppercase tracking-[0.12em] text-muted">
+            <tr>
+              <th className="px-3 py-2">Fecha</th>
+              <th className="px-3 py-2">Cerrado</th>
+              <th className="px-3 py-2">Apertura</th>
+              <th className="px-3 py-2">Cierre</th>
+              <th className="px-3 py-2">Motivo</th>
+              <th className="px-3 py-2 text-right">Accion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr className="bg-white/80" key={row.draftId}>
+                <td className="rounded-l-xl px-3 py-2">
+                  <input className="input-control" type="date" value={row.overrideDate} onChange={(event) => updateRow(row.draftId, { overrideDate: event.target.value })} />
+                </td>
+                <td className="px-3 py-2">
+                  <input type="checkbox" checked={row.closed} onChange={(event) => updateRow(row.draftId, { closed: event.target.checked })} />
+                </td>
+                <td className="px-3 py-2">
+                  <input className="input-control" disabled={row.closed} type="time" value={row.startsAt} onChange={(event) => updateRow(row.draftId, { startsAt: event.target.value })} />
+                </td>
+                <td className="px-3 py-2">
+                  <input className="input-control" disabled={row.closed} type="time" value={row.endsAt} onChange={(event) => updateRow(row.draftId, { endsAt: event.target.value })} />
+                </td>
+                <td className="px-3 py-2">
+                  <input className="input-control" maxLength={160} value={row.reason} onChange={(event) => updateRow(row.draftId, { reason: event.target.value })} />
+                </td>
+                <td className="rounded-r-xl px-3 py-2 text-right">
+                  <button className="icon-action" type="button" onClick={() => saveRow(row)} aria-label="Guardar excepcion">
+                    <Save aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {message ? <p className={message.startsWith("No") ? "text-sm font-semibold text-red-600" : "text-sm font-semibold text-emerald-600"}>{message}</p> : null}
+    </section>
+  );
+}

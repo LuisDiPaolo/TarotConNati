@@ -1,0 +1,13 @@
+<svg width="760" height="520" viewBox="0 0 760 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="760" height="520" rx="32" fill="#020617"/>
+  <circle cx="380" cy="260" r="172" fill="#0f172a" stroke="#1e293b" stroke-width="2"/>
+  <path d="M270 252c0-60.751 49.249-110 110-110 31.935 0 60.693 13.611 80.78 35.36" stroke="#14b8a6" stroke-width="16" stroke-linecap="round"/>
+  <path d="M490 268c0 60.751-49.249 110-110 110-31.935 0-60.693-13.611-80.78-35.36" stroke="#2563eb" stroke-width="16" stroke-linecap="round"/>
+  <path d="M453 128l16 58-58-16" stroke="#14b8a6" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M307 392l-16-58 58 16" stroke="#2563eb" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="327" y="172" width="106" height="176" rx="22" fill="#f8fafc" stroke="#cbd5e1" stroke-width="8"/>
+  <rect x="341" y="196" width="78" height="122" rx="10" fill="#e2e8f0"/>
+  <circle cx="380" cy="331" r="6" fill="#64748b"/>
+  <text x="380" y="452" fill="#f8fafc" font-family="Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle">Gira el dispositivo</text>
+  <text x="380" y="486" fill="#94a3b8" font-family="Arial, sans-serif" font-size="18" text-anchor="middle">La experiencia esta optimizada para modo vertical</text>
+</svg>

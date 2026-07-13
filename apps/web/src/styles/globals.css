@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+  --color-background: 248 250 252;
+  --color-foreground: 15 23 42;
+  --color-muted: 100 116 139;
+  --color-surface: 255 255 255;
+  --color-border: 226 232 240;
+  --brand-primary: 37 99 235;
+  --brand-accent: 20 184 166;
+  --brand-radius: 8px;
+
+  /* Viewport contract migrated from TEMPORAL references. Keep shells on these variables, not fixed 100vh. */
+  --app-height: 100dvh;
+  --app-width: 100vw;
+  --app-keyboard-inset: 0px;
+  --app-viewport-offset-top: 0px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --bottom-nav-height: 68px;
+  --header-height: 56px;
+  --app-shell-bottom-padding: calc(var(--safe-bottom) + var(--bottom-nav-height) + 12px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: 15 23 42;
+    --color-foreground: 248 250 252;
+    --color-muted: 148 163 184;
+    --color-surface: 30 41 59;
+    --color-border: 51 65 85;
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
+  background: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+  overflow-x: clip;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
+  min-height: max(var(--app-height), 100dvh);
+  background: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: clip;
+  overscroll-behavior: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+.app-screen {
+  min-height: 100dvh;
+  min-height: max(var(--app-height), 100dvh);
+  padding-left: max(20px, var(--safe-left));
+  padding-right: max(20px, var(--safe-right));
+}
+
+.panel-shell {
+  min-height: 100dvh;
+  min-height: max(var(--app-height), 100dvh);
+  padding: max(16px, var(--safe-top)) max(16px, var(--safe-right)) calc(var(--safe-bottom) + 16px) max(16px, var(--safe-left));
+}
+
+.bottom-safe-area {
+  padding-bottom: calc(var(--safe-bottom) + var(--app-keyboard-inset));
+}
+
+.app-bottom-nav,
+[data-app-bottom-nav="true"] {
+  padding-bottom: var(--safe-bottom);
+}
+
+html[data-keyboard-open="true"] .app-bottom-nav,
+html[data-keyboard-open="true"] [data-app-bottom-nav="true"],
+body[data-keyboard-open="true"] .app-bottom-nav,
+body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
+  display: none !important;
+}
+
+.sticky-safe-header {
+  padding-top: var(--safe-top);
+  top: 0;
+}
+
+.surface {
+  background: rgb(var(--color-surface) / 0.82);
+  border: 1px solid rgb(var(--color-border));
+  border-radius: var(--brand-radius);
+}
+
+.primary-action {
+  align-items: center;
+  background: rgb(var(--brand-primary));
+  border: 0;
+  border-radius: var(--brand-radius);
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 8px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+.input-control {
+  background: rgb(var(--color-surface));
+  border: 1px solid rgb(var(--color-border));
+  border-radius: var(--brand-radius);
+  color: rgb(var(--color-foreground));
+  min-height: 44px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.input-control:focus {
+  border-color: rgb(var(--brand-primary));
+  outline: 2px solid rgb(var(--brand-primary) / 0.22);
+  outline-offset: 1px;
+}
+
+.icon-action {
+  align-items: center;
+  background: rgb(var(--color-surface));
+  border: 1px solid rgb(var(--color-border));
+  border-radius: var(--brand-radius);
+  color: rgb(var(--color-foreground));
+  cursor: pointer;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.icon-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.panel-nav-link {
+  align-items: center;
+  border-radius: var(--brand-radius);
+  display: inline-flex;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.panel-nav-link:hover {
+  background: rgb(var(--brand-primary) / 0.1);
+}
+
+@media (display-mode: standalone) {
+  body {
+    min-height: var(--app-height);
+  }
+}
