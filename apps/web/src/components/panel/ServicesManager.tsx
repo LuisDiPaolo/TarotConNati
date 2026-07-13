@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Save } from "lucide-react";
+import { AlertTriangle, Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { PanelServiceSettings } from "@/lib/operations/panel-settings.types";
 
@@ -65,6 +65,7 @@ function emptyService(): DraftService {
 export function ServicesManager({ services }: { services: PanelServiceSettings[] }) {
   const [rows, setRows] = useState<DraftService[]>(services.map((service) => ({ ...service, draftId: service.id })));
   const [message, setMessage] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<DraftService | null>(null);
 
   function updateRow(draftId: string, patch: Partial<DraftService>) {
     const normalizedPatch = normalizeSchedulingPatch(patch);
@@ -108,6 +109,26 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       updateRow(row.draftId, { id: data.id, draftId: data.id, isNew: false });
     }
     setMessage("Servicio guardado.");
+  }
+
+  async function confirmDeleteRow() {
+    if (!deleteTarget) return;
+    setMessage("");
+    if (deleteTarget.isNew || !deleteTarget.id) {
+      setRows((current) => current.filter((currentRow) => currentRow.draftId !== deleteTarget.draftId));
+      setDeleteTarget(null);
+      return;
+    }
+
+    const response = await fetch(`/api/panel/services/${deleteTarget.id}`, { method: "DELETE" });
+    if (!response.ok) {
+      setMessage("No se pudo borrar el servicio.");
+      return;
+    }
+
+    setRows((current) => current.filter((currentRow) => currentRow.id !== deleteTarget.id));
+    setDeleteTarget(null);
+    setMessage("Servicio borrado.");
   }
 
   return (
@@ -191,11 +212,11 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
               <input className="input-control" type="number" min={0} value={row.depositCents} onChange={(event) => updateRow(row.draftId, { depositCents: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Pago
+              Cobro al reservar
               <select className="input-control" value={row.paymentMode} onChange={(event) => updateRow(row.draftId, { paymentMode: event.target.value as DraftService["paymentMode"] })}>
                 <option value="deposit">Sena</option>
-                <option value="full">Pago total</option>
-                <option value="none">Sin pago</option>
+                <option value="full">Pago total adelantado</option>
+                <option value="none">Sin cobro online</option>
               </select>
             </label>
             <label className="flex items-end gap-2 text-sm font-semibold">
@@ -204,7 +225,10 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
             </label>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <button className="icon-action danger-icon-action" type="button" onClick={() => setDeleteTarget(row)} title="Borrar servicio">
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+            </button>
             <button className="primary-action" type="button" onClick={() => saveRow(row)}>
               <Save aria-hidden="true" className="h-4 w-4" />
               Guardar
@@ -214,6 +238,33 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       ))}
 
       {message ? <p className="text-sm font-semibold text-emerald-600">{message}</p> : null}
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-service-title">
+          <div className="surface w-full max-w-md p-5 shadow-2xl">
+            <div className="flex gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
+                <AlertTriangle aria-hidden="true" className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 id="delete-service-title" className="text-lg font-black">Borrar servicio</h2>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  Vas a borrar {deleteTarget.name || "este servicio"}. Si ya fue guardado, se desactiva para no romper turnos historicos.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button className="secondary-action w-full sm:w-auto" type="button" onClick={() => setDeleteTarget(null)}>
+                Cancelar
+              </button>
+              <button className="danger-action w-full sm:w-auto" type="button" onClick={confirmDeleteRow}>
+                <Trash2 aria-hidden="true" className="h-4 w-4" />
+                Borrar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

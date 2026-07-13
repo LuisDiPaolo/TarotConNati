@@ -14,6 +14,12 @@ type SubmitState = "idle" | "submitting" | "success" | "error";
 
 type IntakeResponseValue = string | number | boolean | string[];
 
+function getPaymentRequirementLabel(service: PublicService) {
+  if (service.paymentMode === "full") return `Pago total por adelantado: ${service.priceLabel}`;
+  if (service.paymentMode === "deposit" && service.depositCents > 0) return `Sena para reservar: ${service.depositLabel}`;
+  return "Sin cobro online al reservar";
+}
+
 function collectIntakeResponses(formData: FormData, forms: PublicIntakeForm[]) {
   const responses: Record<string, IntakeResponseValue> = {};
 
@@ -60,28 +66,31 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
   }
 
   async function submitReservation(formData: FormData) {
-    if (!canReserveAutomatically) {
-      setState("error");
-      setMessage("Este servicio requiere coordinacion previa. Usa el canal de contacto del negocio.");
-      return;
-    }
-
     setState("submitting");
     setMessage("");
 
-    const response = await fetch("/api/appointments", {
+    const customer = {
+      fullName: String(formData.get("fullName") ?? ""),
+      phone: String(formData.get("phone") ?? ""),
+      email: String(formData.get("email") ?? ""),
+      notes: String(formData.get("notes") ?? ""),
+    };
+    const intakeResponses = collectIntakeResponses(formData, activeIntakeForms);
+    const response = await fetch(canReserveAutomatically ? "/api/appointments" : "/api/service-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: JSON.stringify(canReserveAutomatically ? {
         serviceId,
         startsAt,
-        customer: {
-          fullName: String(formData.get("fullName") ?? ""),
-          phone: String(formData.get("phone") ?? ""),
-          email: String(formData.get("email") ?? ""),
-          notes: String(formData.get("notes") ?? ""),
-        },
-        intakeResponses: collectIntakeResponses(formData, activeIntakeForms),
+        customer,
+        intakeResponses,
+      } : {
+        serviceId,
+        customer,
+        preferredDate: String(formData.get("preferredDate") ?? ""),
+        preferredWindow: String(formData.get("preferredWindow") ?? ""),
+        contactChannel: "whatsapp",
+        intakeResponses,
       }),
     });
 
@@ -98,7 +107,7 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
     }
 
     setState("success");
-    setMessage("Reserva creada. El negocio ya puede verla en el panel.");
+    setMessage(canReserveAutomatically ? "Reserva creada. El negocio ya puede verla en el panel." : "Solicitud enviada. El negocio la va a revisar y responder por WhatsApp.");
   }
 
   return (
@@ -130,8 +139,8 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
           <p className="font-bold text-slate-950 dark:text-white">{activeService.category}</p>
           <p className="mt-1">Duracion: {activeService.durationMinutes} min</p>
           {activeService.bufferBeforeMinutes > 0 ? <p>Llegada sugerida: {activeService.bufferBeforeMinutes} min antes</p> : null}
-          <p>Seña: {activeService.depositCents > 0 ? activeService.depositLabel : "Sin seña"}</p>
-          {!canReserveAutomatically ? <p className="mt-2 font-semibold text-primary">Este servicio requiere coordinacion previa.</p> : null}
+          <p>{getPaymentRequirementLabel(activeService)}</p>
+          {!canReserveAutomatically ? <p className="mt-2 font-semibold text-primary">Este servicio se solicita sin horario exacto y se entrega por WhatsApp.</p> : null}
           {activeService.arrivalInstructions ? <p className="mt-2 leading-6">{activeService.arrivalInstructions}</p> : null}
           {activeService.virtualInstructions ? <p className="mt-2 leading-6">{activeService.virtualInstructions}</p> : null}
           {activeService.description ? <p className="mt-2 leading-6">{activeService.description}</p> : null}
@@ -148,8 +157,19 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
           </select>
         </label>
       ) : (
-        <div className="rounded-md border border-slate-200 bg-white/70 p-4 text-sm font-semibold text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-          El negocio debe coordinar este servicio manualmente antes de confirmar una reserva.
+        <div className="grid gap-3 rounded-md border border-slate-200 bg-white/70 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+          <p className="font-semibold text-slate-950 dark:text-white">Solicitud sin horario estipulado</p>
+          <p>La lectura no es en vivo. Se envia por WhatsApp en el formato que corresponda.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-2 font-semibold">
+              Fecha de referencia
+              <input className="input-control" name="preferredDate" type="date" />
+            </label>
+            <label className="grid gap-2 font-semibold">
+              Franja o preferencia
+              <input className="input-control" name="preferredWindow" maxLength={160} placeholder="Dentro de las 24 hs" />
+            </label>
+          </div>
         </div>
       )}
 
@@ -258,9 +278,9 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
         </section>
       ) : null}
 
-      <button className="primary-action justify-center disabled:cursor-not-allowed disabled:opacity-60" disabled={state === "submitting" || !canReserveAutomatically || !startsAt} type="submit">
+      <button className="primary-action justify-center disabled:cursor-not-allowed disabled:opacity-60" disabled={state === "submitting" || (canReserveAutomatically && !startsAt)} type="submit">
         {state === "submitting" ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <CalendarCheck aria-hidden="true" className="h-4 w-4" />}
-        {canReserveAutomatically ? "Confirmar reserva" : "Requiere coordinacion"}
+        {canReserveAutomatically ? "Confirmar reserva" : "Enviar solicitud"}
       </button>
 
       {message ? <p className={state === "error" ? "text-sm font-semibold text-red-600" : "text-sm font-semibold text-emerald-600"}>{message}</p> : null}

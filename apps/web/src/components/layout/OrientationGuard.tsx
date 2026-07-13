@@ -59,7 +59,7 @@ export function OrientationGuard() {
         draggable={false}
         height={520}
         priority
-        src="/orientation/rotate-device.svg"
+        src="/orientation/landscape_overlay.webp"
         width={760}
       />
     </div>

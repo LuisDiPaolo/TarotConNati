@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { calculateAppointmentEnd, publicReservationSchema } from "@turnos/shared";
-import type { PublicIntakeResponseInput } from "@turnos/shared";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
+import { buildValidatedIntakePayload, type IntakeLinkRow } from "@/lib/operations/intake-validation";
 import { getRequestBaseUrl } from "@/lib/http/base-url";
 import { createMercadoPagoPreference } from "@/lib/payments/mercado-pago";
+import { sendTransactionalPush } from "@/lib/push/transactional";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60_000;
@@ -44,88 +45,6 @@ function calculateCalendarRange(input: { startsAt: Date; durationMinutes: number
     startsAt: new Date(input.startsAt.getTime() - input.bufferBeforeMinutes * 60_000),
     endsAt: new Date(input.startsAt.getTime() + (input.durationMinutes + input.bufferAfterMinutes) * 60_000),
   };
-}
-
-type IntakeFieldRow = {
-  field_key: string;
-  label: string;
-  help_text: string | null;
-  field_type: "short_text" | "long_text" | "number" | "date" | "single_select" | "multi_select" | "boolean" | "consent";
-  required: boolean;
-  options: Array<{ value: string; label: string }> | null;
-  sort_order: number;
-};
-
-type IntakeLinkRow = {
-  form_id: string;
-  intake_forms: {
-    id: string;
-    name: string;
-    description: string | null;
-    active: boolean;
-    deleted_at: string | null;
-    intake_form_fields: IntakeFieldRow[] | null;
-  } | null;
-};
-
-function isEmptyResponse(value: unknown) {
-  return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
-}
-
-function validateFieldResponse(field: IntakeFieldRow, value: PublicIntakeResponseInput[string] | undefined) {
-  if (field.required && isEmptyResponse(value)) return false;
-  if (isEmptyResponse(value)) return true;
-
-  if (field.field_type === "number") return typeof value === "number" && Number.isFinite(value);
-  if (field.field_type === "boolean" || field.field_type === "consent") return typeof value === "boolean" && (!field.required || value === true);
-  if (field.field_type === "date") return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
-
-  const allowedOptions = new Set((field.options ?? []).map((option) => option.value));
-  if (field.field_type === "single_select") return typeof value === "string" && allowedOptions.has(value);
-  if (field.field_type === "multi_select") return Array.isArray(value) && value.every((item) => allowedOptions.has(item));
-
-  return typeof value === "string" && value.length <= (field.field_type === "long_text" ? 1000 : 240);
-}
-
-function buildValidatedIntakePayload(forms: IntakeLinkRow[], responses: PublicIntakeResponseInput) {
-  const payload: Array<{ formId: string; formSnapshot: object; response: Record<string, PublicIntakeResponseInput[string]> }> = [];
-
-  for (const link of forms) {
-    const form = link.intake_forms;
-    if (!form || !form.active || form.deleted_at) continue;
-
-    const fields = (form.intake_form_fields ?? []).sort((a, b) => a.sort_order - b.sort_order);
-    const response: Record<string, PublicIntakeResponseInput[string]> = {};
-
-    for (const field of fields) {
-      const value = responses[field.field_key];
-      if (!validateFieldResponse(field, value)) return null;
-      if (!isEmptyResponse(value)) {
-        response[field.field_key] = value as PublicIntakeResponseInput[string];
-      }
-    }
-
-    payload.push({
-      formId: form.id,
-      formSnapshot: {
-        id: form.id,
-        name: form.name,
-        description: form.description ?? "",
-        fields: fields.map((field) => ({
-          fieldKey: field.field_key,
-          label: field.label,
-          helpText: field.help_text ?? "",
-          fieldType: field.field_type,
-          required: field.required,
-          options: field.options ?? [],
-          sortOrder: field.sort_order,
-        })),
-      },
-      response,
-    });
-  }
-
-  return payload;
 }
 
 export async function POST(request: NextRequest) {
@@ -205,6 +124,13 @@ export async function POST(request: NextRequest) {
 
   if (customerError || !createdCustomer) return apiError(500, "VALIDATION_ERROR", "No se pudo crear el cliente.");
 
+  const paymentMode = service.payment_mode ?? "deposit";
+  const amountCents = paymentMode === "full"
+    ? Number(service.price_cents)
+    : paymentMode === "deposit"
+      ? Number(service.deposit_cents)
+      : 0;
+
   const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
     .insert({
@@ -215,7 +141,7 @@ export async function POST(request: NextRequest) {
       ends_at: endsAtDate.toISOString(),
       calendar_starts_at: calendarRange.startsAt.toISOString(),
       calendar_ends_at: calendarRange.endsAt.toISOString(),
-      status: Number(service.deposit_cents) > 0 || service.requires_manual_confirmation ? "pending" : "confirmed",
+      status: amountCents > 0 || service.requires_manual_confirmation ? "pending" : "confirmed",
       notes: customer.notes || null,
     })
     .select("id")
@@ -235,7 +161,6 @@ export async function POST(request: NextRequest) {
     if (intakeError) return apiError(500, "VALIDATION_ERROR", "No se pudo guardar la informacion adicional.");
   }
 
-  const amountCents = Number(service.deposit_cents) > 0 ? Number(service.deposit_cents) : 0;
   let checkoutUrl: string | null = null;
 
   if (amountCents > 0) {
@@ -259,7 +184,7 @@ export async function POST(request: NextRequest) {
       const origin = getRequestBaseUrl(request);
       const preference = await createMercadoPagoPreference({
         accessToken,
-        title: `Seña - ${String(service.name)}`,
+        title: `${paymentMode === "full" ? "Pago total" : "Seña"} - ${String(service.name)}`,
         quantity: 1,
         unitPrice: amountCents / 100,
         externalReference: appointment.id,
@@ -278,6 +203,21 @@ export async function POST(request: NextRequest) {
         .eq("id", payment.id);
     }
   }
+
+  await sendTransactionalPush({
+    businessId: business.id,
+    eventKey: `appointment.created.${appointment.id}`,
+    eventType: "appointment.created",
+    sourceTable: "appointments",
+    sourceId: appointment.id,
+    surface: "panel",
+    payload: {
+      title: amountCents > 0 ? "Reserva pendiente de pago" : "Nueva reserva",
+      body: `${String(service.name)} - ${customer.fullName}`,
+      url: `/panel/turnos/${appointment.id}`,
+      tag: "appointment-created",
+    },
+  });
 
   return NextResponse.json({
     appointmentId: appointment.id,

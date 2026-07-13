@@ -71,6 +71,26 @@ function mapIntakeResponses(rows: AppointmentIntakeJoin[] | null | undefined): P
   }).filter((response) => response.answers.length > 0);
 }
 
+function mapAppointmentRow(appointment: AppointmentQueryRow): PanelAppointment {
+  const customer = firstJoin(appointment.customers);
+  const service = firstJoin(appointment.services);
+  const payment = appointment.payments?.[0];
+  return {
+    id: appointment.id,
+    startsAt: appointment.starts_at,
+    endsAt: appointment.ends_at,
+    status: appointment.status,
+    notes: appointment.notes ?? "",
+    customerName: customer?.full_name ?? "Sin nombre",
+    customerPhone: customer?.phone ?? "",
+    customerEmail: customer?.email ?? "",
+    serviceName: service?.name ?? "Servicio",
+    paymentStatus: payment?.status ?? "sin_pago",
+    paymentAmount: payment ? formatARS(payment.amount_cents / 100) : "-",
+    intakeResponses: mapIntakeResponses(appointment.appointment_intake_responses),
+  };
+}
+
 export async function getPanelAppointments(): Promise<PanelAppointment[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -82,23 +102,18 @@ export async function getPanelAppointments(): Promise<PanelAppointment[]> {
 
   if (error || !data) return [];
 
-  return (data as unknown as AppointmentQueryRow[]).map((appointment) => {
-    const customer = firstJoin(appointment.customers);
-    const service = firstJoin(appointment.services);
-    const payment = appointment.payments?.[0];
-    return {
-      id: appointment.id,
-      startsAt: appointment.starts_at,
-      endsAt: appointment.ends_at,
-      status: appointment.status,
-      notes: appointment.notes ?? "",
-      customerName: customer?.full_name ?? "Sin nombre",
-      customerPhone: customer?.phone ?? "",
-      customerEmail: customer?.email ?? "",
-      serviceName: service?.name ?? "Servicio",
-      paymentStatus: payment?.status ?? "sin_pago",
-      paymentAmount: payment ? formatARS(payment.amount_cents / 100) : "-",
-      intakeResponses: mapIntakeResponses(appointment.appointment_intake_responses),
-    };
-  });
+  return (data as unknown as AppointmentQueryRow[]).map(mapAppointmentRow);
+}
+
+export async function getPanelAppointmentDetail(appointmentId: string): Promise<PanelAppointment | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("id, starts_at, ends_at, status, notes, customers(full_name, phone, email), services(name), payments(status, amount_cents), appointment_intake_responses(form_snapshot, response)")
+    .eq("id", appointmentId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return mapAppointmentRow(data as unknown as AppointmentQueryRow);
 }

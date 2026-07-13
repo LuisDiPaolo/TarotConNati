@@ -43,3 +43,19 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ serviceId: string }> }) {
+  const { serviceId } = await context.params;
+  const supabase = await createSupabaseServerClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return apiError(401, "UNAUTHORIZED", "Sesion requerida.");
+
+  const { error } = await supabase
+    .from("services")
+    .update({ active: false })
+    .eq("id", serviceId);
+
+  if (error) return apiError(400, "VALIDATION_ERROR", "No se pudo borrar el servicio.");
+
+  return NextResponse.json({ ok: true });
+}

@@ -2,6 +2,7 @@ import { apiError } from "@turnos/shared";
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { getMercadoPagoPayment, toCents, verifyMercadoPagoWebhookSignature } from "@/lib/payments/mercado-pago";
+import { sendTransactionalPush } from "@/lib/push/transactional";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -141,6 +142,21 @@ export async function POST(request: NextRequest) {
       .eq("business_id", business.id)
       .eq("status", "pending");
   }
+
+  await sendTransactionalPush({
+    businessId: business.id,
+    eventKey: `payment.status.${typedPayment.id}.${nextStatus}`,
+    eventType: "payment.status_changed",
+    sourceTable: "payments",
+    sourceId: typedPayment.id,
+    surface: "panel",
+    payload: {
+      title: nextStatus === "approved" ? "Pago aprobado" : "Pago actualizado",
+      body: `Estado de pago: ${nextStatus}`,
+      url: `/panel/turnos/${typedPayment.appointment_id}`,
+      tag: "payment-status",
+    },
+  });
 
   await supabase
     .from("payment_webhook_events")

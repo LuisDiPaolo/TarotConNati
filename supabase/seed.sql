@@ -5,11 +5,14 @@
 begin;
 
 -- Rehacer el demo de forma idempotente.
+delete from appointment_status_events where business_id = '00000000-0000-4000-8000-000000000001';
 delete from appointment_intake_responses where business_id = '00000000-0000-4000-8000-000000000001';
+delete from service_request_intake_responses where business_id = '00000000-0000-4000-8000-000000000001';
 delete from payments where business_id = '00000000-0000-4000-8000-000000000001';
 delete from payment_webhook_events where business_id = '00000000-0000-4000-8000-000000000001';
 delete from push_delivery_events where business_id = '00000000-0000-4000-8000-000000000001';
 delete from push_subscriptions where business_id = '00000000-0000-4000-8000-000000000001';
+delete from service_requests where business_id = '00000000-0000-4000-8000-000000000001';
 delete from appointments where business_id = '00000000-0000-4000-8000-000000000001';
 delete from customers where business_id = '00000000-0000-4000-8000-000000000001';
 delete from service_intake_forms where business_id = '00000000-0000-4000-8000-000000000001';
@@ -271,7 +274,64 @@ values
   ('30000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001', 'Julian Torres', '+5493515551002', 'julian.demo@example.com', 'Consulta laboral.'),
   ('30000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000001', 'Sofia Benitez', '+5493515551003', 'sofia.demo@example.com', 'Consulta vincular.'),
   ('30000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000001', 'Martina Luna', '+5493515551004', 'martina.demo@example.com', 'Pidio texto y foto.'),
-  ('30000000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000001', 'Nicolas Vera', '+5493515551005', 'nicolas.demo@example.com', 'Solicitud inicial sin pago.');
+  ('30000000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000001', 'Nicolas Vera', '+5493515551005', 'nicolas.demo@example.com', 'Solicitud inicial sin pago.'),
+  ('30000000-0000-4000-8000-000000000006', '00000000-0000-4000-8000-000000000001', 'Valentina Paz', '+5493515551006', 'valentina.demo@example.com', 'Solicitud asincronica pendiente.'),
+  ('30000000-0000-4000-8000-000000000007', '00000000-0000-4000-8000-000000000001', 'Bruno Castillo', '+5493515551007', 'bruno.demo@example.com', 'Quiere coordinar formato de entrega.');
+
+insert into service_requests (
+  id,
+  business_id,
+  customer_id,
+  service_id,
+  status,
+  contact_channel,
+  preferred_date,
+  preferred_window,
+  customer_notes,
+  admin_notes
+)
+values
+  (
+    '50000000-0000-4000-8000-000000000001',
+    '00000000-0000-4000-8000-000000000001',
+    '30000000-0000-4000-8000-000000000006',
+    '10000000-0000-4000-8000-000000000001',
+    'pending_review',
+    'whatsapp',
+    current_date,
+    'Entrega dentro de las 24 hs',
+    'Necesito una lectura general para ordenar una decision personal. Prefiero video corto y foto de la tirada.',
+    null
+  ),
+  (
+    '50000000-0000-4000-8000-000000000002',
+    '00000000-0000-4000-8000-000000000001',
+    '30000000-0000-4000-8000-000000000007',
+    '10000000-0000-4000-8000-000000000002',
+    'pending_coordination',
+    'whatsapp',
+    current_date + 1,
+    'Sin vivo, envio asincronico por WhatsApp',
+    'Quiero trabajar un vinculo sin buscar predicciones. Puedo mandar contexto por audio si sirve.',
+    'Confirmar si prefiere audio o texto antes de cobrar.'
+  );
+
+insert into service_request_intake_responses (business_id, service_request_id, form_id, form_snapshot, response)
+values
+  (
+    '00000000-0000-4000-8000-000000000001',
+    '50000000-0000-4000-8000-000000000001',
+    '20000000-0000-4000-8000-000000000001',
+    '{"name":"Contexto para lectura evolutiva","fields":[{"fieldKey":"tema_consulta","label":"Tema principal de la consulta"},{"fieldKey":"contexto_breve","label":"Contexto breve"},{"fieldKey":"pregunta_guia","label":"Pregunta guia"}]}',
+    '{"tema_consulta":"personal","contexto_breve":"Estoy en una etapa de cambios y quiero ordenar prioridades.","pregunta_guia":"Que necesito mirar para avanzar con mas conciencia?"}'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000001',
+    '50000000-0000-4000-8000-000000000002',
+    '20000000-0000-4000-8000-000000000002',
+    '{"name":"Consentimiento y formato de entrega","fields":[{"fieldKey":"formato_preferido","label":"Formato preferido de devolucion"},{"fieldKey":"autoriza_whatsapp","label":"Autorizo recibir la devolucion por WhatsApp"}]}',
+    '{"formato_preferido":["texto","audio"],"autoriza_whatsapp":true,"entiende_no_predictivo":true}'
+  );
 
 insert into appointments (
   id,

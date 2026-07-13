@@ -8,6 +8,7 @@ const config: Config = {
       colors: {
         background: "rgb(var(--color-background) / <alpha-value>)",
         foreground: "rgb(var(--color-foreground) / <alpha-value>)",
+        muted: "rgb(var(--color-muted) / <alpha-value>)",
         primary: "rgb(var(--brand-primary) / <alpha-value>)",
         accent: "rgb(var(--brand-accent) / <alpha-value>)",
       },

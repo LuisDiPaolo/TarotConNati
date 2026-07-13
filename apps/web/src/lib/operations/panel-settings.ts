@@ -37,6 +37,7 @@ export async function getPanelServices(): Promise<PanelServiceSettings[]> {
   const { data, error } = await supabase
     .from("services")
     .select("id, name, description, category, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_cents, deposit_cents, payment_mode, active, sort_order")
+    .eq("active", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 

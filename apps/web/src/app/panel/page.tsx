@@ -2,11 +2,12 @@ import { CalendarCheck, Clock, CreditCard } from "lucide-react";
 import { AppointmentsTable } from "@/components/panel/AppointmentsTable";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { getPanelAppointments } from "@/lib/operations/panel-appointments";
+import { getPanelServices } from "@/lib/operations/panel-settings";
 import { requirePanelSession } from "@/lib/panel/auth";
 
 export default async function PanelHomePage() {
   await requirePanelSession();
-  const appointments = await getPanelAppointments();
+  const [appointments, services] = await Promise.all([getPanelAppointments(), getPanelServices()]);
   const pendingCount = appointments.filter((appointment) => appointment.status === "pending").length;
   const confirmedCount = appointments.filter((appointment) => appointment.status === "confirmed").length;
   const paidCount = appointments.filter((appointment) => appointment.paymentStatus === "approved").length;
@@ -42,7 +43,7 @@ export default async function PanelHomePage() {
           </article>
         </div>
 
-        <AppointmentsTable appointments={appointments} />
+        <AppointmentsTable appointments={appointments} services={services} />
     </PanelShell>
   );
 }
