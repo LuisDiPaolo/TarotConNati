@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { ReservationForm } from "@/components/public/ReservationForm";
 import { resolveBusinessForHostname } from "@/lib/business/resolve";
 import { getPublicBookingData } from "@/lib/operations/booking";
+import { buildBrandStyle } from "@/lib/theme/brand-style";
 
 export default async function PublicHomePage() {
   const headerStore = await headers();
@@ -24,7 +25,7 @@ export default async function PublicHomePage() {
   const { business: publicBusiness, services, slotsByService, intakeFormsByService } = bookingData;
 
   return (
-    <main className="app-screen py-8 sm:py-12">
+    <main className="app-screen py-8 sm:py-12" style={buildBrandStyle(publicBusiness)}>
       <section className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_420px] lg:items-start">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Reservas online</p>

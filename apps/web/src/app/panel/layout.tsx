@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getPanelBusinessSettings } from "@/lib/operations/panel-settings";
+import { buildBrandStyle } from "@/lib/theme/brand-style";
 
 export const metadata: Metadata = {
   title: "Panel Turnos",
@@ -12,6 +14,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PanelLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function PanelLayout({ children }: { children: React.ReactNode }) {
+  const business = await getPanelBusinessSettings();
+
+  if (!business) return children;
+
+  return <div style={buildBrandStyle(business)}>{children}</div>;
 }
