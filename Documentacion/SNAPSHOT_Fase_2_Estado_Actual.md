@@ -54,7 +54,7 @@ Implementado:
 - Servicios con cobro configurable por el prestador: `Sena`, `Pago total adelantado` o `Sin cobro online`.
 - Formularios de admision por servicio.
 - Validacion server-side de respuestas de admision.
-- Fase 2.6 cerrada en desarrollo: selector publico por cards de servicio con imagen, descripcion, precio, duracion y modo de pago.
+- Fase 2.6 cerrada en desarrollo: selector publico por cards de servicio con imagen cuadrada protagonista, descripcion, precio en franja inferior, duracion y modo de pago.
 - Fallback de imagen de servicio: imagen propia, icono publico del negocio y placeholder visual.
 - Detalle/reserva de servicio en bottom sheet flotante desde abajo para mobile/PWA y desktop, con cierre por boton, backdrop y Escape.
 - Bloqueo de scroll del documento mientras el panel esta abierto; solo scrollea el cuerpo interno del panel.
@@ -66,7 +66,7 @@ Flujo publico esperado actual:
 3. Si el servicio es sin horario, envia solicitud con fecha/franja opcional.
 4. El panel recibe la solicitud.
 
-Fase 2.6 implementacion inicial:
+Fase 2.6 cierre de desarrollo/implementacion:
 
 - Reemplazado el dropdown como selector primario por cards de servicio con imagen, titulo, descripcion breve y precio.
 - Agregada carga de imagen por servicio desde panel, con recorte cuadrado y optimizacion WebP.

@@ -211,18 +211,18 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
                 <ServiceArtwork imageUrl={service.imageUrl} fallbackUrl={serviceImageFallbackUrl} />
               </div>
               <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-                <div className="grid min-h-[4.5rem] grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-                  <div className="min-w-0">
-                    <h3 className="service-card-title text-base font-black leading-snug text-slate-950 dark:text-white">{service.name}</h3>
-                    <p className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.12em] text-primary">{service.category}</p>
-                  </div>
-                  <span className="max-w-[8.5rem] shrink-0 truncate rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{service.priceLabel}</span>
+                <div className="min-h-[4.5rem] min-w-0">
+                  <h3 className="service-card-title text-base font-black leading-snug text-slate-950 dark:text-white">{service.name}</h3>
+                  <p className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.12em] text-primary">{service.category}</p>
                 </div>
                 <p className="service-card-summary text-sm leading-6 text-slate-600 dark:text-slate-300">{summary}</p>
-                <div className="mt-auto flex min-h-10 flex-wrap items-center gap-2 border-t border-slate-200/80 pt-3 text-xs font-semibold text-slate-500 dark:border-white/10 dark:text-slate-400">
-                  <span>{service.durationMinutes} min</span>
-                  <span aria-hidden="true">/</span>
-                  <span>{paymentLabel}</span>
+                <div className="mt-auto grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-slate-200/80 pt-3 text-xs font-semibold dark:border-white/10">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <span>{service.durationMinutes} min</span>
+                    <span aria-hidden="true">/</span>
+                    <span>{paymentLabel}</span>
+                  </div>
+                  <span className="max-w-[9rem] shrink-0 truncate rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{service.priceLabel}</span>
                 </div>
               </div>
             </button>
@@ -231,10 +231,16 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
       </div>
 
       {panelOpen && activeService ? (
-        <div className="booking-panel-backdrop fixed inset-0 z-[90] flex items-end justify-center px-0 pt-8 sm:px-6" role="dialog" aria-modal="true" aria-labelledby="booking-panel-title">
-          <button className="absolute inset-0 cursor-default" type="button" aria-label="Cerrar" onClick={() => setPanelOpen(false)} />
-          <form action={submitReservation} className="booking-panel-shell relative z-10 flex max-h-[92dvh] w-full max-w-4xl flex-col overflow-hidden rounded-b-none rounded-t-2xl text-slate-950 dark:text-white">
-            <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-slate-400/70 dark:bg-white/30" />
+        <div className="booking-panel-backdrop fixed inset-0 z-[90] flex items-end justify-center px-0 pt-8 sm:px-5" onClick={() => setPanelOpen(false)}>
+          <form
+            action={submitReservation}
+            aria-labelledby="booking-panel-title"
+            aria-modal="true"
+            className="booking-panel-shell relative z-10 flex w-full max-w-3xl flex-col overflow-hidden text-slate-950 dark:text-white"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <div className="booking-panel-grabber mx-auto mt-3 h-1.5 w-12 rounded-full" />
             <div className="booking-panel-header flex items-start justify-between gap-4 border-b p-4 sm:p-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Reserva</p>

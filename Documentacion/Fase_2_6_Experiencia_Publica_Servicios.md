@@ -13,10 +13,10 @@ Mejorar la landing publica para que el cliente final elija desde un catalogo vis
 
 El selector publico de servicios dejo de ser un dropdown como patron primario. En `Reservar turno / Elegi el servicio` ahora se muestran cards por servicio con:
 
-- Imagen cuadrada superior.
+- Imagen cuadrada superior, protagonista, recortada con `object-cover` y contenida por las esquinas superiores de la card.
 - Nombre del servicio.
 - Categoria.
-- Precio visible.
+- Precio visible en la franja inferior derecha de la card.
 - Descripcion breve basada en `services.description`.
 - Duracion.
 - Indicador de pago: seña online, pago online o sin pago online.
@@ -79,6 +79,7 @@ Esto evita que un servicio quede roto visualmente aunque no tenga imagen propia.
 - `services.image_alt` si se quiere accesibilidad editorial.
 - `services.highlight_label` para etiquetas como `Mas elegido`, `Nuevo`, `Online`.
 - Preview real de card publica dentro del panel de servicios.
+- Alternativa visual documentada pero no implementada: usar thumbnail cuadrado chico junto al titulo/subtitulo y dejar la franja inferior para precio/duracion/pago, si en una iteracion futura se prioriza mostrar mas servicios por pantalla por encima del protagonismo de imagen.
 
 ## Criterio de cierre
 
