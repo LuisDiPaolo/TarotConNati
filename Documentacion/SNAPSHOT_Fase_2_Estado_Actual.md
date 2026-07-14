@@ -45,8 +45,9 @@ Si `0005` ya fue ejecutada, no repetirla sin `drop policy if exists`, porque Sup
 
 Implementado:
 
-- Resolucion de negocio por dominio/slug.
+- Resolucion de negocio por dominio/slug, con fallback que prefiere negocios con assets cargados para no quedar atado al seed demo.
 - Aplicacion de colores configurables desde `business.brand_primary`, `brand_accent` y `brand_radius`.
+- Logo/identidad visual desde assets del negocio; si hay logo cargado, reemplaza visualmente al titulo grande y deja el `h1` accesible.
 - Servicios con agenda: reserva con horario disponible.
 - Servicios sin horario: solicitud asincronica sin bloquear agenda.
 - Servicios con cobro configurable por el prestador: `Sena`, `Pago total adelantado` o `Sin cobro online`.
@@ -73,12 +74,12 @@ Secciones implementadas:
 - `Reportes`: resumen operativo basico.
 - `Configuracion`: negocio, URL/dominio, WhatsApp y colores basicos.
 
-Avance parcial de Fase 2.5:
+Fase 2.5 implementada en codigo:
 
 - Admin ya puede seleccionar tema inicial: `Claro`, `Color` u `Oscuro`.
 - El boton de tema alterna `Claro -> Color -> Oscuro` y conserva la preferencia local del usuario.
 - Admin ya puede configurar color de fondo de la app para el modo `Color`, separado del color principal y secundario.
-- Manifiestos PWA publico/panel ya leen nombre, descripcion, colores e iconos WebP optimizados desde `business`, manteniendo iconos fallback cuando no hay assets.
+- Manifiestos PWA publico/panel ya leen nombre, descripcion, colores e iconos WebP optimizados desde `business`, manteniendo fallback entre assets cargados antes de caer a SVG generico.
 - Admin ya cuenta con carga de logo e iconos mediante picker con recorte reutilizado desde `Archive/TEMPORAL 2`, adaptado sin `framer-motion`, con presupuesto de peso por asset.
 - Admin puede cargar variantes de logo para modo claro y modo oscuro, ademas del logo principal como fallback.
 - El recorte de iconos permite elegir color de fondo solido; se recomienda subir logo sin fondo para generar favicon/PWA/Apple touch con mejor contraste y peso controlado.
@@ -88,11 +89,13 @@ Avance parcial de Fase 2.5:
 - Configuracion incluye checklist de puesta en marcha y preview PWA/navegador.
 - Bucket publico `brand-assets` y endpoint `/api/panel/brand-assets` para guardar PNG/WebP recortados y limpiar versiones anteriores.
 
-Pendiente documentado como Fase 2.5:
+Pendiente para cierre operativo de Fase 2.5:
 
-- Validaciones server-side de dimensiones reales de assets, ademas de MIME/peso.
-- Policies/RLS de Storage mas estrictas si se habilita upload directo desde cliente en el futuro.
-- Prueba completa de base limpia sin seed demo con migraciones `0001` a `0012`.
+- Aplicar migraciones `0001` a `0012` en Supabase real.
+- Probar base limpia sin seed demo y tambien escenario con seed cargado.
+- Verificar en navegador limpio que web publica, favicon, manifest, PWA y service worker usan los assets cargados.
+- Validaciones server-side de dimensiones reales de assets quedan como hardening futuro; hoy el servidor valida MIME/peso y el cropper controla formato/tamano de salida.
+- Policies/RLS de Storage mas estrictas solo si se habilita upload directo desde cliente en el futuro.
 
 Referencia: `Documentacion/Fase_2_5_Onboarding_Identidad_PWA.md`.
 
@@ -165,7 +168,7 @@ Limitacion actual:
 - Reemplazar prompts simples por modales para motivos de cancelacion/ausencia.
 - Cobro desde solicitudes o turnos operativos.
 - Asociar `push_subscriptions` publicas a cliente/turno para enviar push dirigido al cliente correcto.
-- Ejecutar Fase 2.5: onboarding real por cliente, identidad PWA completa y carga del negocio desde admin, separado del seed demo.
+- Cerrar smoke test operativo de Fase 2.5 en ambiente real: migraciones, base limpia, assets, favicon, manifest, PWA y fallback con seed cargado.
 - Endurecer migraciones para re-ejecucion idempotente si se van a copiar manualmente en Supabase.
 
 ## Variables necesarias en Vercel

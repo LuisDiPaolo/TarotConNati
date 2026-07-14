@@ -1,137 +1,175 @@
 # Fase 2.5 - Onboarding e identidad PWA del negocio
 
 Fecha: 2026-07-13
-
-## Diagnostico
-
-La configuracion actual del panel permite editar datos basicos del negocio: nombre, slug, descripcion, WhatsApp, dominio publico, color principal, color secundario y radio visual.
-
-Eso no alcanza para entregar una PWA comercial autonoma. El cliente necesita poder cargar y mantener la identidad de su negocio desde el panel, sin seed demo y sin intervencion de codigo.
-
-Esta fase no corresponde al panel central de Estudio Equis. El panel central queda para aprovisionamiento multi-cliente, activacion remota de modulos y automatizacion operativa. La identidad del negocio pertenece al panel admin del cliente.
-
-## Donde encaja
-
-Encaja entre Fase 2 y Fase 3.
-
-Motivo: antes de avanzar con presencia digital, portfolio, productos o campanas, la instancia debe poder existir como negocio propio: marca, iconos, manifiestos PWA, URL, textos publicos y estado inicial sin datos demo.
-
-Tambien corrige una deuda de Fase 0/Fase 1: el roadmap ya pedia configuracion de negocio, logo, colores e icono propio, pero la implementacion actual solo cubre una parte basica.
+Estado: implementacion completa en codigo. Cierre operativo pendiente de aplicar migraciones en Supabase y hacer smoke test real.
 
 ## Objetivo
 
-Que el cliente pueda entrar al panel admin y dejar lista su instancia desde cero:
+Que una instancia pueda quedar lista desde el panel admin sin tocar codigo y sin depender del seed demo:
 
-1. Crear o completar el negocio si no existe una fila valida en `business`.
-2. Cargar datos publicos del negocio.
-3. Configurar identidad visual completa.
-4. Configurar los manifiestos PWA publica y panel con marca propia.
-5. Ver un checklist de puesta en marcha para cargar servicios, agenda, formularios, pagos y push.
-6. Operar sobre una base limpia sin depender de `seed.sql`.
+1. Crear o completar el negocio asociado al admin.
+2. Cargar identidad visual y assets de marca.
+3. Configurar tema inicial, colores y fondo personalizado.
+4. Configurar nombres instalables de PWA publica y panel.
+5. Usar los assets cargados en web publica, favicon, manifest, PWA y notificaciones.
+6. Guiar al admin con checklist de puesta en marcha.
 
-## Alcance funcional
+## Implementado
 
-### Negocio
+### Negocio y onboarding
 
-- Alta/completado del negocio desde `/panel/configuracion` si no existe negocio asociado. Implementado con migracion `0011`.
-- Edicion de nombre comercial, slug, descripcion publica, WhatsApp, dominio publico y dominio/prefijo de panel.
-- Zona horaria, moneda y locale visibles/configurables cuando deje de ser solo Argentina/ARS.
-- Estado de onboarding: incompleto, en revision, listo para publicar.
+- `/panel/configuracion` permite crear o completar el negocio si el admin no tiene `business_id`.
+- `admin_users.business_id` puede ser nullable para soportar onboarding inicial.
+- El endpoint de negocio usa cliente de sesion para autenticar y service-role para crear/enlazar negocio donde RLS no permite insertar directamente.
+- Estado de onboarding: `incomplete`, `review`, `ready`.
+- Checklist de puesta en marcha dentro del panel: negocio/marca, servicios, agenda, formularios, pagos, push y prueba de reserva/solicitud.
 
-### Branding
+### Theming
 
-- Upload de logo principal.
-- Upload de variantes de logo para modo claro y modo oscuro, con fallback al logo principal.
-- Upload o generacion asistida de icono PWA publico.
-- Upload o generacion asistida de icono PWA panel.
-- Icono maskable para Android.
-- Apple touch icon para iOS.
-- Picker de color de fondo al generar iconos desde logos sin fondo, recomendado para mejorar contraste y consistencia.
-- Color principal, color secundario, color de fondo, radio y preset visual.
-- Vista previa publica y vista previa panel antes de guardar. Implementado como preview PWA/navegador en configuracion.
+- El boton de tema alterna `Claro -> Color -> Oscuro`.
+- El admin puede seleccionar el tema inicial que carga al abrir la app: `light`, `brand` o `dark`.
+- El modo `Color` usa `theme_background`, separado de `brand_primary` y `brand_accent`.
+- `buildBrandStyle` aplica tokens CSS por negocio.
 
-### PWA publica y panel
+### Assets de marca
 
-- Manifest publico dinamico por negocio.
-- Manifest panel dinamico por negocio.
-- `name`, `short_name`, `description`, `theme_color`, `background_color` e `icons` tomados desde configuracion del negocio.
-- Fallback generico solo si el negocio todavia no cargo identidad.
-- Service workers separados por superficie, manteniendo el criterio de PWA publica y panel admin independientes.
+- Bucket publico `brand-assets` en Supabase Storage.
+- Endpoint `/api/panel/brand-assets` para subir/reemplazar assets.
+- Los assets se guardan como paths en `business`, no como URLs absolutas, y se normalizan al leer.
+- Al reemplazar un asset se elimina la version anterior si era path de Storage.
+- Validacion actual server-side: tipo MIME y peso maximo.
+- Recorte client-side con canvas, drag, pinch/zoom, preview y export optimizado.
 
-### Assets
+Assets soportados:
 
-- Bucket de Supabase Storage para assets de marca.
-- Politicas RLS/storage para que solo admins del negocio puedan subir/reemplazar assets.
-- Validacion de tipo, peso, dimensiones minimas y relacion de aspecto.
-- Normalizacion de URLs guardadas en base.
+- `logo_url`: logo principal fallback.
+- `logo_light_url`: logo para modo claro/color.
+- `logo_dark_url`: logo para modo oscuro.
+- `public_app_icon_url`: icono de app publica y favicon publico.
+- `panel_app_icon_url`: icono de app panel.
+- `maskable_icon_url`: icono maskable Android.
+- `apple_touch_icon_url`: Apple touch icon.
 
-### Puesta en marcha
+Presupuestos actuales:
 
-- Checklist dentro del panel:
-  - Negocio y marca.
-  - Servicios.
-  - Agenda o modalidad sin horario.
-  - Formularios de admision.
-  - Mercado Pago.
-  - Push notifications.
-  - Prueba de reserva/solicitud.
-- Empty states utiles despues de correr `limpiar-demo-conservar-negocio.sql`.
-- Accesos directos con `+` para crear servicios, turnos y formularios donde corresponda.
+- Logos: WebP 900x300, hasta 180 KB.
+- Iconos PWA publico/panel/maskable: WebP 512x512, hasta 96 KB.
+- Apple touch icon: PNG 180x180, hasta 160 KB.
 
-## Cambios tecnicos esperados
+### Iconos con fondo configurable
 
-### Base de datos
+- Para iconos, el cropper permite elegir un color de fondo solido.
+- El fondo se pinta en preview y tambien en el canvas final exportado.
+- Recomendacion operativa para el prestador: subir logo PNG/WebP sin fondo y elegir el fondo desde admin.
+- Esto evita transparencias problematicas en iOS/PWA y mejora contraste/peso.
 
-Agregar campos a `business` o crear una tabla `business_brand_assets` si se prefiere separar identidad de datos operativos:
+### Web publica
 
-- `logo_url`
-- `logo_light_url`
-- `logo_dark_url`
-- `public_app_icon_url`
-- `panel_app_icon_url`
-- `maskable_icon_url`
-- `apple_touch_icon_url`
-- `public_app_name`
-- `panel_app_name`
-- `public_short_name`
-- `panel_short_name`
-- `theme_background`
-- `theme_preset`
-- `onboarding_status`
+- La home publica ya renderiza identidad visual real.
+- Prioridad de logo en modo claro/color:
+  1. `logo_light_url`
+  2. `logo_url`
+  3. `public_app_icon_url`
+- Prioridad de logo en modo oscuro:
+  1. `logo_dark_url`
+  2. `logo_url`
+  3. `public_app_icon_url`
+- CSS cambia entre `brand-logo-light` y `brand-logo-dark` segun `data-theme="dark"`.
+- Cuando hay logo o icono publico cargado, reemplaza visualmente al titulo grande de marca; el `h1` queda accesible para lectores de pantalla.
+- Si no hay assets, la home conserva el nombre del negocio como titulo visible.
 
-Agregar migracion idempotente y actualizar seed demo con assets fallback.
+### Manifest, favicon y PWA
 
-### API
+- Manifest publico dinamico: `/api/pwa/public-manifest`.
+- Manifest panel dinamico: `/api/pwa/panel-manifest`.
+- Ambos devuelven `Cache-Control: no-store` para que los cambios de assets se vean al configurar marca.
+- `updatePwaHeadLinks` reemplaza en runtime:
+  - `manifest`
+  - `icon`
+  - `shortcut icon`
+  - `apple-touch-icon`
+- El favicon de desktop usa el mismo icono configurado para la PWA correspondiente.
+- Fallback de iconos blindado: si falta el icono especifico, se reutiliza otro asset cargado antes de caer a SVG generico.
 
-- Endpoint de alta/completado de negocio desde panel.
-- Endpoint de upload/reemplazo de assets.
-- Endpoints de manifest leyendo negocio por host/slug.
-- Validaciones Zod compartidas para identidad y assets.
+Prioridad de icono publico:
 
-### Frontend
+1. `public_app_icon_url`
+2. `panel_app_icon_url`
+3. `maskable_icon_url`
+4. SVG fallback
 
-- Ampliar `/panel/configuracion` de formulario plano a flujo de configuracion del negocio.
-- Incorporar upload con preview.
-- Mostrar estado de PWA publica y panel.
-- Mostrar checklist de configuracion inicial.
-- Mantener mobile/PWA como primera condicion de diseno.
+Prioridad de icono panel:
 
-## Fuera de alcance
+1. `panel_app_icon_url`
+2. `public_app_icon_url`
+3. `maskable_icon_url`
+4. SVG fallback
 
-- Panel central multi-cliente de Estudio Equis.
-- Automatizacion de creacion de instancias Vercel/Supabase.
-- Generacion automatica avanzada de marca.
-- Edicion de codigo por cliente.
+Maskable:
 
-## Criterio de cierre
+1. `maskable_icon_url`
+2. icono principal elegido
+3. SVG fallback
 
-La fase se considera cerrada cuando una base limpia puede quedar lista desde el panel:
+Apple touch:
 
-1. Se corre migracion sin seed demo.
-2. Se crea o completa el negocio desde admin.
-3. Se suben logo e iconos.
-4. La PWA publica instala con nombre e icono propios.
-5. La PWA panel instala con nombre e icono propios.
-6. La web publica y el panel aplican colores e identidad.
-7. El cliente puede cargar servicios propios sin depender de datos demo.
-8. Build/typecheck pasan con variables reales.
+1. `apple_touch_icon_url`
+2. icono principal elegido
+3. fallback runtime
+
+### Service workers y cache
+
+- `sw-public.js` subio a cache `turnos-public-v2` y `turnos-public-static-v2`.
+- El manifest publico ya no se precachea.
+- `sw-panel.js` subio a cache `turnos-panel-v2`.
+- Los managers PWA envian los assets elegidos al service worker con `SET_BRAND_ASSETS`.
+- Las notificaciones usan `brandAssets.iconUrl` y `brandAssets.maskableIconUrl`, no SVG fijo.
+
+### Seed y resolucion de negocio
+
+Problema detectado: si `seed.sql` queda cargado y el host no matchea exactamente el dominio del negocio editado, la app podia caer al primer negocio creado, normalmente el demo.
+
+Blindaje aplicado:
+
+- `resolveBusinessForHostname` mantiene prioridad por match exacto de `public_domain` o `panel_domain`.
+- Si no hay match exacto, busca hasta 10 negocios y prefiere uno con assets cargados.
+- `buildBusinessManifest` aplica la misma regla para favicon/PWA.
+- Esto evita que los assets cargados queden invisibles por fallback al seed demo.
+
+## Migraciones
+
+Fase 2.5 usa migraciones hasta `0012`:
+
+- `0008_business_default_theme_mode.sql`: tema inicial configurable.
+- `0009_business_theme_background.sql`: fondo configurable para modo `Color`.
+- `0010_business_brand_assets.sql`: columnas de assets y bucket `brand-assets`.
+- `0011_business_onboarding_pwa_names.sql`: onboarding sin seed, `admin_users.business_id` nullable y nombres PWA.
+- `0012_business_logo_variants.sql`: variantes `logo_light_url` y `logo_dark_url`.
+
+Orden recomendado en base nueva: `0001` a `0012`.
+
+## Validacion realizada
+
+- `tsc --noEmit` paso correctamente en `apps/web`.
+- Xcode Issue Navigator sin errores.
+
+## Pendientes para cierre operativo
+
+La implementacion puede considerarse lista a nivel codigo, pero la fase no deberia marcarse cerrada en producto hasta completar estas pruebas en una base real:
+
+1. Aplicar migraciones `0001` a `0012` en Supabase real.
+2. Probar base limpia sin `seed.sql`.
+3. Crear/completar negocio desde `/panel/configuracion` con admin real.
+4. Subir logo principal, logo claro, logo oscuro, icono publico, icono panel, maskable y Apple touch.
+5. Verificar web publica: logo correcto en claro/color/oscuro.
+6. Verificar manifest publico y panel con iconos cargados.
+7. Verificar favicon desktop con hard refresh o perfil limpio.
+8. Instalar PWA publica y panel en mobile/desktop y comprobar nombre/icono.
+9. Verificar que service worker actualizado (`v2`) no sirva manifest viejo.
+10. Probar con seed cargado y dominio no exacto que el negocio con assets sea el fallback elegido.
+
+## Decision de cierre
+
+Estado recomendado: `Fase 2.5 code complete / pending operational smoke test`.
+
+No marcar como cerrada total hasta ejecutar la prueba real anterior. Si esa prueba pasa, la fase 2.5 se puede cerrar y pasar a la siguiente fase.
