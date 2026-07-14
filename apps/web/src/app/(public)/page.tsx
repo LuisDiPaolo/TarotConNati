@@ -31,8 +31,8 @@ export default async function PublicHomePage() {
 
   return (
     <main className="app-screen py-8 sm:py-12" style={buildBrandStyle(publicBusiness)}>
-      <section className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_420px] lg:items-start">
-        <div>
+      <section className="mx-auto w-full max-w-6xl">
+        <header className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Reservas online</p>
           {hasLogo ? (
             <>
@@ -51,30 +51,59 @@ export default async function PublicHomePage() {
           ) : (
             <h1 className="mt-3 text-4xl font-black leading-tight sm:text-6xl">{publicBusiness.name}</h1>
           )}
-          {publicBusiness.description ? (
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">{publicBusiness.description}</p>
-          ) : null}
+        </header>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <article className="surface p-5">
-              <CalendarDays aria-hidden="true" className="h-6 w-6 text-primary" />
-              <h2 className="mt-4 text-lg font-bold">Servicios</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{services.length} opciones activas.</p>
-            </article>
-            <article className="surface p-5">
-              <Clock aria-hidden="true" className="h-6 w-6 text-primary" />
-              <h2 className="mt-4 text-lg font-bold">Horarios</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Disponibilidad calculada en {publicBusiness.timezone}.</p>
-            </article>
-            <article className="surface p-5">
-              <CreditCard aria-hidden="true" className="h-6 w-6 text-primary" />
-              <h2 className="mt-4 text-lg font-bold">Señas</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Mercado Pago confirma el turno por webhook.</p>
-            </article>
-          </div>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <article className="surface flex gap-4 p-5 shadow-sm sm:p-6">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <CalendarDays aria-hidden="true" className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold">Servicios</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Elegis la atencion que necesitas y ves la informacion clave antes de avanzar.</p>
+            </div>
+          </article>
+          <article className="surface flex gap-4 p-5 shadow-sm sm:p-6">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Clock aria-hidden="true" className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold">Horarios</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Seleccionas un turno disponible o envias una consulta si el servicio se coordina aparte.</p>
+            </div>
+          </article>
+          <article className="surface flex gap-4 p-5 shadow-sm sm:p-6">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <CreditCard aria-hidden="true" className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold">Pagos</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Cuando corresponde, podes dejar una seña o pagar online para confirmar la reserva.</p>
+            </div>
+          </article>
         </div>
 
-        <ReservationForm services={services} slotsByService={slotsByService} intakeFormsByService={intakeFormsByService} />
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
+          <section className="surface p-6 sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Antes de reservar</p>
+            <h2 className="mt-3 text-2xl font-black leading-tight sm:text-3xl">Coordina tu turno en pocos pasos</h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
+              {publicBusiness.description || "Completa tus datos, revisa las opciones disponibles y confirma la reserva desde el formulario."}
+            </p>
+            <div className="mt-6 grid gap-5 border-t border-slate-200 pt-5 sm:grid-cols-2 dark:border-zinc-800">
+              <div>
+                <p className="text-sm font-bold">Confirmacion clara</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Al finalizar vas a ver el estado de tu reserva y los datos importantes del turno.</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold">Datos necesarios</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">El formulario puede pedir informacion extra para preparar mejor la atencion.</p>
+              </div>
+            </div>
+          </section>
+
+          <ReservationForm services={services} slotsByService={slotsByService} intakeFormsByService={intakeFormsByService} />
+        </div>
       </section>
     </main>
   );
