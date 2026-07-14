@@ -1,7 +1,7 @@
 # Fase 2.6 - Experiencia publica de servicios
 
 Fecha: 2026-07-14
-Estado: implementada / pendiente de verificacion visual final
+Estado: cerrada en desarrollo / implementacion
 
 ## Objetivo
 
@@ -27,8 +27,10 @@ En desktop las cards ya no quedan comprimidas en una columna derecha: el bloque 
 
 Al tocar una card se abre un panel dedicado:
 
-- En mobile/PWA: bottom sheet desde abajo, casi pantalla completa.
-- En desktop: modal centrado, con ancho maximo controlado.
+- En mobile/PWA: bottom sheet flotante desde abajo, pegado al borde inferior, casi pantalla completa.
+- En desktop: bottom sheet flotante desde abajo, pegado al borde inferior, con ancho maximo controlado.
+- El fondo de la pagina queda bloqueado mientras el panel esta abierto; solo scrollea el cuerpo interno del panel.
+- El cierre queda disponible por boton `X`, toque en backdrop y tecla `Escape`.
 
 El panel contiene:
 
@@ -64,11 +66,12 @@ El orden de fallback publico queda blindado asi:
 
 Esto evita que un servicio quede roto visualmente aunque no tenga imagen propia.
 
-## Pendiente recomendado
+## Verificacion y pendientes externos
 
-- Verificacion visual final en navegador real para mobile, PWA y desktop.
-- Probar contraste en tema claro, oscuro y modo personalizado.
-- Correr `pnpm typecheck` y build en entorno donde el comando este permitido.
+- Desarrollo e implementacion de Fase 2.6 cerrados en codigo.
+- Xcode no reporta errores de navegador para los archivos modificados.
+- Queda pendiente externo correr `pnpm typecheck` y build en un entorno donde el comando este permitido.
+- Queda recomendado smoke visual final en navegador real para mobile, PWA y desktop antes de release publico.
 
 ## Datos futuros a evaluar
 
@@ -83,8 +86,8 @@ La Fase 2.6 queda funcionalmente cerrada cuando:
 
 1. El dropdown deja de ser el patron primario de seleccion publica. Hecho.
 2. La landing muestra cards de servicios con precio y descripcion breve. Hecho.
-3. El detalle/formulario abre como bottom sheet en mobile/PWA y modal en desktop. Hecho.
+3. El detalle/formulario abre como bottom sheet flotante desde abajo en mobile/PWA y desktop. Hecho.
 4. El panel permite cargar imagen por servicio. Hecho.
 5. Las imagenes se optimizan en calidad/peso. Hecho.
 6. Existe fallback robusto para servicios sin imagen. Hecho.
-7. La experiencia funciona correctamente en temas claro, personalizado y oscuro. Pendiente de verificacion visual final.
+7. La experiencia queda implementada para temas claro, personalizado y oscuro. Hecho en desarrollo; recomendado smoke visual final antes de release publico.

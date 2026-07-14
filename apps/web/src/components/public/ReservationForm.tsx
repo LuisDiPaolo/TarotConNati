@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarCheck, ImageIcon, Loader2, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
 
 type ReservationFormProps = {
@@ -50,6 +50,37 @@ function collectIntakeResponses(formData: FormData, forms: PublicIntakeForm[]) {
   return responses;
 }
 
+function ServiceArtwork({ imageUrl, fallbackUrl, compact = false }: { imageUrl: string; fallbackUrl: string; compact?: boolean }) {
+  const frameClassName = `service-artwork ${compact ? "service-artwork-compact" : ""}`;
+
+  if (imageUrl) {
+    return (
+      <div className={`${frameClassName} bg-slate-100 dark:bg-zinc-900`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img alt="" className="h-full w-full object-cover" src={imageUrl} />
+      </div>
+    );
+  }
+
+  if (fallbackUrl) {
+    return (
+      <div className={`${frameClassName} bg-[rgb(var(--brand-primary))]/10 dark:bg-white/5`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/55 via-transparent to-black/10 dark:from-white/10 dark:to-black/30" />
+        <div className="relative flex h-full w-full items-center justify-center p-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt="" className="h-full max-h-[66%] w-full max-w-[66%] object-contain drop-shadow-sm" src={fallbackUrl} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${frameClassName} flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 dark:from-zinc-900 dark:to-zinc-800 dark:text-zinc-500`}>
+      <ImageIcon aria-hidden="true" className={compact ? "h-9 w-9" : "h-11 w-11"} />
+    </div>
+  );
+}
+
 export function ReservationForm({ services, slotsByService, intakeFormsByService, serviceImageFallbackUrl }: ReservationFormProps) {
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   const [startsAt, setStartsAt] = useState(slotsByService[services[0]?.id ?? ""]?.[0]?.startsAt ?? "");
@@ -61,7 +92,41 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
   const canReserveAutomatically = activeService?.schedulingPolicy === "scheduled";
   const activeIntakeForms = intakeFormsByService[serviceId] ?? [];
   const slots = slotsByService[serviceId] ?? [];
-  const activeImageUrl = activeService ? activeService.imageUrl || serviceImageFallbackUrl : "";
+
+  useEffect(() => {
+    if (!panelOpen) return;
+
+    const scrollY = window.scrollY;
+    const previousBodyStyles = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    };
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setPanelOpen(false);
+    }
+
+    document.documentElement.classList.add("booking-panel-open");
+    document.body.classList.add("booking-panel-open");
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      document.documentElement.classList.remove("booking-panel-open");
+      document.body.classList.remove("booking-panel-open");
+      document.body.style.overflow = previousBodyStyles.overflow;
+      document.body.style.position = previousBodyStyles.position;
+      document.body.style.top = previousBodyStyles.top;
+      document.body.style.width = previousBodyStyles.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [panelOpen]);
 
   function openServicePanel(nextServiceId: string) {
     setServiceId(nextServiceId);
@@ -128,41 +193,33 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
         </span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => {
-          const selected = service.id === serviceId;
-          const imageUrl = service.imageUrl || serviceImageFallbackUrl;
+          const selected = service.id === serviceId && panelOpen;
           const summary = service.description || service.category || "Servicio disponible para reservar online.";
           const paymentLabel = service.paymentMode === "none" ? "Sin pago online" : service.paymentMode === "full" ? "Pago online" : "Sena online";
 
           return (
             <button
-              aria-pressed={selected && panelOpen}
-              className={`group overflow-hidden rounded-lg border text-left transition hover:-translate-y-0.5 hover:shadow-lg ${selected && panelOpen ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/25" : "border-slate-200 bg-white/70 shadow-sm dark:border-white/10 dark:bg-white/5"}`}
+              aria-pressed={selected}
+              className={`service-card group flex h-full min-h-[360px] flex-col overflow-hidden rounded-lg border text-left transition hover:-translate-y-0.5 hover:shadow-xl ${selected ? "border-primary bg-white/[0.92] shadow-lg ring-2 ring-primary/25 dark:bg-zinc-950/90" : "border-slate-200 bg-white/[0.82] shadow-sm dark:border-white/10 dark:bg-zinc-950/60"}`}
               key={service.id}
               onClick={() => openServicePanel(service.id)}
               type="button"
             >
-              <div className="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-zinc-900">
-                {imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" src={imageUrl} />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 dark:from-zinc-900 dark:to-zinc-800 dark:text-zinc-500">
-                    <ImageIcon aria-hidden="true" className="h-10 w-10" />
-                  </div>
-                )}
+              <div className="shrink-0 overflow-hidden border-b border-slate-200/80 dark:border-white/10 [&_img]:transition [&_img]:duration-300 group-hover:[&_img]:scale-[1.03]">
+                <ServiceArtwork imageUrl={service.imageUrl} fallbackUrl={serviceImageFallbackUrl} />
               </div>
-              <div className="grid gap-3 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-black text-slate-950 dark:text-white">{service.name}</h3>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-primary">{service.category}</p>
+              <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+                <div className="grid min-h-[4.5rem] grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                  <div className="min-w-0">
+                    <h3 className="service-card-title text-base font-black leading-snug text-slate-950 dark:text-white">{service.name}</h3>
+                    <p className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.12em] text-primary">{service.category}</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{service.priceLabel}</span>
+                  <span className="max-w-[8.5rem] shrink-0 truncate rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{service.priceLabel}</span>
                 </div>
-                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{summary}</p>
-                <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <p className="service-card-summary text-sm leading-6 text-slate-600 dark:text-slate-300">{summary}</p>
+                <div className="mt-auto flex min-h-10 flex-wrap items-center gap-2 border-t border-slate-200/80 pt-3 text-xs font-semibold text-slate-500 dark:border-white/10 dark:text-slate-400">
                   <span>{service.durationMinutes} min</span>
                   <span aria-hidden="true">/</span>
                   <span>{paymentLabel}</span>
@@ -174,35 +231,29 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
       </div>
 
       {panelOpen && activeService ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/55 px-3 pb-0 pt-8 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="booking-panel-title">
+        <div className="booking-panel-backdrop fixed inset-0 z-[90] flex items-end justify-center px-0 pt-8 sm:px-6" role="dialog" aria-modal="true" aria-labelledby="booking-panel-title">
           <button className="absolute inset-0 cursor-default" type="button" aria-label="Cerrar" onClick={() => setPanelOpen(false)} />
-          <form action={submitReservation} className="surface relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-b-none rounded-t-2xl border border-white/20 shadow-2xl sm:max-h-[88dvh] sm:rounded-2xl">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-4 dark:border-white/10 sm:p-5">
+          <form action={submitReservation} className="booking-panel-shell relative z-10 flex max-h-[92dvh] w-full max-w-4xl flex-col overflow-hidden rounded-b-none rounded-t-2xl text-slate-950 dark:text-white">
+            <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-slate-400/70 dark:bg-white/30" />
+            <div className="booking-panel-header flex items-start justify-between gap-4 border-b p-4 sm:p-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Reserva</p>
-                <h2 id="booking-panel-title" className="mt-1 text-xl font-black sm:text-2xl">{activeService.name}</h2>
+                <h2 id="booking-panel-title" className="mt-1 text-xl font-black leading-tight sm:text-2xl">{activeService.name}</h2>
               </div>
-              <button className="icon-action" type="button" onClick={() => setPanelOpen(false)} title="Cerrar">
+              <button className="icon-action bg-white/70 dark:bg-white/10" type="button" onClick={() => setPanelOpen(false)} title="Cerrar">
                 <X aria-hidden="true" className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="grid gap-5 overflow-y-auto p-4 sm:p-5">
+            <div className="booking-panel-body grid gap-5 overflow-y-auto p-4 sm:p-5">
               <input type="hidden" name="serviceId" value={serviceId} />
 
-              <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
-                <div className="aspect-square overflow-hidden rounded-lg bg-slate-100 dark:bg-zinc-900">
-                  {activeImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img alt="" className="h-full w-full object-cover" src={activeImageUrl} />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 dark:from-zinc-900 dark:to-zinc-800 dark:text-zinc-500">
-                      <ImageIcon aria-hidden="true" className="h-10 w-10" />
-                    </div>
-                  )}
+              <section className="booking-panel-section grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+                <div className="overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-sm dark:border-white/10 dark:bg-zinc-900">
+                  <ServiceArtwork imageUrl={activeService.imageUrl} fallbackUrl={serviceImageFallbackUrl} compact />
                 </div>
 
-                <div className="grid content-start gap-3 rounded-lg border border-slate-200 bg-white/70 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                <div className="grid content-start gap-3 text-sm text-slate-700 dark:text-slate-300">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{activeService.category}</span>
                     <span className="rounded-full bg-slate-950/5 px-3 py-1 text-xs font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">{activeService.priceLabel}</span>
@@ -215,57 +266,61 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
                   {activeService.virtualInstructions ? <p className="leading-6">{activeService.virtualInstructions}</p> : null}
                   {activeService.description ? <p className="leading-6">{activeService.description}</p> : null}
                 </div>
-              </div>
+              </section>
 
-              {canReserveAutomatically ? (
-                <label className="grid gap-2 text-sm font-semibold">
-                  Horario
-                  <select className="input-control" name="startsAt" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} required>
-                    {slots.length > 0 ? slots.map((slot) => (
-                      <option key={slot.startsAt} value={slot.startsAt}>{slot.label}</option>
-                    )) : <option value="">Sin horarios disponibles</option>}
-                  </select>
-                </label>
-              ) : (
-                <div className="grid gap-3 rounded-lg border border-slate-200 bg-white/70 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-                  <p className="font-semibold text-slate-950 dark:text-white">Solicitud sin horario estipulado</p>
-                  <p>La lectura no es en vivo. Se envia por WhatsApp en el formato que corresponda.</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="grid gap-2 font-semibold">
-                      Fecha de referencia
-                      <input className="input-control" name="preferredDate" type="date" />
-                    </label>
-                    <label className="grid gap-2 font-semibold">
-                      Franja o preferencia
-                      <input className="input-control" name="preferredWindow" maxLength={160} placeholder="Dentro de las 24 hs" />
-                    </label>
+              <section className="booking-panel-section grid gap-3">
+                {canReserveAutomatically ? (
+                  <label className="grid gap-2 text-sm font-semibold">
+                    Horario
+                    <select className="input-control" name="startsAt" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} required>
+                      {slots.length > 0 ? slots.map((slot) => (
+                        <option key={slot.startsAt} value={slot.startsAt}>{slot.label}</option>
+                      )) : <option value="">Sin horarios disponibles</option>}
+                    </select>
+                  </label>
+                ) : (
+                  <div className="grid gap-3 text-sm text-slate-700 dark:text-slate-300">
+                    <p className="font-semibold text-slate-950 dark:text-white">Solicitud sin horario estipulado</p>
+                    <p>La lectura no es en vivo. Se envia por WhatsApp en el formato que corresponda.</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="grid gap-2 font-semibold">
+                        Fecha de referencia
+                        <input className="input-control" name="preferredDate" type="date" />
+                      </label>
+                      <label className="grid gap-2 font-semibold">
+                        Franja o preferencia
+                        <input className="input-control" name="preferredWindow" maxLength={160} placeholder="Dentro de las 24 hs" />
+                      </label>
+                    </div>
                   </div>
+                )}
+              </section>
+
+              <section className="booking-panel-section grid gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-semibold">
+                    Nombre
+                    <input className="input-control" name="fullName" autoComplete="name" required minLength={2} maxLength={120} />
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold">
+                    Telefono
+                    <input className="input-control" name="phone" autoComplete="tel" required minLength={6} maxLength={40} />
+                  </label>
                 </div>
-              )}
 
-              <div className="grid gap-3 sm:grid-cols-2">
                 <label className="grid gap-2 text-sm font-semibold">
-                  Nombre
-                  <input className="input-control" name="fullName" autoComplete="name" required minLength={2} maxLength={120} />
+                  Email
+                  <input className="input-control" name="email" autoComplete="email" type="email" maxLength={160} />
                 </label>
+
                 <label className="grid gap-2 text-sm font-semibold">
-                  Telefono
-                  <input className="input-control" name="phone" autoComplete="tel" required minLength={6} maxLength={40} />
+                  Nota
+                  <textarea className="input-control min-h-24 resize-y" name="notes" maxLength={500} />
                 </label>
-              </div>
-
-              <label className="grid gap-2 text-sm font-semibold">
-                Email
-                <input className="input-control" name="email" autoComplete="email" type="email" maxLength={160} />
-              </label>
-
-              <label className="grid gap-2 text-sm font-semibold">
-                Nota
-                <textarea className="input-control min-h-24 resize-y" name="notes" maxLength={500} />
-              </label>
+              </section>
 
               {activeIntakeForms.length > 0 ? (
-                <section className="grid gap-4 rounded-lg border border-slate-200 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
+                <section className="booking-panel-section grid gap-4">
                   {activeIntakeForms.map((form) => (
                     <div className="grid gap-3" key={form.id}>
                       <div>
@@ -351,7 +406,7 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
               {message ? <p className={state === "error" ? "text-sm font-semibold text-red-600" : "text-sm font-semibold text-emerald-600"}>{message}</p> : null}
             </div>
 
-            <div className="border-t border-slate-200 p-4 dark:border-white/10 sm:p-5">
+            <div className="booking-panel-footer border-t p-4 backdrop-blur-xl sm:p-5">
               <button className="primary-action w-full justify-center disabled:cursor-not-allowed disabled:opacity-60" disabled={state === "submitting" || (canReserveAutomatically && !startsAt)} type="submit">
                 {state === "submitting" ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <CalendarCheck aria-hidden="true" className="h-4 w-4" />}
                 {canReserveAutomatically ? "Confirmar reserva" : "Enviar solicitud"}

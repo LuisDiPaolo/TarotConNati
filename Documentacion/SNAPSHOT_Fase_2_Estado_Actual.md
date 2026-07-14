@@ -1,6 +1,6 @@
 # Snapshot fase 2 - estado actual
 
-Fecha: 2026-07-13
+Fecha: 2026-07-14
 
 ## Estado general
 
@@ -54,8 +54,10 @@ Implementado:
 - Servicios con cobro configurable por el prestador: `Sena`, `Pago total adelantado` o `Sin cobro online`.
 - Formularios de admision por servicio.
 - Validacion server-side de respuestas de admision.
-- Fase 2.6 inicial: selector publico por cards de servicio con imagen cuadrada, descripcion, precio, duracion y modo de pago.
+- Fase 2.6 cerrada en desarrollo: selector publico por cards de servicio con imagen, descripcion, precio, duracion y modo de pago.
 - Fallback de imagen de servicio: imagen propia, icono publico del negocio y placeholder visual.
+- Detalle/reserva de servicio en bottom sheet flotante desde abajo para mobile/PWA y desktop, con cierre por boton, backdrop y Escape.
+- Bloqueo de scroll del documento mientras el panel esta abierto; solo scrollea el cuerpo interno del panel.
 
 Flujo publico esperado actual:
 
@@ -68,7 +70,8 @@ Fase 2.6 implementacion inicial:
 
 - Reemplazado el dropdown como selector primario por cards de servicio con imagen, titulo, descripcion breve y precio.
 - Agregada carga de imagen por servicio desde panel, con recorte cuadrado y optimizacion WebP.
-- El detalle del servicio abre como bottom sheet casi pantalla completa en mobile/PWA y como modal centrado en desktop, moviendo requisitos, horarios y formulario al panel del servicio seleccionado.
+- El detalle del servicio abre como bottom sheet flotante desde abajo en mobile/PWA y desktop, pegado al borde inferior, moviendo requisitos, horarios y formulario al panel del servicio seleccionado.
+- El panel bloquea el scroll del documento, conserva el scroll solo dentro del cuerpo del sheet, respeta safe area en PWA y cierra por `X`, backdrop o `Escape`.
 
 ## Panel
 
@@ -173,13 +176,13 @@ Limitacion actual:
 
 - Ejecutar build/typecheck con variables reales.
 - Probar smoke test completo en navegador.
-- Pulir UI visual final.
+- Smoke visual final pre-release en navegador real para Fase 2.6 (mobile, PWA y desktop).
 - Reemplazar prompts simples por modales para motivos de cancelacion/ausencia.
 - Cobro desde solicitudes o turnos operativos.
 - Asociar `push_subscriptions` publicas a cliente/turno para enviar push dirigido al cliente correcto.
 - Cerrar smoke test operativo de Fase 2.5 en ambiente real: migraciones, base limpia, assets, favicon, manifest, PWA y fallback con seed cargado.
 - Endurecer migraciones para re-ejecucion idempotente si se van a copiar manualmente en Supabase.
-- Fase 2.6 pendiente de verificacion visual final: selector por cards, imagen por servicio y detalle/formulario como bottom sheet en mobile/PWA y modal centrado en desktop ya quedaron implementados. Referencia: `Documentacion/Fase_2_6_Experiencia_Publica_Servicios.md`.
+- Fase 2.6 cerrada en desarrollo/implementacion: selector por cards, imagen por servicio y detalle/formulario como bottom sheet flotante desde abajo en mobile/PWA y desktop ya quedaron implementados. Referencia: `Documentacion/Fase_2_6_Experiencia_Publica_Servicios.md`.
 
 ## Variables necesarias en Vercel
 
