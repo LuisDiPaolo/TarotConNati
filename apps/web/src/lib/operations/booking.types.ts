@@ -19,6 +19,7 @@ export type PublicService = {
   name: string;
   description: string;
   category: string;
+  imageUrl: string;
   serviceModality: "in_person" | "virtual_scheduled" | "virtual_on_demand" | "contact_request";
   schedulingPolicy: "scheduled" | "day_request" | "manual_coordination" | "no_calendar_block";
   durationMinutes: number;

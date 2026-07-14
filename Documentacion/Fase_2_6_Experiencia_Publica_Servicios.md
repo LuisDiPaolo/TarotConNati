@@ -1,41 +1,55 @@
 # Fase 2.6 - Experiencia publica de servicios
 
 Fecha: 2026-07-14
-Estado: propuesta documentada / pendiente de implementacion
+Estado: implementacion inicial aplicada / mejora modal pendiente
 
 ## Objetivo
 
 Mejorar la landing publica para que el cliente final no empiece desde un dropdown, sino desde un catalogo visual de servicios. La experiencia debe sentirse mas profesional, clara e intuitiva en mobile/PWA y desktop.
 
-## Problema actual
+## Implementado
 
-El formulario publico funciona, pero el selector principal de servicios es un dropdown. Esto resuelve la operacion minima, pero limita la presentacion comercial del prestador:
+### Catalogo visual de servicios
 
-- No permite mostrar servicios como catalogo.
-- No permite destacar precio, duracion, imagen o descripcion breve antes de elegir.
-- Obliga a leer detalles dentro del formulario.
-- En mobile/PWA se siente mas utilitario que una experiencia de reserva profesional.
+El selector publico de servicios dejo de ser un dropdown como patron primario. En `Reservar turno / Elegi el servicio` ahora se muestran cards por servicio con:
 
-## Propuesta de UX
-
-### Catalogo de servicios
-
-Reemplazar el dropdown inicial por cards de servicio visibles en la landing.
-
-Cada card deberia mostrar:
-
-- Imagen del servicio, si el prestador la cargo.
-- Titulo del servicio.
-- Descripcion breve o bajada comercial.
+- Imagen cuadrada superior.
+- Nombre del servicio.
+- Categoria.
 - Precio visible.
-- Duracion o modalidad, cuando aplique.
-- Indicador de pago: seña, pago total o sin cobro online.
+- Descripcion breve basada en `services.description`.
+- Duracion.
+- Indicador de pago: seña online, pago online o sin pago online.
 
-La card no deberia contener todo el formulario. Su funcion es ayudar a elegir.
+La seleccion sigue alimentando el mismo `serviceId` interno del formulario para no romper las APIs actuales de reserva y solicitud.
+
+### Imagen por servicio
+
+Se agrego soporte para imagen publica por servicio:
+
+- Migracion `0013_service_public_images.sql` con `services.image_url`.
+- Lectura publica de `image_url` en `getPublicBookingData`.
+- Lectura de panel en `getPanelServices`.
+- Upload dedicado en `/api/panel/service-assets`.
+- Recorte cuadrado 900x900 desde panel.
+- Salida WebP con limite de 260 KB.
+- Guardado en Storage dentro de `brand-assets`, bajo `business/{businessId}/services/{serviceId}`.
+
+### Fallback de imagen
+
+El orden de fallback publico queda blindado asi:
+
+1. `services.image_url`, si el prestador cargo imagen propia del servicio.
+2. Icono publico del negocio (`public_app_icon_url`).
+3. Placeholder visual con icono de imagen.
+
+Esto evita que un servicio quede roto visualmente aunque no tenga imagen propia.
+
+## Pendiente recomendado
 
 ### Detalle como modal responsive
 
-Al tocar una card, abrir una vista de detalle del servicio:
+La seleccion por cards ya esta implementada, pero el formulario todavia vive debajo del selector dentro del mismo bloque. La siguiente mejora de UX recomendada es que al tocar una card se abra una vista de detalle:
 
 - En mobile/PWA: bottom sheet que entra desde abajo y cubre casi toda la pantalla.
 - En desktop: modal centrado, mas acotado, con ancho maximo controlado.
@@ -50,50 +64,31 @@ El detalle deberia contener:
 - Horarios disponibles si el servicio agenda automaticamente.
 - Campos de formulario del turno/solicitud solo para ese servicio.
 
-## Datos necesarios
+## Datos futuros a evaluar
 
-Agregar soporte para imagen por servicio.
-
-Opcion inicial recomendada:
-
-- Columna `services.image_url` como path de Supabase Storage.
-- Bucket o carpeta dentro de `brand-assets`/`service-assets`, segun decision de organizacion.
-- Endpoint de upload desde panel con recorte/optimizacion similar al de marca.
-- Presupuesto sugerido: WebP, 1200x800 o 900x600, peso maximo 220-320 KB.
-
-Campos opcionales a evaluar:
-
-- `services.short_description` para la card.
+- `services.short_description` para separar texto de card y descripcion completa.
 - `services.image_alt` si se quiere accesibilidad editorial.
 - `services.highlight_label` para etiquetas como `Mas elegido`, `Nuevo`, `Online`.
-
-## Impacto en panel admin
-
-En `Servicios`, el prestador deberia poder:
-
-- Cargar o reemplazar imagen del servicio.
-- Ver preview de card publica.
-- Editar descripcion breve para catalogo.
-- Mantener descripcion completa para el detalle/modal.
+- Preview real de card publica dentro del panel de servicios.
 
 ## Criterios de calidad
 
 - Mobile first: la seleccion de servicio debe ser comoda con el pulgar.
-- Bottom sheet con cierre claro, scroll interno y foco accesible.
-- Desktop con modal centrado y sin ocupar toda la pantalla.
-- El formulario no debe duplicar estado entre servicios.
-- Si no hay imagen del servicio, usar fallback visual sobrio: color de marca, icono o patron neutro.
+- Las imagenes deben estar optimizadas para calidad/peso.
+- Si no hay imagen del servicio, debe existir fallback visual consistente.
 - El layout debe mantener buen contraste en tema claro, personalizado y oscuro.
-- No debe bloquear servicios sin horario; esos abren el mismo detalle pero con solicitud asincronica.
+- No debe bloquear servicios sin horario; esos continúan como solicitud asincronica.
+- Editar texto, precio o configuracion de un servicio no debe borrar su imagen cargada.
 
 ## Criterio de cierre
 
-La fase se puede considerar lista cuando:
+La implementacion inicial de Fase 2.6 queda cerrable cuando:
 
-1. El dropdown deja de ser el patron primario de seleccion publica.
-2. La landing muestra cards de servicios con precio y descripcion breve.
-3. El detalle abre como bottom sheet en mobile/PWA y como modal centrado en desktop.
-4. El formulario se completa dentro del detalle del servicio elegido.
-5. El panel permite cargar imagen por servicio.
-6. Las imagenes se optimizan en calidad/peso.
-7. La experiencia funciona correctamente en temas claro, personalizado y oscuro.
+1. El dropdown deja de ser el patron primario de seleccion publica. Hecho.
+2. La landing muestra cards de servicios con precio y descripcion breve. Hecho.
+3. El panel permite cargar imagen por servicio. Hecho.
+4. Las imagenes se optimizan en calidad/peso. Hecho.
+5. Existe fallback robusto para servicios sin imagen. Hecho.
+6. La experiencia funciona correctamente en temas claro, personalizado y oscuro. Pendiente de verificacion visual final.
+
+La variante completa con bottom sheet/modal queda documentada como mejora posterior.

@@ -28,6 +28,7 @@ type ServiceRow = {
   name: string;
   description: string | null;
   category: string | null;
+  image_url: string | null;
   service_modality: PublicService["serviceModality"] | null;
   scheduling_policy: PublicService["schedulingPolicy"] | null;
   duration_minutes: number;
@@ -185,7 +186,7 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
   const [{ data: servicesData }, { data: schedulesData }, { data: overridesData }, { data: appointmentsData }, { data: intakeLinksData }] = await Promise.all([
     supabase
       .from("services")
-      .select("id, name, description, category, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_pesos, deposit_pesos, payment_mode, sort_order")
+      .select("id, name, description, category, image_url, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_pesos, deposit_pesos, payment_mode, sort_order")
       .eq("business_id", business.id)
       .eq("active", true)
       .order("sort_order", { ascending: true })
@@ -220,6 +221,7 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
     name: service.name,
     description: service.description ?? "",
     category: service.category ?? "General",
+    imageUrl: buildBrandAssetUrl(service.image_url),
     serviceModality: service.service_modality ?? "in_person",
     schedulingPolicy: service.scheduling_policy ?? "scheduled",
     durationMinutes: service.duration_minutes,

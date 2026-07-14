@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertTriangle, Plus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, ImageIcon, Plus, Save, Trash2, Upload } from "lucide-react";
 import { useState } from "react";
+import { BrandAssetCropper, type BrandAssetCropConfig } from "@/components/panel/BrandAssetCropper";
 import type { PanelServiceSettings } from "@/lib/operations/panel-settings.types";
 
 type DraftService = PanelServiceSettings & { draftId: string; isNew?: boolean };
@@ -18,6 +19,19 @@ const policyLabels: Record<PanelServiceSettings["schedulingPolicy"], string> = {
   day_request: "Pide dia/ventana",
   manual_coordination: "Coordinacion manual",
   no_calendar_block: "No bloquea agenda",
+};
+
+const serviceImageCropConfig: BrandAssetCropConfig = {
+  title: "Imagen del servicio",
+  helpText: "Usa una foto cuadrada o recortala aca. Se optimiza en WebP para que cargue rapido en la web y PWA.",
+  outputWidth: 900,
+  outputHeight: 900,
+  outputMimeType: "image/webp",
+  fileSuffix: "service",
+  outputQuality: 0.86,
+  maxOutputBytes: 260 * 1024,
+  previewWidth: 160,
+  previewHeight: 160,
 };
 
 function createDraftId() {
@@ -44,6 +58,7 @@ function emptyService(): DraftService {
     name: "",
     description: "",
     category: "General",
+    imageUrl: "",
     serviceModality: "in_person",
     schedulingPolicy: "scheduled",
     durationMinutes: 60,
@@ -66,6 +81,7 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
   const [rows, setRows] = useState<DraftService[]>(services.map((service) => ({ ...service, draftId: service.id })));
   const [message, setMessage] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<DraftService | null>(null);
+  const [imageCropTarget, setImageCropTarget] = useState<{ row: DraftService; file: File } | null>(null);
 
   function updateRow(draftId: string, patch: Partial<DraftService>) {
     const normalizedPatch = normalizeSchedulingPatch(patch);
@@ -111,6 +127,30 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
     setMessage("Servicio guardado.");
   }
 
+  async function uploadServiceImage(row: DraftService, croppedFile: File) {
+    if (!row.id || row.isNew) {
+      setMessage("Guarda el servicio antes de cargar una imagen.");
+      return;
+    }
+
+    setMessage("");
+    const formData = new FormData();
+    formData.set("serviceId", row.id);
+    formData.set("file", croppedFile);
+
+    const response = await fetch("/api/panel/service-assets", { method: "POST", body: formData });
+    const data = await response.json().catch(() => null) as { publicUrl?: string; error?: { message?: string } } | null;
+
+    if (!response.ok || !data?.publicUrl) {
+      setMessage(data?.error?.message ?? "No se pudo subir la imagen del servicio.");
+      return;
+    }
+
+    updateRow(row.draftId, { imageUrl: data.publicUrl });
+    setImageCropTarget(null);
+    setMessage("Imagen del servicio guardada.");
+  }
+
   async function confirmDeleteRow() {
     if (!deleteTarget) return;
     setMessage("");
@@ -142,22 +182,53 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
 
       {rows.map((row) => (
         <article className="surface grid gap-5 p-5" key={row.draftId}>
-          <div className="grid gap-3 md:grid-cols-4">
-            <label className="grid gap-2 text-sm font-semibold md:col-span-2">
-              Nombre
-              <input className="input-control" value={row.name} onChange={(event) => updateRow(row.draftId, { name: event.target.value })} />
+          <div className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)]">
+            <label className={`group relative grid aspect-square overflow-hidden rounded-lg border ${row.isNew ? "cursor-not-allowed border-dashed border-slate-200 bg-slate-50 opacity-70 dark:border-white/10 dark:bg-white/5" : "cursor-pointer border-slate-200 bg-white/70 hover:border-primary dark:border-white/10 dark:bg-white/5"}`}>
+              {row.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt="" className="h-full w-full object-cover" src={row.imageUrl} />
+              ) : (
+                <span className="flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center text-sm font-semibold text-slate-500 dark:text-slate-300">
+                  <ImageIcon aria-hidden="true" className="h-8 w-8" />
+                  Imagen del servicio
+                </span>
+              )}
+              <span className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-2 rounded-md bg-slate-950/80 px-3 py-2 text-xs font-bold text-white shadow-lg transition group-hover:bg-primary">
+                <Upload aria-hidden="true" className="h-3.5 w-3.5" />
+                {row.isNew ? "Guarda primero" : row.imageUrl ? "Cambiar imagen" : "Cargar imagen"}
+              </span>
+              <input
+                accept="image/png,image/jpeg,image/webp"
+                className="sr-only"
+                disabled={row.isNew || !row.id}
+                type="file"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.currentTarget.value = "";
+                  if (file) setImageCropTarget({ row, file });
+                }}
+              />
             </label>
-            <label className="grid gap-2 text-sm font-semibold">
-              Categoria
-              <input className="input-control" value={row.category} onChange={(event) => updateRow(row.draftId, { category: event.target.value })} />
-            </label>
-            <label className="grid gap-2 text-sm font-semibold">
-              Orden
-              <input className="input-control" type="number" value={row.sortOrder} onChange={(event) => updateRow(row.draftId, { sortOrder: Number(event.target.value) })} />
-            </label>
-          </div>
 
-          <textarea className="input-control min-h-20 resize-y" value={row.description} onChange={(event) => updateRow(row.draftId, { description: event.target.value })} placeholder="Descripcion" />
+            <div className="grid gap-3">
+              <div className="grid gap-3 md:grid-cols-4">
+                <label className="grid gap-2 text-sm font-semibold md:col-span-2">
+                  Nombre
+                  <input className="input-control" value={row.name} onChange={(event) => updateRow(row.draftId, { name: event.target.value })} />
+                </label>
+                <label className="grid gap-2 text-sm font-semibold">
+                  Categoria
+                  <input className="input-control" value={row.category} onChange={(event) => updateRow(row.draftId, { category: event.target.value })} />
+                </label>
+                <label className="grid gap-2 text-sm font-semibold">
+                  Orden
+                  <input className="input-control" type="number" value={row.sortOrder} onChange={(event) => updateRow(row.draftId, { sortOrder: Number(event.target.value) })} />
+                </label>
+              </div>
+
+              <textarea className="input-control min-h-24 resize-y" value={row.description} onChange={(event) => updateRow(row.draftId, { description: event.target.value })} placeholder="Descripcion breve para mostrar en la card publica" />
+            </div>
+          </div>
 
           <div className="grid gap-3 lg:grid-cols-3">
             <label className="grid gap-2 text-sm font-semibold">
@@ -238,6 +309,15 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       ))}
 
       {message ? <p className="text-sm font-semibold text-emerald-600">{message}</p> : null}
+
+      {imageCropTarget ? (
+        <BrandAssetCropper
+          config={serviceImageCropConfig}
+          file={imageCropTarget.file}
+          onCancel={() => setImageCropTarget(null)}
+          onConfirm={(croppedFile) => uploadServiceImage(imageCropTarget.row, croppedFile)}
+        />
+      ) : null}
 
       {deleteTarget ? (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-service-title">

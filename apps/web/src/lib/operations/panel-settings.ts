@@ -63,7 +63,7 @@ export async function getPanelServices(): Promise<PanelServiceSettings[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("services")
-    .select("id, name, description, category, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_pesos, deposit_pesos, payment_mode, active, sort_order")
+    .select("id, name, description, category, image_url, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_pesos, deposit_pesos, payment_mode, active, sort_order")
     .eq("active", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -75,6 +75,7 @@ export async function getPanelServices(): Promise<PanelServiceSettings[]> {
     name: service.name,
     description: service.description ?? "",
     category: service.category ?? "",
+    imageUrl: buildBrandAssetUrl(service.image_url),
     serviceModality: (service.service_modality ?? "in_person") as PanelServiceSettings["serviceModality"],
     schedulingPolicy: (service.scheduling_policy ?? "scheduled") as PanelServiceSettings["schedulingPolicy"],
     durationMinutes: service.duration_minutes,

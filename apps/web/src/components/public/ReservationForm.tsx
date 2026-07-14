@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, Loader2 } from "lucide-react";
+import { CalendarCheck, ImageIcon, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
 
@@ -8,6 +8,7 @@ type ReservationFormProps = {
   services: PublicService[];
   slotsByService: Record<string, PublicSlot[]>;
   intakeFormsByService: Record<string, PublicIntakeForm[]>;
+  serviceImageFallbackUrl: string;
 };
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
@@ -49,7 +50,7 @@ function collectIntakeResponses(formData: FormData, forms: PublicIntakeForm[]) {
   return responses;
 }
 
-export function ReservationForm({ services, slotsByService, intakeFormsByService }: ReservationFormProps) {
+export function ReservationForm({ services, slotsByService, intakeFormsByService, serviceImageFallbackUrl }: ReservationFormProps) {
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   const [startsAt, setStartsAt] = useState(slotsByService[services[0]?.id ?? ""]?.[0]?.startsAt ?? "");
   const [state, setState] = useState<SubmitState>("idle");
@@ -112,27 +113,64 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
 
   return (
     <form action={submitReservation} className="surface grid gap-5 p-5 sm:p-6">
-      <div>
-        <p className="text-sm font-semibold text-primary">Reservar turno</p>
-        <h2 className="mt-1 text-2xl font-black">Elegí el servicio</h2>
-      </div>
+      <input type="hidden" name="serviceId" value={serviceId} />
 
-      <label className="grid gap-2 text-sm font-semibold">
-        Servicio
-        <select
-          className="input-control"
-          name="serviceId"
-          value={serviceId}
-          onChange={(event) => handleServiceChange(event.target.value)}
-          required
-        >
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.name} - {service.priceLabel}
-            </option>
-          ))}
-        </select>
-      </label>
+      <section className="grid gap-4">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-primary">Reservar turno</p>
+            <h2 className="mt-1 text-2xl font-black">Elegí el servicio</h2>
+          </div>
+          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            {services.length} opciones
+          </span>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {services.map((service) => {
+            const selected = service.id === serviceId;
+            const imageUrl = service.imageUrl || serviceImageFallbackUrl;
+            const summary = service.description || service.category || "Servicio disponible para reservar online.";
+            const paymentLabel = service.paymentMode === "none" ? "Sin pago online" : service.paymentMode === "full" ? "Pago online" : "Sena online";
+
+            return (
+              <button
+                aria-pressed={selected}
+                className={`overflow-hidden rounded-lg border text-left transition hover:-translate-y-0.5 hover:shadow-lg ${selected ? "border-primary bg-primary/10 shadow-md ring-2 ring-primary/25" : "border-slate-200 bg-white/70 shadow-sm dark:border-white/10 dark:bg-white/5"}`}
+                key={service.id}
+                onClick={() => handleServiceChange(service.id)}
+                type="button"
+              >
+                <div className="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-zinc-900">
+                  {imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt="" className="h-full w-full object-cover" src={imageUrl} />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 dark:from-zinc-900 dark:to-zinc-800 dark:text-zinc-500">
+                      <ImageIcon aria-hidden="true" className="h-10 w-10" />
+                    </div>
+                  )}
+                </div>
+                <div className="grid gap-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-black text-slate-950 dark:text-white">{service.name}</h3>
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-primary">{service.category}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{service.priceLabel}</span>
+                  </div>
+                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{summary}</p>
+                  <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    <span>{service.durationMinutes} min</span>
+                    <span aria-hidden="true">/</span>
+                    <span>{paymentLabel}</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {activeService ? (
         <div className="rounded-md border border-slate-200 bg-white/70 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">

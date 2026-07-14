@@ -102,7 +102,7 @@ export default async function PublicHomePage() {
             </div>
           </section>
 
-          <ReservationForm services={services} slotsByService={slotsByService} intakeFormsByService={intakeFormsByService} />
+          <ReservationForm services={services} slotsByService={slotsByService} intakeFormsByService={intakeFormsByService} serviceImageFallbackUrl={publicBusiness.publicAppIconUrl} />
         </div>
       </section>
     </main>

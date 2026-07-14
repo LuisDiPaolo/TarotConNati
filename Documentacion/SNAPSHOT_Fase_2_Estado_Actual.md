@@ -24,6 +24,7 @@ Migraciones relevantes:
 - `0010_business_brand_assets.sql`: columnas de logo/iconos y bucket publico `brand-assets`.
 - `0011_business_onboarding_pwa_names.sql`: onboarding sin seed, `admin_users.business_id` nullable y nombres PWA configurables.
 - `0012_business_logo_variants.sql`: variantes de logo para modo claro y modo oscuro.
+- `0013_service_public_images.sql`: imagen publica por servicio (`services.image_url`).
 
 Scripts demo:
 
@@ -35,7 +36,7 @@ Nota monetaria: la migracion `0007_rename_money_columns_to_pesos.sql` renombra l
 
 Orden recomendado para una base nueva:
 
-1. Correr migraciones `0001` a `0012` en orden.
+1. Correr migraciones `0001` a `0013` en orden.
 2. Correr `seed.sql` solo si se quiere demo.
 3. Correr `borrar-seed.sql` para limpiar demo.
 
@@ -53,6 +54,8 @@ Implementado:
 - Servicios con cobro configurable por el prestador: `Sena`, `Pago total adelantado` o `Sin cobro online`.
 - Formularios de admision por servicio.
 - Validacion server-side de respuestas de admision.
+- Fase 2.6 inicial: selector publico por cards de servicio con imagen cuadrada, descripcion, precio, duracion y modo de pago.
+- Fallback de imagen de servicio: imagen propia, icono publico del negocio y placeholder visual.
 
 Flujo publico esperado actual:
 
@@ -61,12 +64,11 @@ Flujo publico esperado actual:
 3. Si el servicio es sin horario, envia solicitud con fecha/franja opcional.
 4. El panel recibe la solicitud.
 
-Mejora documentada para Fase 2.6:
+Fase 2.6 implementacion inicial:
 
-- Reemplazar el dropdown como selector primario por cards de servicio con imagen, titulo, descripcion breve y precio.
-- Abrir el detalle del servicio como bottom sheet casi pantalla completa en mobile/PWA y como modal centrado en desktop.
-- Mover requisitos, descripcion completa, horarios y formulario al detalle del servicio seleccionado.
-- Agregar carga de imagen por servicio desde panel, con recorte/optimizacion.
+- Reemplazado el dropdown como selector primario por cards de servicio con imagen, titulo, descripcion breve y precio.
+- Agregada carga de imagen por servicio desde panel, con recorte cuadrado y optimizacion WebP.
+- Pendiente recomendado: abrir el detalle del servicio como bottom sheet casi pantalla completa en mobile/PWA y como modal centrado en desktop, moviendo requisitos, horarios y formulario al detalle del servicio seleccionado.
 
 ## Panel
 
@@ -74,7 +76,7 @@ Secciones implementadas:
 
 - `Turnos`: lista de turnos, alta manual con boton `+`, vista mobile/PWA desplegable, borrado con tachito y confirmacion, cambio de estado y detalle con respuestas extensas.
 - `Solicitudes`: bandeja de solicitudes sin horario, cambio de estado, conversion a turno operativo, detalle con respuestas extensas.
-- `Servicios`: alta con boton `+`, edicion, borrado/desactivacion con tachito y confirmacion, configuracion de modalidades/politicas de agenda y tipo de cobro al reservar (`Sena`, `Pago total adelantado`, `Sin cobro online`).
+- `Servicios`: alta con boton `+`, edicion, borrado/desactivacion con tachito y confirmacion, configuracion de modalidades/politicas de agenda, tipo de cobro al reservar (`Sena`, `Pago total adelantado`, `Sin cobro online`) y carga de imagen publica por servicio.
 - `Agenda`: horarios semanales y excepciones existentes.
 - `Clientes`: listado y ficha con historial de turnos/solicitudes.
 - `Formularios`: formularios de admision y campos.
@@ -177,7 +179,7 @@ Limitacion actual:
 - Asociar `push_subscriptions` publicas a cliente/turno para enviar push dirigido al cliente correcto.
 - Cerrar smoke test operativo de Fase 2.5 en ambiente real: migraciones, base limpia, assets, favicon, manifest, PWA y fallback con seed cargado.
 - Endurecer migraciones para re-ejecucion idempotente si se van a copiar manualmente en Supabase.
-- Fase 2.6 documentada: reemplazar dropdown publico de servicios por cards con imagen, precio y descripcion breve; abrir detalle/formulario como bottom sheet en mobile/PWA y modal centrado en desktop. Referencia: `Documentacion/Fase_2_6_Experiencia_Publica_Servicios.md`.
+- Fase 2.6 mejora pendiente: abrir detalle/formulario como bottom sheet en mobile/PWA y modal centrado en desktop. La seleccion por cards e imagen por servicio ya quedo implementada. Referencia: `Documentacion/Fase_2_6_Experiencia_Publica_Servicios.md`.
 
 ## Variables necesarias en Vercel
 
