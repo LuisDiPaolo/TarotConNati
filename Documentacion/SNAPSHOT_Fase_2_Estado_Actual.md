@@ -68,7 +68,7 @@ Fase 2.6 implementacion inicial:
 
 - Reemplazado el dropdown como selector primario por cards de servicio con imagen, titulo, descripcion breve y precio.
 - Agregada carga de imagen por servicio desde panel, con recorte cuadrado y optimizacion WebP.
-- Pendiente recomendado: abrir el detalle del servicio como bottom sheet casi pantalla completa en mobile/PWA y como modal centrado en desktop, moviendo requisitos, horarios y formulario al detalle del servicio seleccionado.
+- El detalle del servicio abre como bottom sheet casi pantalla completa en mobile/PWA y como modal centrado en desktop, moviendo requisitos, horarios y formulario al panel del servicio seleccionado.
 
 ## Panel
 
@@ -179,7 +179,7 @@ Limitacion actual:
 - Asociar `push_subscriptions` publicas a cliente/turno para enviar push dirigido al cliente correcto.
 - Cerrar smoke test operativo de Fase 2.5 en ambiente real: migraciones, base limpia, assets, favicon, manifest, PWA y fallback con seed cargado.
 - Endurecer migraciones para re-ejecucion idempotente si se van a copiar manualmente en Supabase.
-- Fase 2.6 mejora pendiente: abrir detalle/formulario como bottom sheet en mobile/PWA y modal centrado en desktop. La seleccion por cards e imagen por servicio ya quedo implementada. Referencia: `Documentacion/Fase_2_6_Experiencia_Publica_Servicios.md`.
+- Fase 2.6 pendiente de verificacion visual final: selector por cards, imagen por servicio y detalle/formulario como bottom sheet en mobile/PWA y modal centrado en desktop ya quedaron implementados. Referencia: `Documentacion/Fase_2_6_Experiencia_Publica_Servicios.md`.
 
 ## Variables necesarias en Vercel
 

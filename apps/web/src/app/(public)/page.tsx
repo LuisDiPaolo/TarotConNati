@@ -83,7 +83,7 @@ export default async function PublicHomePage() {
           </article>
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
+        <div className="mt-8 grid gap-6">
           <section className="surface p-6 sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Antes de reservar</p>
             <h2 className="mt-3 text-2xl font-black leading-tight sm:text-3xl">Coordina tu turno en pocos pasos</h2>

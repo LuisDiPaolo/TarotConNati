@@ -1,11 +1,11 @@
 # Fase 2.6 - Experiencia publica de servicios
 
 Fecha: 2026-07-14
-Estado: implementacion inicial aplicada / mejora modal pendiente
+Estado: implementada / pendiente de verificacion visual final
 
 ## Objetivo
 
-Mejorar la landing publica para que el cliente final no empiece desde un dropdown, sino desde un catalogo visual de servicios. La experiencia debe sentirse mas profesional, clara e intuitiva en mobile/PWA y desktop.
+Mejorar la landing publica para que el cliente final elija desde un catalogo visual de servicios y complete la reserva dentro de un panel dedicado, sin que el formulario quede mezclado como una continuacion larga de la landing.
 
 ## Implementado
 
@@ -21,7 +21,26 @@ El selector publico de servicios dejo de ser un dropdown como patron primario. E
 - Duracion.
 - Indicador de pago: seña online, pago online o sin pago online.
 
-La seleccion sigue alimentando el mismo `serviceId` interno del formulario para no romper las APIs actuales de reserva y solicitud.
+En desktop las cards ya no quedan comprimidas en una columna derecha: el bloque de reserva ocupa el ancho de la landing y organiza las cards en grilla.
+
+### Panel de detalle y reserva
+
+Al tocar una card se abre un panel dedicado:
+
+- En mobile/PWA: bottom sheet desde abajo, casi pantalla completa.
+- En desktop: modal centrado, con ancho maximo controlado.
+
+El panel contiene:
+
+- Imagen principal del servicio.
+- Nombre, categoria, precio y duracion.
+- Politica de pago o seña.
+- Descripcion e instrucciones del servicio.
+- Horarios disponibles si el servicio agenda automaticamente.
+- Campos de solicitud si el servicio no tiene horario exacto.
+- Datos del cliente.
+- Formularios de admision asociados al servicio.
+- Accion final de confirmar reserva o enviar solicitud.
 
 ### Imagen por servicio
 
@@ -47,22 +66,9 @@ Esto evita que un servicio quede roto visualmente aunque no tenga imagen propia.
 
 ## Pendiente recomendado
 
-### Detalle como modal responsive
-
-La seleccion por cards ya esta implementada, pero el formulario todavia vive debajo del selector dentro del mismo bloque. La siguiente mejora de UX recomendada es que al tocar una card se abra una vista de detalle:
-
-- En mobile/PWA: bottom sheet que entra desde abajo y cubre casi toda la pantalla.
-- En desktop: modal centrado, mas acotado, con ancho maximo controlado.
-
-El detalle deberia contener:
-
-- Imagen principal del servicio.
-- Nombre, categoria, precio y duracion.
-- Descripcion completa.
-- Requisitos o instrucciones de llegada/virtuales.
-- Politica de pago o seña.
-- Horarios disponibles si el servicio agenda automaticamente.
-- Campos de formulario del turno/solicitud solo para ese servicio.
+- Verificacion visual final en navegador real para mobile, PWA y desktop.
+- Probar contraste en tema claro, oscuro y modo personalizado.
+- Correr `pnpm typecheck` y build en entorno donde el comando este permitido.
 
 ## Datos futuros a evaluar
 
@@ -71,24 +77,14 @@ El detalle deberia contener:
 - `services.highlight_label` para etiquetas como `Mas elegido`, `Nuevo`, `Online`.
 - Preview real de card publica dentro del panel de servicios.
 
-## Criterios de calidad
-
-- Mobile first: la seleccion de servicio debe ser comoda con el pulgar.
-- Las imagenes deben estar optimizadas para calidad/peso.
-- Si no hay imagen del servicio, debe existir fallback visual consistente.
-- El layout debe mantener buen contraste en tema claro, personalizado y oscuro.
-- No debe bloquear servicios sin horario; esos continúan como solicitud asincronica.
-- Editar texto, precio o configuracion de un servicio no debe borrar su imagen cargada.
-
 ## Criterio de cierre
 
-La implementacion inicial de Fase 2.6 queda cerrable cuando:
+La Fase 2.6 queda funcionalmente cerrada cuando:
 
 1. El dropdown deja de ser el patron primario de seleccion publica. Hecho.
 2. La landing muestra cards de servicios con precio y descripcion breve. Hecho.
-3. El panel permite cargar imagen por servicio. Hecho.
-4. Las imagenes se optimizan en calidad/peso. Hecho.
-5. Existe fallback robusto para servicios sin imagen. Hecho.
-6. La experiencia funciona correctamente en temas claro, personalizado y oscuro. Pendiente de verificacion visual final.
-
-La variante completa con bottom sheet/modal queda documentada como mejora posterior.
+3. El detalle/formulario abre como bottom sheet en mobile/PWA y modal en desktop. Hecho.
+4. El panel permite cargar imagen por servicio. Hecho.
+5. Las imagenes se optimizan en calidad/peso. Hecho.
+6. Existe fallback robusto para servicios sin imagen. Hecho.
+7. La experiencia funciona correctamente en temas claro, personalizado y oscuro. Pendiente de verificacion visual final.
