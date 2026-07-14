@@ -1,6 +1,10 @@
-const CACHE_NAME = "turnos-panel-v1";
+const CACHE_NAME = "turnos-panel-v2";
 const NEVER_CACHE_PREFIXES = ["/api/"];
 let vapidPublicKey = null;
+let brandAssets = {
+  iconUrl: "/pwa/panel/icon.svg",
+  maskableIconUrl: "/pwa/panel/maskable.svg",
+};
 
 function isNeverCachePath(pathname) {
   return NEVER_CACHE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -61,8 +65,8 @@ self.addEventListener("push", (event) => {
     await self.registration.showNotification(title, {
       body,
       data: { url: targetUrl },
-      icon: "/pwa/panel/icon.svg",
-      badge: "/pwa/panel/maskable.svg",
+      icon: brandAssets.iconUrl,
+      badge: brandAssets.maskableIconUrl,
       tag: typeof payload.tag === "string" ? payload.tag : undefined,
     });
   })());
@@ -104,5 +108,9 @@ self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
   if (event.data?.type === "SET_VAPID_PUBLIC_KEY" && typeof event.data.value === "string") {
     vapidPublicKey = event.data.value;
+  }
+  if (event.data?.type === "SET_BRAND_ASSETS" && event.data.value) {
+    if (typeof event.data.value.iconUrl === "string") brandAssets.iconUrl = event.data.value.iconUrl;
+    if (typeof event.data.value.maskableIconUrl === "string") brandAssets.maskableIconUrl = event.data.value.maskableIconUrl;
   }
 });

@@ -25,11 +25,26 @@ export default async function PublicHomePage() {
   }
 
   const { business: publicBusiness, services, slotsByService, intakeFormsByService } = bookingData;
+  const lightLogoUrl = publicBusiness.logoLightUrl || publicBusiness.logoUrl || publicBusiness.publicAppIconUrl;
+  const darkLogoUrl = publicBusiness.logoDarkUrl || publicBusiness.logoUrl || publicBusiness.publicAppIconUrl;
+  const hasLogo = Boolean(lightLogoUrl || darkLogoUrl);
 
   return (
     <main className="app-screen py-8 sm:py-12" style={buildBrandStyle(publicBusiness)}>
       <section className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_420px] lg:items-start">
         <div>
+          {hasLogo ? (
+            <div className="mb-5 flex h-20 max-w-[280px] items-center sm:h-24 sm:max-w-sm">
+              {lightLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt={publicBusiness.name} className="brand-logo-light max-h-full max-w-full object-contain object-left" src={lightLogoUrl} />
+              ) : null}
+              {darkLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt={publicBusiness.name} className="brand-logo-dark hidden max-h-full max-w-full object-contain object-left" src={darkLogoUrl} />
+              ) : null}
+            </div>
+          ) : null}
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Reservas online</p>
           <h1 className="mt-3 text-4xl font-black leading-tight sm:text-6xl">{publicBusiness.name}</h1>
           {publicBusiness.description ? (

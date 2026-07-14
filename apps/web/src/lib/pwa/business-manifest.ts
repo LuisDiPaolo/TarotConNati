@@ -43,6 +43,19 @@ function buildIconEntry(path: string | null | undefined, fallbackPath: string, p
   return { src: fallbackPath, sizes: "any", type: "image/svg+xml", purpose };
 }
 
+function firstStoragePath(...paths: Array<string | null | undefined>) {
+  return paths.find((path) => Boolean(path?.trim())) ?? null;
+}
+
+function hasBrandAssets(row: BusinessManifestRow) {
+  return Boolean(
+    row.public_app_icon_url?.trim()
+    || row.panel_app_icon_url?.trim()
+    || row.maskable_icon_url?.trim()
+    || row.apple_touch_icon_url?.trim(),
+  );
+}
+
 async function getBusinessForManifest(request: NextRequest): Promise<BusinessManifestRow | null> {
   const hostname = getRequestHostname(request);
   const supabase = createSupabaseAdminClient();
@@ -55,15 +68,15 @@ async function getBusinessForManifest(request: NextRequest): Promise<BusinessMan
 
   if (!exactError && exactMatch) return exactMatch as BusinessManifestRow;
 
-  const { data: fallback, error: fallbackError } = await supabase
+  const { data: fallbackRows, error: fallbackError } = await supabase
     .from("business")
     .select("name, description, public_domain, panel_domain, public_app_name, panel_app_name, public_short_name, panel_short_name, brand_primary, theme_background, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
     .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .limit(10);
 
-  if (fallbackError || !fallback) return null;
-  return fallback as BusinessManifestRow;
+  if (fallbackError || !fallbackRows?.length) return null;
+  const rows = fallbackRows as BusinessManifestRow[];
+  return rows.find(hasBrandAssets) ?? rows[0]!;
 }
 
 export async function buildBusinessManifest(request: NextRequest, surface: ManifestSurface) {
@@ -80,8 +93,11 @@ export async function buildBusinessManifest(request: NextRequest, surface: Manif
     ? business?.panel_short_name || `Panel ${truncate(businessName, 18)}`
     : business?.public_short_name || truncate(businessName, 24);
   const iconBasePath = isPanel ? "/pwa/panel" : "/pwa/public";
-  const appIconPath = isPanel ? business?.panel_app_icon_url : business?.public_app_icon_url;
-  const appleTouchIconUrl = buildBrandAssetUrl(business?.apple_touch_icon_url);
+  const appIconPath = isPanel
+    ? firstStoragePath(business?.panel_app_icon_url, business?.public_app_icon_url, business?.maskable_icon_url)
+    : firstStoragePath(business?.public_app_icon_url, business?.panel_app_icon_url, business?.maskable_icon_url);
+  const maskableIconPath = firstStoragePath(business?.maskable_icon_url, appIconPath);
+  const appleTouchIconUrl = buildBrandAssetUrl(firstStoragePath(business?.apple_touch_icon_url, appIconPath));
 
   return {
     name: appName,
@@ -99,7 +115,7 @@ export async function buildBusinessManifest(request: NextRequest, surface: Manif
     apple_touch_icon: appleTouchIconUrl || undefined,
     icons: [
       buildIconEntry(appIconPath, `${iconBasePath}/icon.svg`, "any"),
-      buildIconEntry(business?.maskable_icon_url, `${iconBasePath}/maskable.svg`, "maskable"),
+      buildIconEntry(maskableIconPath, `${iconBasePath}/maskable.svg`, "maskable"),
     ],
   };
 }

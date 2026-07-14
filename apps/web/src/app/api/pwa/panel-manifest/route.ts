@@ -5,6 +5,6 @@ export async function GET(request: NextRequest) {
   const manifest = await buildBusinessManifest(request, "panel");
 
   return NextResponse.json(manifest, {
-    headers: { "Content-Type": "application/manifest+json", "Cache-Control": "public, max-age=3600" },
+    headers: { "Content-Type": "application/manifest+json", "Cache-Control": "no-store" },
   });
 }

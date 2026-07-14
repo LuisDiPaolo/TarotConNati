@@ -1,6 +1,7 @@
 import "server-only";
 
 import { calculateAppointmentEnd, formatARS, resolveEffectiveSchedulesForDate } from "@turnos/shared";
+import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { ResolvedBusiness } from "@/lib/business/resolve";
 import type { PublicBookingData, PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
@@ -16,6 +17,10 @@ type BusinessRow = {
   brand_primary: string;
   brand_accent: string;
   brand_radius: string;
+  logo_url: string | null;
+  logo_light_url: string | null;
+  logo_dark_url: string | null;
+  public_app_icon_url: string | null;
 };
 
 type ServiceRow = {
@@ -160,7 +165,7 @@ async function getBusiness(businessId: string) {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("business")
-    .select("id, name, slug, description, timezone, currency, locale, brand_primary, brand_accent, brand_radius")
+    .select("id, name, slug, description, timezone, currency, locale, brand_primary, brand_accent, brand_radius, logo_url, logo_light_url, logo_dark_url, public_app_icon_url")
     .eq("id", businessId)
     .maybeSingle();
 
@@ -353,6 +358,10 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
       brandPrimary: business.brand_primary,
       brandAccent: business.brand_accent,
       brandRadius: business.brand_radius,
+      logoUrl: buildBrandAssetUrl(business.logo_url),
+      logoLightUrl: buildBrandAssetUrl(business.logo_light_url),
+      logoDarkUrl: buildBrandAssetUrl(business.logo_dark_url),
+      publicAppIconUrl: buildBrandAssetUrl(business.public_app_icon_url),
     },
     services,
     slotsByService,

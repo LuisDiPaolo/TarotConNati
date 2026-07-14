@@ -51,6 +51,10 @@ export type PublicBookingData = {
     brandPrimary: string;
     brandAccent: string;
     brandRadius: string;
+    logoUrl: string;
+    logoLightUrl: string;
+    logoDarkUrl: string;
+    publicAppIconUrl: string;
   };
   services: PublicService[];
   slotsByService: Record<string, PublicSlot[]>;

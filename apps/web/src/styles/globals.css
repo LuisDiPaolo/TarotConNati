@@ -154,6 +154,14 @@ body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
   color: rgb(71 85 105);
 }
 
+[data-theme="dark"] .brand-logo-light {
+  display: none;
+}
+
+[data-theme="dark"] .brand-logo-dark {
+  display: block;
+}
+
 .primary-action {
   align-items: center;
   background: rgb(var(--brand-primary));
