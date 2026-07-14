@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "@/styles/globals.css";
 import { PanelPwaManager } from "@/components/pwa/PanelPwaManager";
 import { PublicPwaManager } from "@/components/pwa/PublicPwaManager";
 import { OrientationGuard } from "@/components/layout/OrientationGuard";
 import { ViewportRuntime } from "@/components/layout/ViewportRuntime";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { resolveBusinessForHostname } from "@/lib/business/resolve";
+import { buildBrandStyle } from "@/lib/theme/brand-style";
 
 export const metadata: Metadata = {
   title: "Turnos",
@@ -33,13 +36,17 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headerStore = await headers();
+  const business = await resolveBusinessForHostname(headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "");
+  const defaultThemeMode = business?.defaultThemeMode ?? "light";
+
   return (
-    <html lang="es-AR" suppressHydrationWarning>
+    <html lang="es-AR" data-default-theme={defaultThemeMode} style={business ? buildBrandStyle(business) : undefined} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var root=document.documentElement;root.style.setProperty('--app-height',window.innerHeight+'px');root.style.setProperty('--app-width',window.innerWidth+'px');var stored=window.localStorage.getItem('turnos-theme');var theme=stored==='light'||stored==='dark'?stored:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');root.dataset.theme=theme;root.classList.toggle('dark',theme==='dark');root.style.colorScheme=theme;}catch(e){}})();`,
+            __html: `(function(){try{var root=document.documentElement;root.style.setProperty('--app-height',window.innerHeight+'px');root.style.setProperty('--app-width',window.innerWidth+'px');var stored=window.localStorage.getItem('turnos-theme');var fallback=root.dataset.defaultTheme;var valid={light:true,brand:true,dark:true};var theme=valid[stored]?stored:(valid[fallback]?fallback:'light');root.dataset.theme=theme;root.classList.toggle('dark',theme==='dark');root.style.colorScheme=theme==='dark'?'dark':'light';}catch(e){}})();`,
           }}
         />
         <meta name="mobile-web-app-capable" content="yes" />

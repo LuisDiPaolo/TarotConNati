@@ -19,17 +19,23 @@ Migraciones relevantes:
 - `0005_business_admin_update_policy.sql`: permite actualizar configuracion del negocio desde panel.
 - `0006_phase_2_service_requests.sql`: solicitudes sin horario, respuestas de solicitud y eventos de estado de turno.
 - `0007_rename_money_columns_to_pesos.sql`: renombra columnas monetarias de centavos a pesos.
+- `0008_business_default_theme_mode.sql`: tema inicial configurable por negocio.
+- `0009_business_theme_background.sql`: color de fondo configurable para modo `Color`.
+- `0010_business_brand_assets.sql`: columnas de logo/iconos y bucket publico `brand-assets`.
+- `0011_business_onboarding_pwa_names.sql`: onboarding sin seed, `admin_users.business_id` nullable y nombres PWA configurables.
+- `0012_business_logo_variants.sql`: variantes de logo para modo claro y modo oscuro.
 
 Scripts demo:
 
 - `supabase/seed.sql`: carga negocio demo de tarot evolutivo, servicios, horarios 24 hs, formularios, clientes, turnos y solicitudes mock. Los importes demo estan expresados en pesos.
-- `supabase/borrar-seed.sql`: limpia exclusivamente datos del seed demo.
+- `supabase/limpiar-demo-conservar-negocio.sql`: borra servicios, horarios, formularios, clientes, turnos, solicitudes, pagos y push demo, pero conserva negocio, admin, features y runtime config para cargar datos propios desde panel.
+- `supabase/borrar-seed.sql`: limpia todo el seed demo, incluyendo negocio, admin, features y runtime config.
 
 Nota monetaria: la migracion `0007_rename_money_columns_to_pesos.sql` renombra las columnas monetarias a `price_pesos`, `deposit_pesos` y `amount_pesos`. Si encuentra columnas viejas `*_cents`, convierte sus valores dividiendo por 100. Los importes se cargan, visualizan y envian a Mercado Pago en pesos.
 
 Orden recomendado para una base nueva:
 
-1. Correr migraciones `0001` a `0007` en orden.
+1. Correr migraciones `0001` a `0012` en orden.
 2. Correr `seed.sql` solo si se quiere demo.
 3. Correr `borrar-seed.sql` para limpiar demo.
 
@@ -65,7 +71,30 @@ Secciones implementadas:
 - `Clientes`: listado y ficha con historial de turnos/solicitudes.
 - `Formularios`: formularios de admision y campos.
 - `Reportes`: resumen operativo basico.
-- `Configuracion`: negocio, URL/dominio, WhatsApp y colores.
+- `Configuracion`: negocio, URL/dominio, WhatsApp y colores basicos.
+
+Avance parcial de Fase 2.5:
+
+- Admin ya puede seleccionar tema inicial: `Claro`, `Color` u `Oscuro`.
+- El boton de tema alterna `Claro -> Color -> Oscuro` y conserva la preferencia local del usuario.
+- Admin ya puede configurar color de fondo de la app para el modo `Color`, separado del color principal y secundario.
+- Manifiestos PWA publico/panel ya leen nombre, descripcion, colores e iconos WebP optimizados desde `business`, manteniendo iconos fallback cuando no hay assets.
+- Admin ya cuenta con carga de logo e iconos mediante picker con recorte reutilizado desde `Archive/TEMPORAL 2`, adaptado sin `framer-motion`, con presupuesto de peso por asset.
+- Admin puede cargar variantes de logo para modo claro y modo oscuro, ademas del logo principal como fallback.
+- El recorte de iconos permite elegir color de fondo solido; se recomienda subir logo sin fondo para generar favicon/PWA/Apple touch con mejor contraste y peso controlado.
+- El favicon de desktop usa el mismo icono de app configurado para la PWA correspondiente.
+- `/panel/configuracion` permite crear/completar el negocio cuando la sesion no tiene `business_id`, enlazando el admin autenticado.
+- Admin puede configurar nombres instalables PWA publico/panel y nombres cortos.
+- Configuracion incluye checklist de puesta en marcha y preview PWA/navegador.
+- Bucket publico `brand-assets` y endpoint `/api/panel/brand-assets` para guardar PNG/WebP recortados y limpiar versiones anteriores.
+
+Pendiente documentado como Fase 2.5:
+
+- Validaciones server-side de dimensiones reales de assets, ademas de MIME/peso.
+- Policies/RLS de Storage mas estrictas si se habilita upload directo desde cliente en el futuro.
+- Prueba completa de base limpia sin seed demo con migraciones `0001` a `0012`.
+
+Referencia: `Documentacion/Fase_2_5_Onboarding_Identidad_PWA.md`.
 
 Estados de solicitudes:
 
@@ -136,7 +165,7 @@ Limitacion actual:
 - Reemplazar prompts simples por modales para motivos de cancelacion/ausencia.
 - Cobro desde solicitudes o turnos operativos.
 - Asociar `push_subscriptions` publicas a cliente/turno para enviar push dirigido al cliente correcto.
-- Onboarding real por cliente, separado del seed demo.
+- Ejecutar Fase 2.5: onboarding real por cliente, identidad PWA completa y carga del negocio desde admin, separado del seed demo.
 - Endurecer migraciones para re-ejecucion idempotente si se van a copiar manualmente en Supabase.
 
 ## Variables necesarias en Vercel

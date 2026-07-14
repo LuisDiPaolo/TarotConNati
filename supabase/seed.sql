@@ -36,7 +36,9 @@ insert into business (
   whatsapp_phone,
   brand_primary,
   brand_accent,
-  brand_radius
+  theme_background,
+  brand_radius,
+  default_theme_mode
 )
 values (
   '00000000-0000-4000-8000-000000000001',
@@ -48,7 +50,9 @@ values (
   '5493515550101',
   '#7c3aed',
   '#0f766e',
-  '10px'
+  '#4c1d95',
+  '10px',
+  'brand'
 );
 
 insert into features (business_id, feature_key, enabled, pack, requires_migration)

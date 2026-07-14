@@ -1,28 +1,31 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, Palette, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type ThemeMode = "light" | "dark";
+type ThemeMode = "light" | "brand" | "dark";
 
 const STORAGE_KEY = "turnos-theme";
+const THEME_SEQUENCE: ThemeMode[] = ["light", "brand", "dark"];
 
-function getSystemTheme(): ThemeMode {
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+function isThemeMode(value: string | null | undefined): value is ThemeMode {
+  return value === "light" || value === "brand" || value === "dark";
 }
 
 function getInitialTheme(): ThemeMode {
   if (typeof window === "undefined") return "light";
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "light" || stored === "dark" ? stored : getSystemTheme();
+  if (isThemeMode(stored)) return stored;
+
+  const defaultTheme = document.documentElement.dataset.defaultTheme;
+  return isThemeMode(defaultTheme) ? defaultTheme : "light";
 }
 
 function applyTheme(theme: ThemeMode) {
   const root = document.documentElement;
   root.dataset.theme = theme;
   root.classList.toggle("dark", theme === "dark");
-  root.style.colorScheme = theme;
+  root.style.colorScheme = theme === "dark" ? "dark" : "light";
 }
 
 export function ThemeToggle() {
@@ -34,19 +37,22 @@ export function ThemeToggle() {
   }, [theme]);
 
   function toggleTheme() {
-    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+    setTheme((currentTheme) => {
+      const currentIndex = THEME_SEQUENCE.indexOf(currentTheme);
+      return THEME_SEQUENCE[(currentIndex + 1) % THEME_SEQUENCE.length] ?? "light";
+    });
   }
 
-  const isDark = theme === "dark";
-  const Icon = isDark ? Sun : Moon;
+  const Icon = theme === "light" ? Palette : theme === "brand" ? Moon : Sun;
+  const nextLabel = theme === "light" ? "color personalizado" : theme === "brand" ? "oscuro" : "claro";
 
   return (
     <button
       type="button"
-      aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
-      aria-pressed={isDark}
+      aria-label={`Activar modo ${nextLabel}`}
       className="theme-toggle"
       onClick={toggleTheme}
+      title={`Activar modo ${nextLabel}`}
     >
       <Icon aria-hidden="true" className="h-4 w-4" />
     </button>

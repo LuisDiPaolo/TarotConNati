@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 type BrandTokens = {
   brandPrimary: string;
   brandAccent: string;
+  themeBackground?: string;
   brandRadius: string;
 };
 
@@ -19,10 +20,12 @@ function hexToRgbTriplet(hex: string) {
 export function buildBrandStyle(tokens: BrandTokens): CSSProperties {
   const primary = hexToRgbTriplet(tokens.brandPrimary);
   const accent = hexToRgbTriplet(tokens.brandAccent);
+  const background = hexToRgbTriplet(tokens.themeBackground ?? tokens.brandPrimary);
 
   return {
     ...(primary ? { "--brand-primary": primary } : {}),
     ...(accent ? { "--brand-accent": accent } : {}),
+    ...(background ? { "--theme-background": background } : {}),
     "--brand-radius": tokens.brandRadius,
   } as CSSProperties;
 }

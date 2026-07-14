@@ -312,6 +312,26 @@ _Objetivo: que el profesional pueda entender la actividad de su negocio a partir
 
 • Recordatorios automáticos por correo electrónico vía Resend (cuenta del cliente).
 
+Fase 2.5 - Onboarding e identidad PWA del negocio
+
+_Objetivo: que el cliente pueda dejar lista su instancia desde el panel admin, sin depender del seed demo ni de cambios de codigo._
+
+• Alta o completado del negocio desde `/panel/configuracion` cuando no exista una fila valida en `business`.
+
+• Configuracion completa del negocio: nombre comercial, slug, descripcion publica, WhatsApp, dominio publico, dominio/prefijo de panel, zona horaria, moneda y locale.
+
+• Branding gestionable por el cliente: logo, icono PWA publico, icono PWA panel, icono maskable, Apple touch icon, colores, preset visual y vista previa.
+
+• Manifiestos PWA dinamicos por negocio para web publica y panel, con nombre, descripcion, theme color e iconos propios.
+
+• Bucket de assets de marca en Supabase Storage con validacion de tipo, peso, dimensiones y politicas de acceso para admins del negocio.
+
+• Checklist de puesta en marcha: negocio y marca, servicios, agenda/modalidad sin horario, formularios, Mercado Pago, push notifications y prueba de reserva/solicitud.
+
+• Empty states utiles para operar una base limpia despues de correr `limpiar-demo-conservar-negocio.sql`.
+
+_Criterio de cierre de Fase 2.5: una instancia sin seed demo puede configurarse desde el panel, instalar PWA publica y panel con identidad propia, y cargar servicios reales sin intervencion de codigo._
+
 Fase 3 - Presencia digital
 
 • Portfolio manual: imágenes con título, categoría y enlace opcional de Instagram.
@@ -321,8 +341,6 @@ Fase 3 - Presencia digital
 • Módulo de productos simples: compra con pago total y retiro en el negocio, sin logística ni envíos.
 
 • Módulo de promociones: precio especial o descuento porcentual con fechas de vigencia.
-
-• Asistente de configuración inicial (onboarding guiado).
 
 • Consultas y contacto: formulario publico, registro en bandeja admin, ruteo a WhatsApp y conversion manual a reserva/turno cuando corresponda.
 

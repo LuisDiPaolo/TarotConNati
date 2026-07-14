@@ -1,5 +1,6 @@
 import "server-only";
 
+import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   PanelBusinessSettings,
@@ -12,9 +13,21 @@ import type {
 
 export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings | null> {
   const supabase = await createSupabaseServerClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return null;
+
+  const { data: adminUser, error: adminError } = await supabase
+    .from("admin_users")
+    .select("business_id")
+    .eq("auth_user_id", userData.user.id)
+    .maybeSingle();
+
+  if (adminError || !adminUser?.business_id) return null;
+
   const { data, error } = await supabase
     .from("business")
-    .select("id, name, slug, description, public_domain, whatsapp_phone, brand_primary, brand_accent, brand_radius")
+    .select("id, name, slug, description, public_domain, whatsapp_phone, public_app_name, panel_app_name, public_short_name, panel_short_name, onboarding_status, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
+    .eq("id", adminUser.business_id)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -26,9 +39,23 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
     description: data.description ?? "",
     whatsappPhone: data.whatsapp_phone ?? "",
     publicDomain: data.public_domain ?? "",
+    publicAppName: data.public_app_name ?? "",
+    panelAppName: data.panel_app_name ?? "",
+    publicShortName: data.public_short_name ?? "",
+    panelShortName: data.panel_short_name ?? "",
+    onboardingStatus: (data.onboarding_status ?? "incomplete") as PanelBusinessSettings["onboardingStatus"],
     brandPrimary: data.brand_primary,
     brandAccent: data.brand_accent,
+    themeBackground: data.theme_background ?? data.brand_primary,
     brandRadius: data.brand_radius,
+    defaultThemeMode: data.default_theme_mode ?? "light",
+    logoUrl: buildBrandAssetUrl(data.logo_url),
+    logoLightUrl: buildBrandAssetUrl(data.logo_light_url),
+    logoDarkUrl: buildBrandAssetUrl(data.logo_dark_url),
+    publicAppIconUrl: buildBrandAssetUrl(data.public_app_icon_url),
+    panelAppIconUrl: buildBrandAssetUrl(data.panel_app_icon_url),
+    maskableIconUrl: buildBrandAssetUrl(data.maskable_icon_url),
+    appleTouchIconUrl: buildBrandAssetUrl(data.apple_touch_icon_url),
   };
 }
 

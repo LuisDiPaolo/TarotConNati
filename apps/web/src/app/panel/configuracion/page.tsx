@@ -1,14 +1,20 @@
 import { headers } from "next/headers";
+import { BrandAssetsManager } from "@/components/panel/BrandAssetsManager";
 import { BusinessQrCard } from "@/components/panel/BusinessQrCard";
 import { BusinessSettingsForm } from "@/components/panel/BusinessSettingsForm";
+import { OnboardingChecklist } from "@/components/panel/OnboardingChecklist";
 import { PanelShell } from "@/components/panel/PanelShell";
-import { getPanelBusinessSettings } from "@/lib/operations/panel-settings";
+import { PwaBrandPreview } from "@/components/panel/PwaBrandPreview";
+import { getPanelBusinessSettings, getPanelIntakeForms, getPanelSchedules, getPanelServices } from "@/lib/operations/panel-settings";
 import { requirePanelSession } from "@/lib/panel/auth";
 
 export default async function PanelConfigurationPage() {
   await requirePanelSession();
-  const [business, headerStore] = await Promise.all([
+  const [business, services, schedules, intakeForms, headerStore] = await Promise.all([
     getPanelBusinessSettings(),
+    getPanelServices(),
+    getPanelSchedules(),
+    getPanelIntakeForms(),
     headers(),
   ]);
   const protocol = headerStore.get("x-forwarded-proto") ?? "http";
@@ -22,16 +28,20 @@ export default async function PanelConfigurationPage() {
         <h1 className="mt-2 text-3xl font-black sm:text-5xl">Negocio y marca</h1>
       </header>
 
+      <OnboardingChecklist
+        business={business}
+        servicesCount={business ? services.length : 0}
+        schedulesCount={business ? schedules.length : 0}
+        formsCount={business ? intakeForms.length : 0}
+      />
+      <BusinessSettingsForm business={business} />
       {business ? (
         <>
-          <BusinessSettingsForm business={business} />
+          <BrandAssetsManager business={business} />
+          <PwaBrandPreview business={business} />
           <BusinessQrCard business={business} fallbackOrigin={fallbackOrigin} />
         </>
-      ) : (
-        <section className="surface p-6">
-          <p className="font-semibold">No se encontro un negocio asociado a esta sesion.</p>
-        </section>
-      )}
+      ) : null}
     </PanelShell>
   );
 }

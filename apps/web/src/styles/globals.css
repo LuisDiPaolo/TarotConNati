@@ -11,6 +11,7 @@
   --color-border: 226 232 240;
   --brand-primary: 37 99 235;
   --brand-accent: 20 184 166;
+  --theme-background: 37 99 235;
   --brand-radius: 8px;
 
   /* Viewport contract migrated from TEMPORAL references. Keep shells on these variables, not fixed 100vh. */
@@ -28,7 +29,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]):not([data-theme="brand"]) {
     --color-background: 10 10 10;
     --color-foreground: 245 245 245;
     --color-muted: 163 163 163;
@@ -44,6 +45,15 @@
   --color-muted: 100 116 139;
   --color-surface: 255 255 255;
   --color-border: 226 232 240;
+}
+
+:root[data-theme="brand"] {
+  color-scheme: light;
+  --color-background: var(--theme-background);
+  --color-foreground: 255 255 255;
+  --color-muted: 226 232 240;
+  --color-surface: 255 255 255;
+  --color-border: 255 255 255;
 }
 
 :root[data-theme="dark"] {
@@ -128,6 +138,20 @@ body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
   background: rgb(var(--color-surface) / 0.82);
   border: 1px solid rgb(var(--color-border));
   border-radius: var(--brand-radius);
+}
+
+[data-theme="brand"] .surface,
+[data-theme="brand"] .input-control,
+[data-theme="brand"] .secondary-action,
+[data-theme="brand"] .icon-action,
+[data-theme="brand"] .theme-toggle {
+  color: rgb(15 23 42);
+}
+
+[data-theme="brand"] .text-slate-600,
+[data-theme="brand"] .dark\:text-slate-300,
+[data-theme="brand"] .dark\:text-slate-400 {
+  color: rgb(71 85 105);
 }
 
 .primary-action {

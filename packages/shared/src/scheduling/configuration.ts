@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 const hexColorSchema = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/);
+const themeModeSchema = z.enum(["light", "brand", "dark"]);
+const onboardingStatusSchema = z.enum(["incomplete", "review", "ready"]);
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const hostnameSchema = z.string().trim().max(253).regex(/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/);
 
@@ -10,9 +12,16 @@ export const businessSettingsSchema = z.object({
   description: z.string().trim().max(500).optional().or(z.literal("")),
   whatsappPhone: z.string().trim().max(40).optional().or(z.literal("")),
   publicDomain: hostnameSchema.optional().or(z.literal("")),
+  publicAppName: z.string().trim().max(60).optional().or(z.literal("")),
+  panelAppName: z.string().trim().max(60).optional().or(z.literal("")),
+  publicShortName: z.string().trim().max(24).optional().or(z.literal("")),
+  panelShortName: z.string().trim().max(24).optional().or(z.literal("")),
+  onboardingStatus: onboardingStatusSchema.default("incomplete"),
   brandPrimary: hexColorSchema,
   brandAccent: hexColorSchema,
+  themeBackground: hexColorSchema,
   brandRadius: z.string().trim().regex(/^([0-9]|1[0-6])px$/),
+  defaultThemeMode: themeModeSchema,
 });
 
 export const serviceModalitySchema = z.enum(["in_person", "virtual_scheduled", "virtual_on_demand", "contact_request"]);
@@ -85,6 +94,8 @@ export const scheduleOverrideSchema = z.object({
 
 export type ServiceModality = z.infer<typeof serviceModalitySchema>;
 export type SchedulingPolicy = z.infer<typeof schedulingPolicySchema>;
+export type ThemeMode = z.infer<typeof themeModeSchema>;
+export type OnboardingStatus = z.infer<typeof onboardingStatusSchema>;
 export type BusinessSettingsInput = z.infer<typeof businessSettingsSchema>;
 export type ServiceSettingsInput = z.infer<typeof serviceSettingsSchema>;
 export type WeeklyScheduleInput = z.infer<typeof weeklyScheduleSchema>;

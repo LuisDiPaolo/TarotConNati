@@ -11,7 +11,9 @@ describe("businessSettingsSchema", () => {
       publicDomain: "reservas.negocio.com.ar",
       brandPrimary: "#101820",
       brandAccent: "#00A878",
+      themeBackground: "#101820",
       brandRadius: "8px",
+      defaultThemeMode: "brand",
     }).success).toBe(true);
   });
 
@@ -21,7 +23,9 @@ describe("businessSettingsSchema", () => {
       slug: "Barberia Centro",
       brandPrimary: "#101820",
       brandAccent: "#00A878",
+      themeBackground: "#101820",
       brandRadius: "8px",
+      defaultThemeMode: "light",
     }).success).toBe(false);
   });
 });

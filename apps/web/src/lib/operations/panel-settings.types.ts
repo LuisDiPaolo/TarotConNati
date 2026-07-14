@@ -5,9 +5,23 @@ export type PanelBusinessSettings = {
   description: string;
   whatsappPhone: string;
   publicDomain: string;
+  publicAppName: string;
+  panelAppName: string;
+  publicShortName: string;
+  panelShortName: string;
+  onboardingStatus: "incomplete" | "review" | "ready";
   brandPrimary: string;
   brandAccent: string;
+  themeBackground: string;
   brandRadius: string;
+  defaultThemeMode: "light" | "brand" | "dark";
+  logoUrl: string;
+  logoLightUrl: string;
+  logoDarkUrl: string;
+  publicAppIconUrl: string;
+  panelAppIconUrl: string;
+  maskableIconUrl: string;
+  appleTouchIconUrl: string;
 };
 
 export type PanelServiceSettings = {
