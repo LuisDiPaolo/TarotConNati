@@ -172,4 +172,6 @@ La implementacion puede considerarse lista a nivel codigo, pero la fase no deber
 
 Estado recomendado: `Fase 2.5 code complete / pending operational smoke test`.
 
-No marcar como cerrada total hasta ejecutar la prueba real anterior. Si esa prueba pasa, la fase 2.5 se puede cerrar y pasar a la siguiente fase.
+No marcar como cerrada total hasta ejecutar la prueba real anterior. Si esa prueba pasa, la fase 2.5 se puede cerrar.
+
+Siguiente mejora documentada: `Documentacion/Fase_2_6_Experiencia_Publica_Servicios.md`, enfocada en reemplazar el dropdown publico de servicios por cards visuales, detalle responsive y carga de imagen por servicio.

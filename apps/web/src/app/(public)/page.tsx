@@ -32,19 +32,19 @@ export default async function PublicHomePage() {
   return (
     <main className="app-screen py-8 sm:py-12" style={buildBrandStyle(publicBusiness)}>
       <section className="mx-auto w-full max-w-6xl">
-        <header className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Reservas online</p>
+        <header className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--color-foreground))]">Reservas online</p>
           {hasLogo ? (
             <>
               <h1 className="sr-only">{publicBusiness.name}</h1>
-              <div className="mt-5 flex min-h-[120px] w-full max-w-xl items-center sm:min-h-[150px] lg:min-h-[180px]">
+              <div className="mx-auto mt-5 flex min-h-[140px] w-full max-w-2xl items-center justify-center sm:min-h-[170px] lg:min-h-[210px]">
                 {lightLogoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img alt="" className="brand-logo-light max-h-[180px] w-auto max-w-full object-contain object-left" src={lightLogoUrl} />
+                  <img alt="" className="brand-logo-light max-h-[210px] w-auto max-w-full object-contain object-center" src={lightLogoUrl} />
                 ) : null}
                 {darkLogoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img alt="" className="brand-logo-dark hidden max-h-[180px] w-auto max-w-full object-contain object-left" src={darkLogoUrl} />
+                  <img alt="" className="brand-logo-dark hidden max-h-[210px] w-auto max-w-full object-contain object-center" src={darkLogoUrl} />
                 ) : null}
               </div>
             </>

@@ -12,6 +12,11 @@
   --brand-primary: 37 99 235;
   --brand-accent: 20 184 166;
   --theme-background: 37 99 235;
+  --brand-on-background: 248 250 252;
+  --brand-surface: 255 255 255;
+  --brand-surface-foreground: 15 23 42;
+  --brand-surface-muted: 71 85 105;
+  --brand-surface-border: 255 255 255;
   --brand-radius: 8px;
 
   /* Viewport contract migrated from TEMPORAL references. Keep shells on these variables, not fixed 100vh. */
@@ -48,12 +53,12 @@
 }
 
 :root[data-theme="brand"] {
-  color-scheme: light;
+  color-scheme: light dark;
   --color-background: var(--theme-background);
-  --color-foreground: 255 255 255;
-  --color-muted: 226 232 240;
-  --color-surface: 255 255 255;
-  --color-border: 255 255 255;
+  --color-foreground: var(--brand-on-background);
+  --color-muted: var(--brand-surface-muted);
+  --color-surface: var(--brand-surface);
+  --color-border: var(--brand-surface-border);
 }
 
 :root[data-theme="dark"] {
@@ -140,18 +145,46 @@ body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
   border-radius: var(--brand-radius);
 }
 
-[data-theme="brand"] .surface,
+[data-theme="brand"] .surface {
+  background: rgb(var(--brand-surface) / 0.48);
+  border-color: rgb(var(--brand-surface-border) / 0.28);
+  color: rgb(var(--brand-surface-foreground));
+  backdrop-filter: blur(18px);
+}
+
 [data-theme="brand"] .input-control,
 [data-theme="brand"] .secondary-action,
 [data-theme="brand"] .icon-action,
 [data-theme="brand"] .theme-toggle {
-  color: rgb(15 23 42);
+  background: rgb(var(--brand-surface) / 0.38);
+  border-color: rgb(var(--brand-surface-border) / 0.34);
+  color: rgb(var(--brand-surface-foreground));
+  backdrop-filter: blur(14px);
 }
 
+[data-theme="brand"] .input-control::placeholder {
+  color: rgb(var(--brand-surface-muted) / 0.74);
+}
+
+[data-theme="brand"] .surface [class*="bg-white/"] {
+  background: rgb(var(--brand-surface) / 0.24) !important;
+  border-color: rgb(var(--brand-surface-border) / 0.24) !important;
+  color: rgb(var(--brand-surface-foreground));
+}
+
+[data-theme="brand"] .surface .text-slate-950,
+[data-theme="brand"] .surface .text-slate-800,
+[data-theme="brand"] .surface .text-slate-700,
+[data-theme="brand"] .surface .dark\:text-white {
+  color: rgb(var(--brand-surface-foreground));
+}
+
+[data-theme="brand"] .text-slate-700,
 [data-theme="brand"] .text-slate-600,
+[data-theme="brand"] .text-slate-500,
 [data-theme="brand"] .dark\:text-slate-300,
 [data-theme="brand"] .dark\:text-slate-400 {
-  color: rgb(71 85 105);
+  color: rgb(var(--brand-surface-muted));
 }
 
 [data-theme="dark"] .brand-logo-light {

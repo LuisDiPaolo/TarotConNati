@@ -54,12 +54,19 @@ Implementado:
 - Formularios de admision por servicio.
 - Validacion server-side de respuestas de admision.
 
-Flujo publico esperado:
+Flujo publico esperado actual:
 
 1. Usuario elige servicio.
 2. Si el servicio requiere horario, elige slot y crea turno.
 3. Si el servicio es sin horario, envia solicitud con fecha/franja opcional.
 4. El panel recibe la solicitud.
+
+Mejora documentada para Fase 2.6:
+
+- Reemplazar el dropdown como selector primario por cards de servicio con imagen, titulo, descripcion breve y precio.
+- Abrir el detalle del servicio como bottom sheet casi pantalla completa en mobile/PWA y como modal centrado en desktop.
+- Mover requisitos, descripcion completa, horarios y formulario al detalle del servicio seleccionado.
+- Agregar carga de imagen por servicio desde panel, con recorte/optimizacion.
 
 ## Panel
 
@@ -170,6 +177,7 @@ Limitacion actual:
 - Asociar `push_subscriptions` publicas a cliente/turno para enviar push dirigido al cliente correcto.
 - Cerrar smoke test operativo de Fase 2.5 en ambiente real: migraciones, base limpia, assets, favicon, manifest, PWA y fallback con seed cargado.
 - Endurecer migraciones para re-ejecucion idempotente si se van a copiar manualmente en Supabase.
+- Fase 2.6 documentada: reemplazar dropdown publico de servicios por cards con imagen, precio y descripcion breve; abrir detalle/formulario como bottom sheet en mobile/PWA y modal centrado en desktop. Referencia: `Documentacion/Fase_2_6_Experiencia_Publica_Servicios.md`.
 
 ## Variables necesarias en Vercel
 

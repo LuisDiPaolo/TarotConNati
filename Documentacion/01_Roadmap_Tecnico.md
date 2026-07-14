@@ -332,6 +332,22 @@ _Objetivo: que el cliente pueda dejar lista su instancia desde el panel admin, s
 
 _Criterio de cierre de Fase 2.5: una instancia sin seed demo puede configurarse desde el panel, instalar PWA publica y panel con identidad propia, y cargar servicios reales sin intervencion de codigo._
 
+Fase 2.6 - Experiencia publica de servicios
+
+_Objetivo: que la web publica presente los servicios como catalogo profesional y que la reserva ocurra dentro del contexto del servicio elegido._
+
+• Reemplazo del dropdown principal por cards de servicio con imagen, titulo, descripcion breve, precio, duracion/modalidad e indicador de pago.
+
+• Detalle de servicio como bottom sheet en mobile/PWA, cubriendo casi toda la pantalla, con scroll interno y cierre claro.
+
+• Detalle de servicio como modal centrado en desktop, con ancho maximo acotado y foco accesible.
+
+• Formulario de reserva/solicitud dentro del detalle del servicio seleccionado, incluyendo horarios, requisitos, formularios de admision e instrucciones.
+
+• Carga de imagen por servicio desde el panel, con recorte, optimizacion de calidad/peso y fallback visual cuando no hay imagen.
+
+_Criterio de cierre de Fase 2.6: el usuario final puede elegir un servicio desde cards visuales, abrir su detalle en una experiencia responsive y completar la reserva o solicitud sin pasar por un dropdown generico._
+
 Fase 3 - Presencia digital
 
 • Portfolio manual: imágenes con título, categoría y enlace opcional de Instagram.
