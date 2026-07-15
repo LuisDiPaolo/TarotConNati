@@ -47,15 +47,6 @@ function firstStoragePath(...paths: Array<string | null | undefined>) {
   return paths.find((path) => Boolean(path?.trim())) ?? null;
 }
 
-function hasBrandAssets(row: BusinessManifestRow) {
-  return Boolean(
-    row.public_app_icon_url?.trim()
-    || row.panel_app_icon_url?.trim()
-    || row.maskable_icon_url?.trim()
-    || row.apple_touch_icon_url?.trim(),
-  );
-}
-
 async function getBusinessForManifest(request: NextRequest): Promise<BusinessManifestRow | null> {
   const hostname = getRequestHostname(request);
   const supabase = createSupabaseAdminClient();
@@ -71,12 +62,12 @@ async function getBusinessForManifest(request: NextRequest): Promise<BusinessMan
   const { data: fallbackRows, error: fallbackError } = await supabase
     .from("business")
     .select("name, description, public_domain, panel_domain, public_app_name, panel_app_name, public_short_name, panel_short_name, brand_primary, theme_background, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
-    .order("created_at", { ascending: true })
+    .order("updated_at", { ascending: false })
     .limit(10);
 
   if (fallbackError || !fallbackRows?.length) return null;
   const rows = fallbackRows as BusinessManifestRow[];
-  return rows.find(hasBrandAssets) ?? rows[0]!;
+  return rows[0]!;
 }
 
 export async function buildBusinessManifest(request: NextRequest, surface: ManifestSurface) {

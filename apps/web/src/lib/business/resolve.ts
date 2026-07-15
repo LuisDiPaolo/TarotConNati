@@ -52,18 +52,6 @@ type BusinessRow = {
   apple_touch_icon_url?: string | null;
 };
 
-function hasBrandAssets(row: BusinessRow) {
-  return Boolean(
-    row.logo_url?.trim()
-    || row.logo_light_url?.trim()
-    || row.logo_dark_url?.trim()
-    || row.public_app_icon_url?.trim()
-    || row.panel_app_icon_url?.trim()
-    || row.maskable_icon_url?.trim()
-    || row.apple_touch_icon_url?.trim(),
-  );
-}
-
 function mapBusiness(row: BusinessRow): ResolvedBusiness {
   return {
     id: row.id,
@@ -100,12 +88,12 @@ export async function resolveBusinessForHostname(hostname: string): Promise<Reso
   const { data: fallbackRows, error: fallbackError } = await supabase
     .from("business")
     .select("id, timezone, currency, locale, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
-    .order("created_at", { ascending: true })
+    .order("updated_at", { ascending: false })
     .limit(10);
 
   if (fallbackError || !fallbackRows?.length) return null;
   const rows = fallbackRows as BusinessRow[];
-  return mapBusiness(rows.find(hasBrandAssets) ?? rows[0]!);
+  return mapBusiness(rows[0]!);
 }
 
 export async function resolveBusinessForRequest(request: NextRequest): Promise<ResolvedBusiness | null> {

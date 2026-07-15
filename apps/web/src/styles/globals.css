@@ -120,6 +120,62 @@ summary,
   -webkit-tap-highlight-color: transparent;
 }
 
+button,
+[role="button"] {
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  user-select: none;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+button > svg,
+button > span,
+button > div,
+button > [aria-hidden="true"],
+button > .lucide,
+a[href] > svg,
+a[href] > span,
+a[href] > [aria-hidden="true"],
+a[href] > .lucide,
+[role="button"] > svg,
+[role="button"] > span,
+[role="button"] > div,
+[role="button"] > [aria-hidden="true"],
+[role="button"] > .lucide,
+.service-card * {
+  pointer-events: none;
+}
+
+button:focus-visible,
+a[href]:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgb(var(--brand-accent) / 0.72);
+  outline-offset: 3px;
+}
+
+button:not(:disabled):active,
+a[href]:active,
+[role="button"]:active {
+  filter: brightness(0.97);
+}
+
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]) {
+  cursor: pointer;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  min-height: 20px;
+  min-width: 20px;
+  touch-action: manipulation;
+}
+
 .app-screen {
   min-height: 100dvh;
   min-height: max(var(--app-height), 100dvh);

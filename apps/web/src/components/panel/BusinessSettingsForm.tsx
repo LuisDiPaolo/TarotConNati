@@ -47,6 +47,8 @@ export function BusinessSettingsForm({ business }: { business: PanelBusinessSett
   const router = useRouter();
   const values = business ?? DEFAULT_BUSINESS;
   const [businessName, setBusinessName] = useState(values.name);
+  const [bottomNavEnabled, setBottomNavEnabled] = useState(values.publicBottomNavEnabled);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(values.notificationsEnabled);
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -78,8 +80,8 @@ export function BusinessSettingsForm({ business }: { business: PanelBusinessSett
         themeBackground: String(formData.get("themeBackground") ?? ""),
         brandRadius: String(formData.get("brandRadius") ?? ""),
         defaultThemeMode: String(formData.get("defaultThemeMode") ?? "light"),
-        publicBottomNavEnabled: formData.get("publicBottomNavEnabled") === "true",
-        notificationsEnabled: formData.get("notificationsEnabled") === "true",
+        publicBottomNavEnabled: bottomNavEnabled,
+        notificationsEnabled,
       }),
     }).catch(() => null);
 
@@ -174,15 +176,29 @@ export function BusinessSettingsForm({ business }: { business: PanelBusinessSett
           <h3 className="text-base font-black">Funciones de la app publica</h3>
           <p className="mt-1 text-sm text-muted">Activa solo lo que el negocio quiere mostrar o usar con sus clientes.</p>
         </div>
-        <label className="flex items-start gap-3 text-sm">
-          <input className="mt-1" name="publicBottomNavEnabled" type="checkbox" value="true" defaultChecked={values.publicBottomNavEnabled} />
+        <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-md p-1 text-sm">
+          <input
+            checked={bottomNavEnabled}
+            className="mt-1 h-5 w-5 shrink-0 cursor-pointer"
+            name="publicBottomNavEnabled"
+            onChange={(event) => setBottomNavEnabled(event.target.checked)}
+            type="checkbox"
+            value="true"
+          />
           <span>
             <span className="block font-bold">Mostrar navegacion inferior</span>
             <span className="mt-1 block leading-6 text-muted">Agrega accesos a Servicios, Historial, Notificaciones y Cuenta. Dejalo apagado si solo queres mostrar la reserva simple.</span>
           </span>
         </label>
-        <label className="flex items-start gap-3 text-sm">
-          <input className="mt-1" name="notificationsEnabled" type="checkbox" value="true" defaultChecked={values.notificationsEnabled} />
+        <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-md p-1 text-sm">
+          <input
+            checked={notificationsEnabled}
+            className="mt-1 h-5 w-5 shrink-0 cursor-pointer"
+            name="notificationsEnabled"
+            onChange={(event) => setNotificationsEnabled(event.target.checked)}
+            type="checkbox"
+            value="true"
+          />
           <span>
             <span className="block font-bold">Servicio de notificaciones</span>
             <span className="mt-1 block leading-6 text-muted">Permite enviar avisos push por reservas, solicitudes y cambios de estado. Viene activo por defecto y se puede apagar cuando el negocio no quiera usar notificaciones.</span>
