@@ -9,21 +9,21 @@ type DraftService = PanelServiceSettings & { draftId: string; isNew?: boolean };
 
 const modalityLabels: Record<PanelServiceSettings["serviceModality"], string> = {
   in_person: "Presencial",
-  virtual_scheduled: "Virtual con hora",
-  virtual_on_demand: "Virtual a demanda",
-  contact_request: "Solicitud/contacto",
+  virtual_scheduled: "Online con turno",
+  virtual_on_demand: "Online sin horario fijo",
+  contact_request: "Consulta para coordinar",
 };
 
 const policyLabels: Record<PanelServiceSettings["schedulingPolicy"], string> = {
-  scheduled: "Requiere horario",
-  day_request: "Pide dia/ventana",
-  manual_coordination: "Coordinacion manual",
-  no_calendar_block: "No bloquea agenda",
+  scheduled: "El cliente elige horario",
+  day_request: "El cliente pide dia o franja",
+  manual_coordination: "Lo coordinas manualmente",
+  no_calendar_block: "No ocupa agenda",
 };
 
 const serviceImageCropConfig: BrandAssetCropConfig = {
   title: "Imagen del servicio",
-  helpText: "Usa una foto cuadrada o recortala aca. Se optimiza en WebP para que cargue rapido en la web y PWA.",
+  helpText: "Usa una foto cuadrada. La app la ajusta para que cargue rapido en la pagina publica.",
   outputWidth: 900,
   outputHeight: 900,
   outputMimeType: "image/webp",
@@ -80,6 +80,8 @@ function emptyService(): DraftService {
 export function ServicesManager({ services }: { services: PanelServiceSettings[] }) {
   const [rows, setRows] = useState<DraftService[]>(services.map((service) => ({ ...service, draftId: service.id })));
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "error">("success");
+  const [savingId, setSavingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DraftService | null>(null);
   const [imageCropTarget, setImageCropTarget] = useState<{ row: DraftService; file: File } | null>(null);
 
@@ -90,6 +92,28 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
 
   async function saveRow(row: DraftService) {
     setMessage("");
+    setMessageTone("success");
+
+    if (row.name.trim().length < 2) {
+      setMessageTone("error");
+      setMessage("Escribi el nombre del servicio antes de guardar.");
+      return;
+    }
+
+    if (!Number.isFinite(row.durationMinutes) || row.durationMinutes < 5) {
+      setMessageTone("error");
+      setMessage("La duracion tiene que ser de al menos 5 minutos.");
+      return;
+    }
+
+    if (row.pricePesos < 0 || row.depositPesos < 0) {
+      setMessageTone("error");
+      setMessage("Los importes no pueden ser negativos.");
+      return;
+    }
+
+    setSavingId(row.draftId);
+
     const payload = {
       name: row.name,
       description: row.description,
@@ -113,35 +137,41 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       method: row.isNew ? "POST" : "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    });
-    const data = await response.json().catch(() => null) as { id?: string } | null;
+    }).catch(() => null);
+    const data = await response?.json().catch(() => null) as { id?: string } | null;
 
-    if (!response.ok) {
-      setMessage("No se pudo guardar el servicio.");
+    if (!response?.ok) {
+      setSavingId(null);
+      setMessageTone("error");
+      setMessage("No se pudo guardar el servicio. Revisa los datos e intenta de nuevo.");
       return;
     }
 
     if (row.isNew && data?.id) {
       updateRow(row.draftId, { id: data.id, draftId: data.id, isNew: false });
     }
+    setSavingId(null);
     setMessage("Servicio guardado.");
   }
 
   async function uploadServiceImage(row: DraftService, croppedFile: File) {
     if (!row.id || row.isNew) {
+      setMessageTone("error");
       setMessage("Guarda el servicio antes de cargar una imagen.");
       return;
     }
 
     setMessage("");
+    setMessageTone("success");
     const formData = new FormData();
     formData.set("serviceId", row.id);
     formData.set("file", croppedFile);
 
-    const response = await fetch("/api/panel/service-assets", { method: "POST", body: formData });
-    const data = await response.json().catch(() => null) as { publicUrl?: string; error?: { message?: string } } | null;
+    const response = await fetch("/api/panel/service-assets", { method: "POST", body: formData }).catch(() => null);
+    const data = await response?.json().catch(() => null) as { publicUrl?: string; error?: { message?: string } } | null;
 
-    if (!response.ok || !data?.publicUrl) {
+    if (!response?.ok || !data?.publicUrl) {
+      setMessageTone("error");
       setMessage(data?.error?.message ?? "No se pudo subir la imagen del servicio.");
       return;
     }
@@ -154,6 +184,7 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
   async function confirmDeleteRow() {
     if (!deleteTarget) return;
     setMessage("");
+    setMessageTone("success");
     if (deleteTarget.isNew || !deleteTarget.id) {
       setRows((current) => current.filter((currentRow) => currentRow.draftId !== deleteTarget.draftId));
       setDeleteTarget(null);
@@ -162,18 +193,23 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
 
     const response = await fetch(`/api/panel/services/${deleteTarget.id}`, { method: "DELETE" });
     if (!response.ok) {
-      setMessage("No se pudo borrar el servicio.");
+      setMessageTone("error");
+      setMessage("No se pudo quitar el servicio.");
       return;
     }
 
     setRows((current) => current.filter((currentRow) => currentRow.id !== deleteTarget.id));
     setDeleteTarget(null);
-    setMessage("Servicio borrado.");
+    setMessage("Servicio quitado.");
   }
 
   return (
     <div className="grid gap-4">
-      <div className="flex justify-end">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-xl font-black">Servicios</h2>
+          <p className="mt-1 text-sm text-muted">Carga lo que el cliente puede reservar o solicitar desde la pagina publica.</p>
+        </div>
         <button className="primary-action" type="button" onClick={() => setRows((current) => [...current, emptyService()])}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Agregar servicio
@@ -211,60 +247,56 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
             </label>
 
             <div className="grid gap-3">
-              <div className="grid gap-3 md:grid-cols-4">
+              <div className="grid gap-3 md:grid-cols-3">
                 <label className="grid gap-2 text-sm font-semibold md:col-span-2">
-                  Nombre
-                  <input className="input-control" value={row.name} onChange={(event) => updateRow(row.draftId, { name: event.target.value })} />
+                  Nombre del servicio
+                  <input className="input-control" value={row.name} onChange={(event) => updateRow(row.draftId, { name: event.target.value })} placeholder="Ej: Corte y peinado" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold">
                   Categoria
-                  <input className="input-control" value={row.category} onChange={(event) => updateRow(row.draftId, { category: event.target.value })} />
-                </label>
-                <label className="grid gap-2 text-sm font-semibold">
-                  Orden
-                  <input className="input-control" type="number" value={row.sortOrder} onChange={(event) => updateRow(row.draftId, { sortOrder: Number(event.target.value) })} />
+                  <input className="input-control" value={row.category} onChange={(event) => updateRow(row.draftId, { category: event.target.value })} placeholder="Ej: Peluqueria" />
                 </label>
               </div>
 
-              <textarea className="input-control min-h-24 resize-y" value={row.description} onChange={(event) => updateRow(row.draftId, { description: event.target.value })} placeholder="Descripcion breve para mostrar en la card publica" />
+              <textarea className="input-control min-h-24 resize-y" value={row.description} onChange={(event) => updateRow(row.draftId, { description: event.target.value })} placeholder="Descripcion breve que va a ver el cliente antes de reservar" />
             </div>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-3">
             <label className="grid gap-2 text-sm font-semibold">
-              Modalidad
+              Tipo de atencion
               <select className="input-control" value={row.serviceModality} onChange={(event) => updateRow(row.draftId, { serviceModality: event.target.value as DraftService["serviceModality"] })}>
                 {Object.entries(modalityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Agenda
+              Como se reserva
               <select className="input-control" value={row.schedulingPolicy} onChange={(event) => updateRow(row.draftId, { schedulingPolicy: event.target.value as DraftService["schedulingPolicy"] })}>
                 {Object.entries(policyLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
             <label className="flex items-end gap-2 text-sm font-semibold">
               <input type="checkbox" checked={row.requiresManualConfirmation} onChange={(event) => updateRow(row.draftId, { requiresManualConfirmation: event.target.checked })} />
-              Confirmacion manual
+              Revisar antes de confirmar
             </label>
           </div>
 
           <div className="grid gap-3 md:grid-cols-4">
             <label className="grid gap-2 text-sm font-semibold">
-              Duracion min.
+              Duracion
               <input className="input-control" type="number" min={5} max={480} value={row.durationMinutes} onChange={(event) => updateRow(row.draftId, { durationMinutes: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Buffer antes
+              Preparacion antes
               <input className="input-control" type="number" min={0} max={480} value={row.bufferBeforeMinutes} onChange={(event) => updateRow(row.draftId, { bufferBeforeMinutes: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Buffer despues
+              Tiempo despues
               <input className="input-control" type="number" min={0} max={480} value={row.bufferAfterMinutes} onChange={(event) => updateRow(row.draftId, { bufferAfterMinutes: Number(event.target.value) })} />
             </label>
             <label className="flex items-end gap-2 text-sm font-semibold">
               <input type="checkbox" checked={row.blocksCalendar} disabled={row.schedulingPolicy !== "scheduled"} onChange={(event) => updateRow(row.draftId, { blocksCalendar: event.target.checked })} />
-              Bloquea agenda
+              Reservar horario en agenda
             </label>
           </div>
 
@@ -279,13 +311,13 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
               <input className="input-control" type="number" min={0} step={1} value={row.pricePesos} onChange={(event) => updateRow(row.draftId, { pricePesos: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Sena en pesos
+              Reserva en pesos
               <input className="input-control" type="number" min={0} step={1} value={row.depositPesos} onChange={(event) => updateRow(row.draftId, { depositPesos: Number(event.target.value) })} />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
-              Cobro al reservar
+              Pago al reservar
               <select className="input-control" value={row.paymentMode} onChange={(event) => updateRow(row.draftId, { paymentMode: event.target.value as DraftService["paymentMode"] })}>
-                <option value="deposit">Sena</option>
+                <option value="deposit">Reserva parcial</option>
                 <option value="full">Pago total adelantado</option>
                 <option value="none">Sin cobro online</option>
               </select>
@@ -297,18 +329,18 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
           </div>
 
           <div className="flex justify-end gap-2">
-            <button className="icon-action danger-icon-action" type="button" onClick={() => setDeleteTarget(row)} title="Borrar servicio">
+            <button className="icon-action danger-icon-action" type="button" onClick={() => setDeleteTarget(row)} title="Quitar servicio">
               <Trash2 aria-hidden="true" className="h-4 w-4" />
             </button>
-            <button className="primary-action" type="button" onClick={() => saveRow(row)}>
+            <button className="primary-action disabled:opacity-60" type="button" disabled={savingId === row.draftId} onClick={() => saveRow(row)}>
               <Save aria-hidden="true" className="h-4 w-4" />
-              Guardar
+              {savingId === row.draftId ? "Guardando" : "Guardar"}
             </button>
           </div>
         </article>
       ))}
 
-      {message ? <p className="text-sm font-semibold text-emerald-600">{message}</p> : null}
+      {message ? <p className={messageTone === "error" ? "text-sm font-semibold text-red-600" : "text-sm font-semibold text-emerald-600"}>{message}</p> : null}
 
       {imageCropTarget ? (
         <BrandAssetCropper
@@ -328,9 +360,9 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
                 <AlertTriangle aria-hidden="true" className="h-5 w-5" />
               </div>
               <div>
-                <h2 id="delete-service-title" className="text-lg font-black">Borrar servicio</h2>
+                <h2 id="delete-service-title" className="text-lg font-black">Quitar servicio</h2>
                 <p className="mt-2 text-sm leading-6 text-muted">
-                  Vas a borrar {deleteTarget.name || "este servicio"}. Si ya fue guardado, se desactiva para no romper turnos historicos.
+                  Vas a quitar {deleteTarget.name || "este servicio"} de la pagina publica. Si ya tenia turnos, se conserva el historial.
                 </p>
               </div>
             </div>
@@ -340,7 +372,7 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
               </button>
               <button className="danger-action w-full sm:w-auto" type="button" onClick={confirmDeleteRow}>
                 <Trash2 aria-hidden="true" className="h-4 w-4" />
-                Borrar
+                Quitar
               </button>
             </div>
           </div>

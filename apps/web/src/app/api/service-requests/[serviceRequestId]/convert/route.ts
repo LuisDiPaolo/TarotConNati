@@ -76,7 +76,7 @@ export async function POST(_request: Request, context: { params: Promise<{ servi
 
   await sendTransactionalPush({
     businessId: serviceRequest.business_id,
-    eventKey: `service_request.converted.${serviceRequestId}.${appointment.id}`,
+    eventKey: `service_request.converted.panel.${serviceRequestId}.${appointment.id}`,
     eventType: "service_request.converted",
     sourceTable: "service_requests",
     sourceId: serviceRequestId,
@@ -85,6 +85,23 @@ export async function POST(_request: Request, context: { params: Promise<{ servi
       title: "Solicitud convertida",
       body: `Turno operativo creado para ${String(serviceJoin?.name ?? "servicio")}`,
       url: "/panel",
+      tag: "service-request-converted",
+    },
+  });
+
+  await sendTransactionalPush({
+    businessId: serviceRequest.business_id,
+    eventKey: `service_request.converted.public.${serviceRequestId}.${appointment.id}`,
+    eventType: "service_request.converted",
+    sourceTable: "service_requests",
+    sourceId: serviceRequestId,
+    surface: "public",
+    customerId: serviceRequest.customer_id,
+    serviceRequestId,
+    payload: {
+      title: "Tu solicitud ya tiene turno",
+      body: `Turno creado para ${String(serviceJoin?.name ?? "servicio")}`,
+      url: "/?tab=history",
       tag: "service-request-converted",
     },
   });

@@ -19,7 +19,7 @@ const ASSET_CONFIGS: AssetConfig[] = [
     type: "logo",
     label: "Logo principal",
     title: "Recortar logo",
-    helpText: "Arrastra para encuadrar el logo. Se guarda optimizado en WebP. Se usa como fallback si no hay variantes.",
+    helpText: "Arrastra para encuadrar el logo. Se usa cuando no cargaste una version especifica para modo claro u oscuro.",
     outputWidth: 900,
     outputHeight: 300,
     outputMimeType: "image/webp",
@@ -62,9 +62,9 @@ const ASSET_CONFIGS: AssetConfig[] = [
   },
   {
     type: "publicIcon",
-    label: "Icono publico",
-    title: "Recortar icono publico",
-    helpText: "Recomendado: subir un logo PNG/WebP sin fondo y elegir aca el color de fondo. Se usa al instalar la PWA publica y como favicon del navegador.",
+    label: "Icono pagina publica",
+    title: "Recortar icono de la pagina publica",
+    helpText: "Recomendado: subir un logo sin fondo y elegir aca el color de fondo. Se usa como icono de acceso rapido y en la pestana del navegador.",
     outputWidth: 512,
     outputHeight: 512,
     outputMimeType: "image/webp",
@@ -79,8 +79,8 @@ const ASSET_CONFIGS: AssetConfig[] = [
   },
   {
     type: "panelIcon",
-    label: "Icono panel",
-    title: "Recortar icono panel",
+    label: "Icono del panel",
+    title: "Recortar icono del panel",
     helpText: "Recomendado: subir un logo sin fondo y elegir un color de fondo que funcione para el panel administrativo.",
     outputWidth: 512,
     outputHeight: 512,
@@ -96,9 +96,9 @@ const ASSET_CONFIGS: AssetConfig[] = [
   },
   {
     type: "maskableIcon",
-    label: "Icono maskable",
-    title: "Recortar icono maskable",
-    helpText: "Recomendado: logo sin fondo, margen visual amplio y color de fondo elegido aca para que Android no corte contenido importante.",
+    label: "Icono Android seguro",
+    title: "Recortar icono para Android",
+    helpText: "Deja margen visual alrededor del logo para que no se corte cuando el telefono redondea el icono.",
     outputWidth: 512,
     outputHeight: 512,
     outputMimeType: "image/webp",
@@ -113,9 +113,9 @@ const ASSET_CONFIGS: AssetConfig[] = [
   },
   {
     type: "appleTouchIcon",
-    label: "Apple touch icon",
-    title: "Recortar Apple touch icon",
-    helpText: "Recomendado: logo sin fondo y color de fondo solido elegido aca, porque iOS no trata bien transparencias en iconos instalables.",
+    label: "Icono iPhone y iPad",
+    title: "Recortar icono para iPhone y iPad",
+    helpText: "Usa un logo con fondo solido para que se vea bien al guardar el acceso en la pantalla de inicio.",
     outputWidth: 180,
     outputHeight: 180,
     outputMimeType: "image/png",
@@ -192,7 +192,7 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
 
     if (!response.ok) {
       setState("error");
-      setMessage("No se pudo guardar el asset.");
+      setMessage("No se pudo guardar la imagen.");
       return;
     }
 
@@ -206,13 +206,13 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
     <section className="surface grid gap-5 p-5 sm:p-6">
       <div className="flex items-center gap-3">
         <ImageIcon aria-hidden="true" className="h-5 w-5 text-accent" />
-        <h2 className="text-xl font-black">Assets de marca</h2>
+        <h2 className="text-xl font-black">Imagenes de marca</h2>
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelected} />
 
       <p className="text-sm text-muted">
-        Para iconos conviene pedir al prestador un logo sin fondo: desde el recorte se elige el color solido final. Para logos con texto o colores delicados, carga variante para modo claro y para modo oscuro.
+        Carga el logo y los iconos que vera el cliente en la pagina publica, el navegador y los accesos guardados en el telefono. Si el logo cambia segun fondo claro u oscuro, carga esas variantes.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -226,14 +226,14 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
             </div>
             <div>
               <h3 className="text-sm font-black">{config.label}</h3>
-              <p className="mt-1 text-xs text-muted">{config.outputWidth} x {config.outputHeight}</p>
+              <p className="mt-1 text-xs text-muted">{config.currentUrl(business) ? "Imagen cargada" : "Pendiente"}</p>
             </div>
           </article>
         ))}
       </div>
 
       {message ? <p className="text-sm font-semibold text-red-600">{message}</p> : null}
-      {state === "uploading" ? <p className="text-sm font-semibold text-muted">Subiendo asset...</p> : null}
+      {state === "uploading" ? <p className="text-sm font-semibold text-muted">Subiendo imagen...</p> : null}
 
       {cropSource && selectedConfig ? (
         <BrandAssetCropper

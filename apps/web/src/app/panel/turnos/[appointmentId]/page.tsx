@@ -1,7 +1,9 @@
+import { MessageCircle } from "lucide-react";
 import { notFound } from "next/navigation";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { getPanelAppointmentDetail } from "@/lib/operations/panel-appointments";
 import { requirePanelSession } from "@/lib/panel/auth";
+import { buildAppointmentReminderWhatsAppUrl } from "@/lib/whatsapp/appointment-reminder";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-AR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
@@ -12,6 +14,7 @@ export default async function PanelAppointmentDetailPage({ params }: { params: P
   const { appointmentId } = await params;
   const appointment = await getPanelAppointmentDetail(appointmentId);
   if (!appointment) notFound();
+  const whatsappReminderUrl = buildAppointmentReminderWhatsAppUrl(appointment);
 
   return (
     <PanelShell>
@@ -31,12 +34,21 @@ export default async function PanelAppointmentDetailPage({ params }: { params: P
           </dl>
         </article>
         <article className="surface p-5">
-          <h2 className="text-lg font-bold">Cliente</h2>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h2 className="text-lg font-bold">Cliente</h2>
+            {whatsappReminderUrl ? (
+              <a className="secondary-action" href={whatsappReminderUrl} rel="noopener noreferrer" target="_blank">
+                <MessageCircle aria-hidden="true" className="h-4 w-4" />
+                Recordatorio WhatsApp
+              </a>
+            ) : null}
+          </div>
           <dl className="mt-4 grid gap-3 text-sm">
             <div><dt className="font-semibold">Nombre</dt><dd>{appointment.customerName}</dd></div>
             <div><dt className="font-semibold">Telefono</dt><dd>{appointment.customerPhone || "-"}</dd></div>
             <div><dt className="font-semibold">Email</dt><dd>{appointment.customerEmail || "-"}</dd></div>
           </dl>
+          {!whatsappReminderUrl ? <p className="mt-4 text-sm text-slate-500">Carga un telefono valido para enviar recordatorios por WhatsApp.</p> : null}
         </article>
       </section>
 

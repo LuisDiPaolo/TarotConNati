@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertTriangle, Check, ChevronDown, Eye, Plus, RotateCcw, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Eye, MessageCircle, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useState } from "react";
 import type { PanelAppointment } from "@/lib/operations/panel-appointments";
 import type { PanelServiceSettings } from "@/lib/operations/panel-settings.types";
+import { buildAppointmentReminderWhatsAppUrl } from "@/lib/whatsapp/appointment-reminder";
 
 type AppointmentsTableProps = {
   appointments: PanelAppointment[];
@@ -123,11 +124,22 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
   }
 
   function renderActions(appointment: PanelAppointment) {
+    const whatsappReminderUrl = buildAppointmentReminderWhatsAppUrl(appointment);
+
     return (
       <div className="flex flex-wrap justify-end gap-2">
         <Link className="icon-action" href={`/panel/turnos/${appointment.id}` as Route} title="Ver detalle">
           <Eye aria-hidden="true" className="h-4 w-4" />
         </Link>
+        {whatsappReminderUrl ? (
+          <a className="icon-action" href={whatsappReminderUrl} rel="noopener noreferrer" target="_blank" title="Enviar recordatorio por WhatsApp">
+            <MessageCircle aria-hidden="true" className="h-4 w-4" />
+          </a>
+        ) : (
+          <button className="icon-action" disabled title="Cargar telefono valido para WhatsApp" type="button">
+            <MessageCircle aria-hidden="true" className="h-4 w-4" />
+          </button>
+        )}
         {appointment.status === "pending" ? (
           <button className="icon-action" disabled={busyId === appointment.id} onClick={() => updateStatus(appointment.id, "confirmed")} title="Confirmar" type="button">
             <Check aria-hidden="true" className="h-4 w-4" />

@@ -70,17 +70,17 @@ export function InstallInstructions({ surface }: InstallInstructionsProps) {
   return (
     <main className="app-screen flex items-center justify-center py-10">
       <section className="w-full max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">PWA</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Acceso rapido</p>
         <h1 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">{title}</h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-          Cada superficie se instala desde su propio origen: el sitio publico desde el dominio principal y el panel desde el subdominio operativo.
+          Guarda esta pantalla en el inicio del telefono para entrar mas rapido y activar avisos cuando haya novedades.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="surface p-5">
             <MonitorSmartphone aria-hidden="true" className="h-6 w-6 text-primary" />
-            <h2 className="mt-4 text-lg font-bold">Origen separado</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Manifest y service worker se resuelven por hostname.</p>
+            <h2 className="mt-4 text-lg font-bold">Acceso directo</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Queda como una app en la pantalla principal del dispositivo.</p>
           </article>
           <article className="surface p-5">
             <Smartphone aria-hidden="true" className="h-6 w-6 text-primary" />
@@ -89,21 +89,20 @@ export function InstallInstructions({ surface }: InstallInstructionsProps) {
           </article>
           <article className="surface p-5">
             <Share aria-hidden="true" className="h-6 w-6 text-primary" />
-            <h2 className="mt-4 text-lg font-bold">Android/desktop</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">El navegador puede mostrar el prompt nativo de instalacion.</p>
+            <h2 className="mt-4 text-lg font-bold">Android y computadora</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">El navegador puede ofrecer guardar el acceso automaticamente.</p>
           </article>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
           <button className="primary-action" disabled={!installEvent || installed} onClick={requestInstall} type="button">
             <Download aria-hidden="true" className="h-5 w-5" />
-            {installed ? "Instalada" : installEvent ? "Instalar" : platform === "ios" ? "Instalacion manual" : "Prompt no disponible"}
+            {installed ? "Instalada" : installEvent ? "Instalar" : platform === "ios" ? "Usar Compartir" : "Usar menu del navegador"}
           </button>
           <button className="primary-action bg-accent" disabled={notificationStatus === "unsupported" || notificationStatus === "granted"} onClick={requestNotifications} type="button">
             <Bell aria-hidden="true" className="h-5 w-5" />
             {notificationStatus === "granted" ? "Notificaciones activas" : "Activar notificaciones"}
           </button>
-          <a className="primary-action" href={surface === "panel" ? "/api/pwa/panel-manifest" : "/api/pwa/public-manifest"}>Ver manifest</a>
         </div>
       </section>
     </main>

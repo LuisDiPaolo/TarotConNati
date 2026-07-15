@@ -68,8 +68,8 @@ export function PwaBrandPreview({ business }: { business: PanelBusinessSettings 
       <div className="flex items-center gap-3">
         <MonitorSmartphone aria-hidden="true" className="h-5 w-5 text-accent" />
         <div>
-          <h2 className="text-xl font-black">Preview PWA y navegador</h2>
-          <p className="text-sm text-muted">Mismo icono de app para instalacion y favicon desktop.</p>
+          <h2 className="text-xl font-black">Vista previa de marca</h2>
+          <p className="text-sm text-muted">Asi se veran el icono y el nombre en la pagina publica y en el panel.</p>
         </div>
       </div>
       <div className="grid gap-3 lg:grid-cols-2">

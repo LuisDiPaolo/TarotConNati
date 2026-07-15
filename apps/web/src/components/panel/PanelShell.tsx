@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, ClipboardList, FileText, MessageCircle, Settings, Users, Wrench } from "lucide-react";
+import { BarChart3, Bell, CalendarDays, ClipboardList, FileText, MessageCircle, Settings, Users, Wrench } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import type { ComponentType, ReactNode } from "react";
@@ -16,6 +16,7 @@ const navItems: PanelNavItem[] = [
   { href: "/panel/servicios", label: "Servicios", icon: Wrench },
   { href: "/panel/agenda", label: "Agenda", icon: ClipboardList },
   { href: "/panel/clientes", label: "Clientes", icon: Users },
+  { href: "/panel/notificaciones", label: "Avisos", icon: Bell },
   { href: "/panel/formularios", label: "Formularios", icon: FileText },
   { href: "/panel/reportes", label: "Reportes", icon: BarChart3 },
 ];

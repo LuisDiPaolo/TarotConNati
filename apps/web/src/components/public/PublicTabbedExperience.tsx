@@ -4,6 +4,7 @@ import { Bell, CalendarDays, History, UserRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ReservationForm } from "@/components/public/ReservationForm";
 import type { PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
+import { syncCurrentPushSubscription } from "@/lib/pwa/push-client";
 
 type PublicTab = "services" | "history" | "notifications" | "account";
 
@@ -24,6 +25,16 @@ type PublicNotificationItem = {
   body: string;
   createdAt: string;
   read: boolean;
+};
+
+type PushMessagePayload = {
+  type?: string;
+  payload?: {
+    eventId?: string;
+    title?: string;
+    body?: string;
+    receivedAt?: string;
+  };
 };
 
 type PublicAccount = {
@@ -53,6 +64,17 @@ function readStoredArray<T>(key: string): T[] {
     return Array.isArray(parsed) ? parsed as T[] : [];
   } catch {
     return [];
+  }
+}
+
+function persistPublicNotification(item: PublicNotificationItem) {
+  try {
+    const currentItems = readStoredArray<PublicNotificationItem>(notificationsStorageKey);
+    const nextItems = [item, ...currentItems.filter((current) => current.id !== item.id)].slice(0, 50);
+    window.localStorage.setItem(notificationsStorageKey, JSON.stringify(nextItems));
+    window.dispatchEvent(new Event("turnos-public-notifications-updated"));
+  } catch {
+    // Notification history is local-only and must never block the PWA.
   }
 }
 
@@ -161,6 +183,11 @@ export function PublicTabbedExperience({ description, services, slotsByService, 
   const [notificationPermission, setNotificationPermission] = useState("default");
 
   useEffect(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (requestedTab === "history" || requestedTab === "notifications" || requestedTab === "account" || requestedTab === "services") {
+      setActiveTab(requestedTab);
+    }
+
     function syncStoredState() {
       setHistory(readStoredArray<PublicHistoryItem>(historyStorageKey));
       setNotifications(readStoredArray<PublicNotificationItem>(notificationsStorageKey));
@@ -169,11 +196,31 @@ export function PublicTabbedExperience({ description, services, slotsByService, 
     }
 
     syncStoredState();
+    function storePushNotification(event: MessageEvent) {
+      const data = event.data as PushMessagePayload;
+      if (data?.type !== "TURNOS_PUSH_NOTIFICATION") return;
+      const payload = data.payload;
+      if (!payload?.title && !payload?.body) return;
+
+      persistPublicNotification({
+        id: payload.eventId || `${Date.now()}`,
+        title: payload.title || "Turnos",
+        body: payload.body || "Tenes una notificacion nueva.",
+        createdAt: payload.receivedAt || new Date().toISOString(),
+        read: false,
+      });
+      syncStoredState();
+    }
+
     window.addEventListener("turnos-public-history-updated", syncStoredState);
+    window.addEventListener("turnos-public-notifications-updated", syncStoredState);
     window.addEventListener("storage", syncStoredState);
+    navigator.serviceWorker?.addEventListener("message", storePushNotification);
     return () => {
       window.removeEventListener("turnos-public-history-updated", syncStoredState);
+      window.removeEventListener("turnos-public-notifications-updated", syncStoredState);
       window.removeEventListener("storage", syncStoredState);
+      navigator.serviceWorker?.removeEventListener("message", storePushNotification);
     };
   }, []);
 
@@ -194,6 +241,7 @@ export function PublicTabbedExperience({ description, services, slotsByService, 
     }
     const permission = await Notification.requestPermission();
     setNotificationPermission(permission);
+    if (permission === "granted") await syncCurrentPushSubscription("public").catch(() => null);
   }
 
   const servicesSection = (

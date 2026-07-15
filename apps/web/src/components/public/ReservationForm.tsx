@@ -3,6 +3,7 @@
 import { CalendarCheck, ImageIcon, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
+import { syncCurrentPushSubscription } from "@/lib/pwa/push-client";
 
 type ReservationFormProps = {
   services: PublicService[];
@@ -190,7 +191,7 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
       }),
     });
 
-    const payload = await response.json().catch(() => null) as { checkoutUrl?: string; error?: { message?: string } } | null;
+    const payload = await response.json().catch(() => null) as { appointmentId?: string; serviceRequestId?: string; checkoutUrl?: string; error?: { message?: string } } | null;
     if (!response.ok) {
       setState("error");
       setMessage(payload?.error?.message ?? "No se pudo crear la reserva.");
@@ -198,6 +199,13 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
     }
 
     const successMessage = canReserveAutomatically ? "Reserva creada. El negocio ya puede verla en el panel." : "Solicitud enviada. El negocio la va a revisar y responder por WhatsApp.";
+    if (payload?.appointmentId || payload?.serviceRequestId) {
+      await syncCurrentPushSubscription("public", {
+        appointmentId: payload.appointmentId,
+        serviceRequestId: payload.serviceRequestId,
+      }).catch(() => null);
+    }
+
     if (activeService) {
       persistPublicHistoryItem({
         id: `${Date.now()}-${activeService.id}`,

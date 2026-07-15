@@ -1,3 +1,8 @@
+export type PushSubscriptionTarget = {
+  appointmentId?: string;
+  serviceRequestId?: string;
+};
+
 function urlBase64ToUint8Array(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const base64 = `${value}${padding}`.replace(/-/g, "+").replace(/_/g, "/");
@@ -5,15 +10,15 @@ function urlBase64ToUint8Array(value: string) {
   return Uint8Array.from([...raw].map((char) => char.charCodeAt(0)));
 }
 
-async function postSubscription(subscription: PushSubscription, surface: "public" | "panel") {
+async function postSubscription(subscription: PushSubscription, surface: "public" | "panel", target?: PushSubscriptionTarget) {
   await fetch("/api/push/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subscription: subscription.toJSON(), surface }),
+    body: JSON.stringify({ subscription: subscription.toJSON(), surface, target }),
   }).catch(() => null);
 }
 
-export async function ensurePushSubscription(registration: ServiceWorkerRegistration, surface: "public" | "panel") {
+export async function ensurePushSubscription(registration: ServiceWorkerRegistration, surface: "public" | "panel", target?: PushSubscriptionTarget) {
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!vapidPublicKey) return;
 
@@ -24,7 +29,7 @@ export async function ensurePushSubscription(registration: ServiceWorkerRegistra
 
   const existing = await registration.pushManager.getSubscription();
   if (existing) {
-    await postSubscription(existing, surface);
+    await postSubscription(existing, surface, target);
     return;
   }
 
@@ -33,5 +38,14 @@ export async function ensurePushSubscription(registration: ServiceWorkerRegistra
     applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
   });
 
-  await postSubscription(subscription, surface);
+  await postSubscription(subscription, surface, target);
+}
+
+export async function syncCurrentPushSubscription(surface: "public" | "panel", target?: PushSubscriptionTarget) {
+  if (!("serviceWorker" in navigator) || !("Notification" in window) || Notification.permission !== "granted") return;
+
+  const registration = await navigator.serviceWorker.ready.catch(() => null);
+  if (!registration) return;
+
+  await ensurePushSubscription(registration, surface, target);
 }

@@ -1,11 +1,13 @@
 import { IntakeFormsManager } from "@/components/panel/IntakeFormsManager";
 import { PanelShell } from "@/components/panel/PanelShell";
-import { getPanelIntakeForms, getPanelServices } from "@/lib/operations/panel-settings";
+import { PanelSetupRequired } from "@/components/panel/PanelSetupRequired";
+import { getPanelBusinessSettings, getPanelIntakeForms, getPanelServices } from "@/lib/operations/panel-settings";
 import { requirePanelSession } from "@/lib/panel/auth";
 
 export default async function PanelIntakeFormsPage() {
   await requirePanelSession();
-  const [forms, services] = await Promise.all([getPanelIntakeForms(), getPanelServices()]);
+  const business = await getPanelBusinessSettings();
+  const [forms, services] = business ? await Promise.all([getPanelIntakeForms(), getPanelServices()]) : [[], []];
 
   return (
     <PanelShell>
@@ -17,7 +19,11 @@ export default async function PanelIntakeFormsPage() {
         </p>
       </header>
 
-      <IntakeFormsManager forms={forms} services={services} />
+      {business ? (
+        <IntakeFormsManager forms={forms} services={services} />
+      ) : (
+        <PanelSetupRequired text="Crea el negocio y despues carga las preguntas que el cliente debera responder al reservar." />
+      )}
     </PanelShell>
   );
 }

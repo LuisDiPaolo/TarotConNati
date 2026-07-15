@@ -79,11 +79,42 @@ async function removeExpiredSubscription(id: string) {
     .eq("id", id);
 }
 
+async function recordPushNotification(input: {
+  businessId: string;
+  surface?: "public" | "panel";
+  payload: PushPayload;
+  customerId?: string;
+  appointmentId?: string;
+  serviceRequestId?: string;
+  delivered: number;
+  failed: number;
+}) {
+  const supabase = createSupabaseAdminClient();
+  await supabase.from("push_notification_records").insert({
+    business_id: input.businessId,
+    surface: input.surface ?? "panel",
+    customer_id: input.customerId ?? null,
+    appointment_id: input.appointmentId ?? null,
+    service_request_id: input.serviceRequestId ?? null,
+    event_key: input.payload.eventId,
+    event_type: input.payload.type,
+    title: input.payload.title,
+    body: input.payload.body,
+    url: input.payload.url ?? null,
+    payload: input.payload,
+    delivered_count: input.delivered,
+    failed_count: input.failed,
+  });
+}
+
 export async function sendPushToSubscribers(input: {
   businessId: string;
   payload: PushPayload;
   endpoint?: string;
   surface?: "public" | "panel";
+  customerId?: string;
+  appointmentId?: string;
+  serviceRequestId?: string;
 }) {
   configureVapid();
 
@@ -96,6 +127,9 @@ export async function sendPushToSubscribers(input: {
 
   if (input.endpoint) query = query.eq("endpoint", input.endpoint);
   if (input.surface) query = query.eq("surface", input.surface);
+  if (input.customerId) query = query.eq("customer_id", input.customerId);
+  if (input.appointmentId) query = query.eq("appointment_id", input.appointmentId);
+  if (input.serviceRequestId) query = query.eq("service_request_id", input.serviceRequestId);
 
   const { data, error } = await query;
   if (error) return { ok: false as const, error: error.message, delivered: 0, failed: 0, removed: 0, subscriptions: 0 };
@@ -118,6 +152,17 @@ export async function sendPushToSubscribers(input: {
       }
     }
   }));
+
+  await recordPushNotification({
+    businessId: input.businessId,
+    surface: input.surface,
+    payload: input.payload,
+    customerId: input.customerId,
+    appointmentId: input.appointmentId,
+    serviceRequestId: input.serviceRequestId,
+    delivered,
+    failed,
+  }).catch(() => null);
 
   return { ok: true as const, delivered, failed, removed, subscriptions: rows.length };
 }

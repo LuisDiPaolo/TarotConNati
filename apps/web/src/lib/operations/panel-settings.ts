@@ -32,6 +32,13 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
 
   if (error || !data) return null;
 
+  const { data: pushFeature } = await supabase
+    .from("features")
+    .select("enabled")
+    .eq("business_id", adminUser.business_id)
+    .eq("feature_key", "push_enabled")
+    .maybeSingle();
+
   return {
     id: data.id,
     name: data.name,
@@ -50,6 +57,7 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
     brandRadius: data.brand_radius,
     defaultThemeMode: data.default_theme_mode ?? "light",
     publicBottomNavEnabled: data.public_bottom_nav_enabled ?? false,
+    notificationsEnabled: pushFeature?.enabled !== false,
     logoUrl: buildBrandAssetUrl(data.logo_url),
     logoLightUrl: buildBrandAssetUrl(data.logo_light_url),
     logoDarkUrl: buildBrandAssetUrl(data.logo_dark_url),

@@ -39,12 +39,12 @@ export function OnboardingChecklist({
   const hasBrandAssets = Boolean(business?.publicAppIconUrl && business.panelAppIconUrl && business.maskableIconUrl && business.appleTouchIconUrl);
   const items: ChecklistItem[] = [
     { label: "Negocio creado", done: Boolean(business), href: "/panel/configuracion" },
-    { label: "Marca e iconos cargados", done: hasBrandAssets, href: "/panel/configuracion" },
+    { label: "Logo e iconos cargados", done: hasBrandAssets, href: "/panel/configuracion" },
     { label: "Servicios cargados", done: servicesCount > 0, href: "/panel/servicios" },
-    { label: "Agenda o modalidad configurada", done: schedulesCount > 0 || servicesCount > 0, href: "/panel/agenda" },
-    { label: "Formularios de admision", done: formsCount > 0, href: "/panel/formularios" },
-    { label: "Mercado Pago revisado", done: false },
-    { label: "Push notifications probadas", done: false },
+    { label: "Forma de reserva definida", done: schedulesCount > 0 || servicesCount > 0, href: "/panel/agenda" },
+    { label: "Preguntas al cliente cargadas", done: formsCount > 0, href: "/panel/formularios" },
+    { label: "Pagos revisados", done: false },
+    { label: "Avisos al cliente probados", done: false },
     { label: "Reserva o solicitud de prueba", done: false, href: "/" },
   ];
   const completedCount = items.filter((item) => item.done).length;
@@ -54,7 +54,7 @@ export function OnboardingChecklist({
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-black">Puesta en marcha</h2>
-          <p className="text-sm text-muted">Checklist minimo para operar una base limpia.</p>
+          <p className="text-sm text-muted">Pasos basicos para dejar el negocio listo para recibir reservas.</p>
         </div>
         <p className="text-sm font-black text-accent">{completedCount}/{items.length}</p>
       </div>

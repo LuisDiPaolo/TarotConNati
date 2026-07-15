@@ -221,6 +221,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     appointmentId: appointment.id,
+    customerId: createdCustomer.id,
     checkoutUrl,
     status: amountPesos > 0 ? "pending_payment" : "confirmed",
   });

@@ -7,6 +7,15 @@ function apiError(status: number, code: string, message: string) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
+function getAppointmentStatusLabel(status: string) {
+  if (status === "confirmed") return "confirmado";
+  if (status === "pending") return "pendiente";
+  if (status === "cancelled") return "cancelado";
+  if (status === "completed") return "realizado";
+  if (status === "no_show") return "ausente";
+  return status;
+}
+
 export async function PATCH(request: NextRequest, context: { params: Promise<{ appointmentId: string }> }) {
   const { appointmentId } = await context.params;
   const parsed = updateAppointmentStatusSchema.safeParse(await request.json().catch(() => null));
@@ -18,7 +27,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
 
   const { data: appointment, error: readError } = await supabase
     .from("appointments")
-    .select("id, business_id, status")
+    .select("id, business_id, customer_id, status, services(name)")
     .eq("id", appointmentId)
     .maybeSingle();
 
@@ -44,17 +53,38 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
     created_by: userData.user.id,
   });
 
+  const serviceJoin = Array.isArray(appointment.services) ? appointment.services[0] : appointment.services;
+  const statusLabel = getAppointmentStatusLabel(parsed.data.status);
+  const serviceName = String(serviceJoin?.name ?? "turno");
+
   await sendTransactionalPush({
     businessId: appointment.business_id,
-    eventKey: `appointment.status.${appointmentId}.${parsed.data.status}`,
+    eventKey: `appointment.status.panel.${appointmentId}.${parsed.data.status}`,
     eventType: "appointment.status_changed",
     sourceTable: "appointments",
     sourceId: appointmentId,
     surface: "panel",
     payload: {
       title: "Turno actualizado",
-      body: `Estado: ${parsed.data.status}`,
+      body: `${serviceName}: ${statusLabel}`,
       url: "/panel",
+      tag: "appointment-status",
+    },
+  });
+
+  await sendTransactionalPush({
+    businessId: appointment.business_id,
+    eventKey: `appointment.status.public.${appointmentId}.${parsed.data.status}`,
+    eventType: "appointment.status_changed",
+    sourceTable: "appointments",
+    sourceId: appointmentId,
+    surface: "public",
+    customerId: appointment.customer_id,
+    appointmentId,
+    payload: {
+      title: "Tu turno fue actualizado",
+      body: `${serviceName}: ${statusLabel}`,
+      url: "/?tab=history",
       tag: "appointment-status",
     },
   });

@@ -1,6 +1,6 @@
 # Fase 2.6 - Experiencia publica de servicios
 
-Fecha: 2026-07-14
+Fecha: 2026-07-15
 Estado: cerrada en desarrollo / implementacion
 
 ## Objetivo
@@ -76,6 +76,19 @@ Luego del cierre visual del selector por servicios se agrego, detras de un toggl
 - `Cuenta`: guarda datos basicos del cliente en cache local y permite revisar/solicitar permiso de notificaciones.
 
 La barra queda oculta por defecto hasta activar `Mostrar barra inferior en la app publica` desde Configuracion. Mantiene safe-area inferior, usa formato full-width pegado abajo en touch/PWA, flota solo en desktop y se oculta al abrir teclado en iOS Safari/PWA con guard CSS + React para no tapar campos ni generar una franja pegada al formulario.
+
+## Pasada UX de panel
+
+Se reviso el panel para reducir friccion operativa en creacion de negocio, configuracion de marca y carga de servicios:
+
+- El slug deja de pedirse al admin y se autogenera desde el nombre del negocio cuando hace falta.
+- El home del panel ya no expone botones de manifest ni instalacion.
+- La pagina de instalacion queda como acceso rapido, sin links tecnicos al manifest.
+- Los nombres instalables de la app quedan derivados automaticamente desde el negocio.
+- La carga de servicios usa labels de negocio: tipo de atencion, como se reserva, reserva parcial, pago al reservar y quitar servicio.
+- La imagen del servicio conserva formato cuadrado protagonista con recorte superior redondeado por la card publica.
+- La alternativa de thumbnail junto al titulo/subtitulo queda documentada como futura evaluacion, no implementada en esta version.
+- La gestion de logo/iconos oculta nombres tecnicos como maskable, Apple touch, PWA o asset y muestra destinos claros: pagina publica, panel, Android, iPhone/iPad.
 
 ## Verificacion y pendientes externos
 

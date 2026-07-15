@@ -128,6 +128,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     serviceRequestId: serviceRequest.id,
+    customerId: createdCustomer.id,
     status: "pending_review",
   });
 }

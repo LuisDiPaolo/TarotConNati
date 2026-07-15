@@ -15,6 +15,15 @@ function apiError(status: number, code: string, message: string) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
+function getServiceRequestStatusLabel(status: string) {
+  if (status === "pending_review") return "en revision";
+  if (status === "pending_coordination") return "en coordinacion";
+  if (status === "converted") return "convertida en turno";
+  if (status === "closed") return "cerrada";
+  if (status === "cancelled") return "cancelada";
+  return status;
+}
+
 export async function PATCH(request: NextRequest, context: { params: Promise<{ serviceRequestId: string }> }) {
   const { serviceRequestId } = await context.params;
   const parsed = updateServiceRequestSchema.safeParse(await request.json().catch(() => null));
@@ -26,7 +35,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
 
   const { data: serviceRequest, error: readError } = await supabase
     .from("service_requests")
-    .select("id, business_id, status")
+    .select("id, business_id, customer_id, service_id, status, services(name)")
     .eq("id", serviceRequestId)
     .maybeSingle();
 
@@ -48,17 +57,38 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
 
   if (updateError) return apiError(400, "VALIDATION_ERROR", "No se pudo actualizar la solicitud.");
 
+  const serviceJoin = Array.isArray(serviceRequest.services) ? serviceRequest.services[0] : serviceRequest.services;
+  const statusLabel = getServiceRequestStatusLabel(nextStatus);
+  const serviceName = String(serviceJoin?.name ?? "solicitud");
+
   await sendTransactionalPush({
     businessId: serviceRequest.business_id,
-    eventKey: `service_request.status.${serviceRequestId}.${nextStatus}`,
+    eventKey: `service_request.status.panel.${serviceRequestId}.${nextStatus}`,
     eventType: "service_request.status_changed",
     sourceTable: "service_requests",
     sourceId: serviceRequestId,
     surface: "panel",
     payload: {
       title: "Solicitud actualizada",
-      body: `Estado: ${nextStatus}`,
+      body: `${serviceName}: ${statusLabel}`,
       url: "/panel/solicitudes",
+      tag: "service-request-status",
+    },
+  });
+
+  await sendTransactionalPush({
+    businessId: serviceRequest.business_id,
+    eventKey: `service_request.status.public.${serviceRequestId}.${nextStatus}`,
+    eventType: "service_request.status_changed",
+    sourceTable: "service_requests",
+    sourceId: serviceRequestId,
+    surface: "public",
+    customerId: serviceRequest.customer_id,
+    serviceRequestId,
+    payload: {
+      title: "Tu solicitud fue actualizada",
+      body: `${serviceName}: ${statusLabel}`,
+      url: "/?tab=notifications",
       tag: "service-request-status",
     },
   });

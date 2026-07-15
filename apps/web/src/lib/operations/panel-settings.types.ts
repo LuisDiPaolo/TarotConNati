@@ -16,6 +16,7 @@ export type PanelBusinessSettings = {
   brandRadius: string;
   defaultThemeMode: "light" | "brand" | "dark";
   publicBottomNavEnabled: boolean;
+  notificationsEnabled: boolean;
   logoUrl: string;
   logoLightUrl: string;
   logoDarkUrl: string;

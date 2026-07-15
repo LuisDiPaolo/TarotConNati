@@ -65,7 +65,7 @@ values
   ('00000000-0000-4000-8000-000000000001', 'portfolio_enabled', false, 'profesional', true),
   ('00000000-0000-4000-8000-000000000001', 'promotions_enabled', false, 'profesional', true),
   ('00000000-0000-4000-8000-000000000001', 'inquiries_enabled', true, 'esencial', true),
-  ('00000000-0000-4000-8000-000000000001', 'push_enabled', false, 'profesional', true),
+  ('00000000-0000-4000-8000-000000000001', 'push_enabled', true, 'profesional', true),
   ('00000000-0000-4000-8000-000000000001', 'push_campaigns_enabled', false, 'comercial', true),
   ('00000000-0000-4000-8000-000000000001', 'campaigns_enabled', false, 'comercial', true),
   ('00000000-0000-4000-8000-000000000001', 'coupons_enabled', false, 'comercial', true),
@@ -83,7 +83,7 @@ values
   ('00000000-0000-4000-8000-000000000001', 'reservations_enabled', 'true', true),
   ('00000000-0000-4000-8000-000000000001', 'public_pwa_enabled', 'true', true),
   ('00000000-0000-4000-8000-000000000001', 'panel_pwa_enabled', 'true', true),
-  ('00000000-0000-4000-8000-000000000001', 'push_enabled', 'false', true),
+  ('00000000-0000-4000-8000-000000000001', 'push_enabled', 'true', true),
   ('00000000-0000-4000-8000-000000000001', 'maintenance_mode', 'false', true),
   ('00000000-0000-4000-8000-000000000001', 'reservation_cutoff_minutes', '0', true),
   ('00000000-0000-4000-8000-000000000001', 'demo_mode', 'true', true);

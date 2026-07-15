@@ -230,15 +230,18 @@ La PWA pública (que instala el cliente final para ver/reservar turnos) y el pan
 
 ---
 
-### Fase 4 — Fidelización, comunicación y push dual
+### Fase 4 — Fidelizacion, comunicacion y push dual
+
+**Estado 2026-07-15:** se ejecuta antes de Fase 3 para estabilizar comunicacion transaccional y PWA publica antes de sumar presencia/contacto comercial.
 
 **Se agrega respecto al Roadmap original:**
-- Las dos tablas de suscripción push (`push_subscriptions_public`, `push_subscriptions_admin`) y el catálogo `notification_event_types` se construyen juntas en esta fase, no una antes que la otra — comparten la misma infraestructura de envío (Web Push API + VAPID) y separarlas en el tiempo generaría dos implementaciones distintas que después hay que unificar.
-- Las preferencias de notificación por admin (`admin_notification_preferences`) se construyen desde el día uno de este módulo, no como mejora posterior — evita una migración de datos para usuarios que ya tengan suscripciones activas cuando más adelante se soporte más de un profesional por negocio.
+- La tabla existente `push_subscriptions` se mantiene unificada con `surface`, y se extiende con `customer_id`, `appointment_id` y `service_request_id` para targeting publico sin duplicar infraestructura.
+- El catalogo `notification_event_types`, las preferencias `admin_notification_preferences` y la auditoria `push_notification_records` se construyen juntas con Web Push API + VAPID.
+- El panel conserva avisos operativos; el cliente final recibe eventos dirigidos solo cuando su suscripcion quedo vinculada a su turno o solicitud.
 
-**Fuera de alcance:** multi-staff, multi-sucursal, lista de espera, membresías — fase 5.
+**Fuera de alcance:** campañas masivas, cupones, gift cards, membresias, multi-staff, multi-sucursal y lista de espera — fases posteriores.
 
-**Criterio de cierre medible:** un evento real (turno cancelado por el cliente) genera una notificación push visible en el panel admin en menos de unos segundos, y el cliente final recibe la suya por separado.
+**Criterio de cierre medible:** un cambio real de estado de turno/solicitud o pago genera una notificacion push visible para el panel y otra dirigida al cliente correcto; el panel lista el evento en `/panel/notificaciones` y la PWA publica lo guarda en `Notificaciones` local.
 
 ---
 

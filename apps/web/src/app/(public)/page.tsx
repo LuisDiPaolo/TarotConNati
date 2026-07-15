@@ -1,4 +1,5 @@
 import { CalendarDays, Clock, CreditCard } from "lucide-react";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { PublicTabbedExperience } from "@/components/public/PublicTabbedExperience";
 import { resolveBusinessForHostname } from "@/lib/business/resolve";
@@ -16,9 +17,12 @@ export default async function PublicHomePage() {
     return (
       <main className="app-screen flex items-center justify-center py-10">
         <section className="surface w-full max-w-xl p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Sin configuracion</p>
-          <h1 className="mt-3 text-3xl font-black">No se encontro el negocio</h1>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">Revisa dominio, seed o variables de Supabase.</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Reservas no disponibles</p>
+          <h1 className="mt-3 text-3xl font-black">El negocio todavia no esta configurado</h1>
+          <p className="mt-3 text-slate-600 dark:text-slate-300">Si sos el administrador, entra al panel para crear el negocio y cargar servicios. Si sos cliente, intenta nuevamente mas tarde.</p>
+          <Link className="primary-action mt-5 inline-flex" href="/panel/configuracion">
+            Ir al panel
+          </Link>
         </section>
       </main>
     );

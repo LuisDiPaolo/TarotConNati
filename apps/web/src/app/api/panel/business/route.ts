@@ -28,6 +28,31 @@ function businessPayload(input: BusinessSettingsInput) {
   };
 }
 
+async function syncPushNotifications(
+  adminSupabase: ReturnType<typeof createSupabaseAdminClient>,
+  businessId: string,
+  enabled: boolean,
+) {
+  const { error: featureError } = await adminSupabase.from("features").upsert({
+    business_id: businessId,
+    feature_key: "push_enabled",
+    enabled,
+    pack: "profesional",
+    requires_migration: true,
+  }, { onConflict: "business_id,feature_key" });
+
+  if (featureError) return featureError;
+
+  const { error: runtimeError } = await adminSupabase.from("app_runtime_config").upsert({
+    business_id: businessId,
+    key: "push_enabled",
+    value: enabled ? "true" : "false",
+    public_readable: true,
+  }, { onConflict: "business_id,key" });
+
+  return runtimeError;
+}
+
 export async function PATCH(request: NextRequest) {
   const parsed = businessSettingsSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError(400, "VALIDATION_ERROR", "Revisa la configuracion del negocio.");
@@ -55,6 +80,10 @@ export async function PATCH(request: NextRequest) {
       .eq("id", adminUser.business_id);
 
     if (error) return apiError(400, "VALIDATION_ERROR", "No se pudo actualizar el negocio.");
+
+    const pushError = await syncPushNotifications(adminSupabase, adminUser.business_id, input.notificationsEnabled);
+    if (pushError) return apiError(400, "VALIDATION_ERROR", "No se pudo guardar la configuracion de notificaciones.");
+
     return NextResponse.json({ ok: true, mode: "updated" });
   }
 
@@ -65,6 +94,9 @@ export async function PATCH(request: NextRequest) {
     .single();
 
   if (createBusinessError || !business) return apiError(400, "VALIDATION_ERROR", "No se pudo crear el negocio.");
+
+  const pushError = await syncPushNotifications(adminSupabase, business.id, input.notificationsEnabled);
+  if (pushError) return apiError(400, "VALIDATION_ERROR", "No se pudo guardar la configuracion de notificaciones.");
 
   if (adminUser?.id) {
     const { error: linkError } = await adminSupabase

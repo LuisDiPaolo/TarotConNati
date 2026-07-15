@@ -3,7 +3,7 @@ import { businessSettingsSchema, scheduleOverrideSchema, serviceSettingsSchema, 
 
 describe("businessSettingsSchema", () => {
   it("accepts valid white-label business settings", () => {
-    expect(businessSettingsSchema.safeParse({
+    const parsed = businessSettingsSchema.safeParse({
       name: "Barberia Centro",
       slug: "barberia-centro",
       description: "Turnos con sena online.",
@@ -14,7 +14,10 @@ describe("businessSettingsSchema", () => {
       themeBackground: "#101820",
       brandRadius: "8px",
       defaultThemeMode: "brand",
-    }).success).toBe(true);
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.notificationsEnabled).toBe(true);
   });
 
   it("rejects unsafe slug formats", () => {

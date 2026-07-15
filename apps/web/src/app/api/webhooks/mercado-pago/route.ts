@@ -143,9 +143,16 @@ export async function POST(request: NextRequest) {
       .eq("status", "pending");
   }
 
+  const { data: appointment } = await supabase
+    .from("appointments")
+    .select("id, customer_id")
+    .eq("business_id", business.id)
+    .eq("id", typedPayment.appointment_id)
+    .maybeSingle();
+
   await sendTransactionalPush({
     businessId: business.id,
-    eventKey: `payment.status.${typedPayment.id}.${nextStatus}`,
+    eventKey: `payment.status.panel.${typedPayment.id}.${nextStatus}`,
     eventType: "payment.status_changed",
     sourceTable: "payments",
     sourceId: typedPayment.id,
@@ -154,6 +161,23 @@ export async function POST(request: NextRequest) {
       title: nextStatus === "approved" ? "Pago aprobado" : "Pago actualizado",
       body: `Estado de pago: ${nextStatus}`,
       url: `/panel/turnos/${typedPayment.appointment_id}`,
+      tag: "payment-status",
+    },
+  });
+
+  await sendTransactionalPush({
+    businessId: business.id,
+    eventKey: `payment.status.public.${typedPayment.id}.${nextStatus}`,
+    eventType: "payment.status_changed",
+    sourceTable: "payments",
+    sourceId: typedPayment.id,
+    surface: "public",
+    customerId: appointment?.customer_id,
+    appointmentId: typedPayment.appointment_id,
+    payload: {
+      title: nextStatus === "approved" ? "Pago aprobado" : "Pago actualizado",
+      body: `Estado de pago: ${nextStatus}`,
+      url: "/?tab=history",
       tag: "payment-status",
     },
   });

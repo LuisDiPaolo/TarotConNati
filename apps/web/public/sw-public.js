@@ -87,6 +87,14 @@ function resolveNotificationUrl(value) {
   }
 }
 
+async function notifyWindowClients(payload) {
+  const windowClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  await Promise.all(windowClients.map((client) => client.postMessage({
+    type: "TURNOS_PUSH_NOTIFICATION",
+    payload,
+  })));
+}
+
 self.addEventListener("push", (event) => {
   event.waitUntil((async () => {
     let payload = {};
@@ -99,14 +107,24 @@ self.addEventListener("push", (event) => {
     const title = typeof payload.title === "string" ? payload.title : "Turnos";
     const body = typeof payload.body === "string" ? payload.body : "Tenes una notificacion nueva.";
     const targetUrl = resolveNotificationUrl(payload.url);
+    const normalizedPayload = {
+      ...payload,
+      title,
+      body,
+      url: targetUrl,
+      eventId: typeof payload.eventId === "string" ? payload.eventId : `${Date.now()}`,
+      receivedAt: new Date().toISOString(),
+    };
 
     await self.registration.showNotification(title, {
       body,
-      data: { url: targetUrl },
-      icon: brandAssets.iconUrl,
+      data: { url: targetUrl, payload: normalizedPayload },
+      icon: typeof payload.icon === "string" ? payload.icon : brandAssets.iconUrl,
       badge: brandAssets.maskableIconUrl,
-      tag: typeof payload.tag === "string" ? payload.tag : undefined,
+      tag: typeof payload.tag === "string" ? payload.tag : "turnos-public-notification",
+      renotify: typeof payload.tag === "string",
     });
+    await notifyWindowClients(normalizedPayload).catch(() => null);
   })());
 });
 
