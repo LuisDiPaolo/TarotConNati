@@ -15,6 +15,7 @@ export type PanelBusinessSettings = {
   themeBackground: string;
   brandRadius: string;
   defaultThemeMode: "light" | "brand" | "dark";
+  publicBottomNavEnabled: boolean;
   logoUrl: string;
   logoLightUrl: string;
   logoDarkUrl: string;

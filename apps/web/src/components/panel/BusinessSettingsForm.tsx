@@ -21,6 +21,7 @@ const DEFAULT_BUSINESS = {
   themeBackground: "#2563eb",
   brandRadius: "8px",
   defaultThemeMode: "light" as const,
+  publicBottomNavEnabled: false,
 };
 
 export function BusinessSettingsForm({ business }: { business: PanelBusinessSettings | null }) {
@@ -52,6 +53,7 @@ export function BusinessSettingsForm({ business }: { business: PanelBusinessSett
         themeBackground: String(formData.get("themeBackground") ?? ""),
         brandRadius: String(formData.get("brandRadius") ?? ""),
         defaultThemeMode: String(formData.get("defaultThemeMode") ?? "light"),
+        publicBottomNavEnabled: formData.get("publicBottomNavEnabled") === "true",
       }),
     });
 
@@ -118,6 +120,14 @@ export function BusinessSettingsForm({ business }: { business: PanelBusinessSett
           <input className="input-control" name="panelShortName" defaultValue={values.panelShortName} maxLength={24} placeholder="Panel" />
         </label>
       </div>
+
+      <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-4 text-sm dark:border-white/10">
+        <input className="mt-1" name="publicBottomNavEnabled" type="checkbox" value="true" defaultChecked={values.publicBottomNavEnabled} />
+        <span>
+          <span className="block font-bold">Mostrar barra inferior en la app publica</span>
+          <span className="mt-1 block leading-6 text-muted">Activa las secciones Servicios, Historial, Notificaciones y Cuenta para probar si conviene dejar la navegacion visible.</span>
+        </span>
+      </label>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <label className="grid gap-2 text-sm font-semibold">

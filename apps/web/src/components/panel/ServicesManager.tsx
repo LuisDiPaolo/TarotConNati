@@ -320,8 +320,9 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       ) : null}
 
       {deleteTarget ? (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-service-title">
-          <div className="surface w-full max-w-md p-5 shadow-2xl">
+        <div className="fixed inset-0 z-[180] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-service-title">
+          <button aria-label="Cancelar borrado" className="absolute inset-0 cursor-default bg-black/55" type="button" onClick={() => setDeleteTarget(null)} />
+          <div className="surface relative z-10 w-full max-w-md p-5 shadow-2xl">
             <div className="flex gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
                 <AlertTriangle aria-hidden="true" className="h-5 w-5" />

@@ -22,6 +22,7 @@ export const businessSettingsSchema = z.object({
   themeBackground: hexColorSchema,
   brandRadius: z.string().trim().regex(/^([0-9]|1[0-6])px$/),
   defaultThemeMode: themeModeSchema,
+  publicBottomNavEnabled: z.coerce.boolean().default(false),
 });
 
 export const serviceModalitySchema = z.enum(["in_person", "virtual_scheduled", "virtual_on_demand", "contact_request"]);

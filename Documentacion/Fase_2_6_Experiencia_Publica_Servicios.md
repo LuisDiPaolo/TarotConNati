@@ -66,6 +66,17 @@ El orden de fallback publico queda blindado asi:
 
 Esto evita que un servicio quede roto visualmente aunque no tenga imagen propia.
 
+## Extension PWA opcional
+
+Luego del cierre visual del selector por servicios se agrego, detras de un toggle de admin, una barra inferior publica replicando el patron rescatable de `Archive/TEMPORAL 2`:
+
+- `Servicios`: conserva la pagina publica actual con cards y bottom sheet de reserva.
+- `Historial`: guarda en cache local las reservas/solicitudes creadas desde esta PWA.
+- `Notificaciones`: queda lista para listar push recibidas como cards horizontales.
+- `Cuenta`: guarda datos basicos del cliente en cache local y permite revisar/solicitar permiso de notificaciones.
+
+La barra queda oculta por defecto hasta activar `Mostrar barra inferior en la app publica` desde Configuracion. Mantiene safe-area inferior, usa formato full-width pegado abajo en touch/PWA, flota solo en desktop y se oculta al abrir teclado en iOS Safari/PWA con guard CSS + React para no tapar campos ni generar una franja pegada al formulario.
+
 ## Verificacion y pendientes externos
 
 - Desarrollo e implementacion de Fase 2.6 cerrados en codigo.

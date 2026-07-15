@@ -21,6 +21,7 @@ type BusinessRow = {
   logo_light_url: string | null;
   logo_dark_url: string | null;
   public_app_icon_url: string | null;
+  public_bottom_nav_enabled: boolean | null;
 };
 
 type ServiceRow = {
@@ -166,7 +167,7 @@ async function getBusiness(businessId: string) {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("business")
-    .select("id, name, slug, description, timezone, currency, locale, brand_primary, brand_accent, brand_radius, logo_url, logo_light_url, logo_dark_url, public_app_icon_url")
+    .select("id, name, slug, description, timezone, currency, locale, brand_primary, brand_accent, brand_radius, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, public_bottom_nav_enabled")
     .eq("id", businessId)
     .maybeSingle();
 
@@ -364,6 +365,7 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
       logoLightUrl: buildBrandAssetUrl(business.logo_light_url),
       logoDarkUrl: buildBrandAssetUrl(business.logo_dark_url),
       publicAppIconUrl: buildBrandAssetUrl(business.public_app_icon_url),
+      publicBottomNavEnabled: business.public_bottom_nav_enabled ?? false,
     },
     services,
     slotsByService,

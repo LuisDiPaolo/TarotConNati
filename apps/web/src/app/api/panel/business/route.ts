@@ -24,6 +24,7 @@ function businessPayload(input: BusinessSettingsInput) {
     theme_background: input.themeBackground,
     brand_radius: input.brandRadius,
     default_theme_mode: input.defaultThemeMode,
+    public_bottom_nav_enabled: input.publicBottomNavEnabled,
   };
 }
 

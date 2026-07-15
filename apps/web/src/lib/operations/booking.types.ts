@@ -56,6 +56,7 @@ export type PublicBookingData = {
     logoLightUrl: string;
     logoDarkUrl: string;
     publicAppIconUrl: string;
+    publicBottomNavEnabled: boolean;
   };
   services: PublicService[];
   slotsByService: Record<string, PublicSlot[]>;

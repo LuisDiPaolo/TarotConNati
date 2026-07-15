@@ -1,6 +1,6 @@
 import { CalendarDays, Clock, CreditCard } from "lucide-react";
 import { headers } from "next/headers";
-import { ReservationForm } from "@/components/public/ReservationForm";
+import { PublicTabbedExperience } from "@/components/public/PublicTabbedExperience";
 import { resolveBusinessForHostname } from "@/lib/business/resolve";
 import { getPublicBookingData } from "@/lib/operations/booking";
 import { buildBrandStyle } from "@/lib/theme/brand-style";
@@ -83,26 +83,15 @@ export default async function PublicHomePage() {
           </article>
         </div>
 
-        <div className="mt-8 grid gap-6">
-          <section className="surface p-6 sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Antes de reservar</p>
-            <h2 className="mt-3 text-2xl font-black leading-tight sm:text-3xl">Coordina tu turno en pocos pasos</h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-              {publicBusiness.description || "Completa tus datos, revisa las opciones disponibles y confirma la reserva desde el formulario."}
-            </p>
-            <div className="mt-6 grid gap-5 border-t border-slate-200 pt-5 sm:grid-cols-2 dark:border-zinc-800">
-              <div>
-                <p className="text-sm font-bold">Confirmacion clara</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Al finalizar vas a ver el estado de tu reserva y los datos importantes del turno.</p>
-              </div>
-              <div>
-                <p className="text-sm font-bold">Datos necesarios</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">El formulario puede pedir informacion extra para preparar mejor la atencion.</p>
-              </div>
-            </div>
-          </section>
-
-          <ReservationForm services={services} slotsByService={slotsByService} intakeFormsByService={intakeFormsByService} serviceImageFallbackUrl={publicBusiness.publicAppIconUrl} />
+        <div className="mt-8">
+          <PublicTabbedExperience
+            bottomNavigationEnabled={publicBusiness.publicBottomNavEnabled}
+            description={publicBusiness.description}
+            services={services}
+            slotsByService={slotsByService}
+            intakeFormsByService={intakeFormsByService}
+            serviceImageFallbackUrl={publicBusiness.publicAppIconUrl}
+          />
         </div>
       </section>
     </main>

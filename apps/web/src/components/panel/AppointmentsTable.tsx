@@ -31,6 +31,7 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
   const [rows, setRows] = useState(appointments);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<PanelAppointment | null>(null);
 
@@ -224,41 +225,51 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
       ) : (
         <>
           <div className="grid gap-3 md:hidden">
-            {rows.map((appointment) => (
-              <details className="surface group p-4" key={appointment.id}>
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">{statusLabels[appointment.status]}</p>
-                    <h3 className="mt-1 truncate text-base font-black">{appointment.customerName}</h3>
-                    <p className="mt-1 text-sm text-muted">{formatDate(appointment.startsAt)}</p>
-                    <p className="mt-1 truncate text-sm font-semibold">{appointment.serviceName}</p>
-                  </div>
-                  <ChevronDown aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 transition group-open:rotate-180" />
-                </summary>
-                <div className="mt-4 grid gap-4 border-t border-[rgb(var(--color-border))] pt-4">
-                  <div className="grid gap-2 text-sm">
-                    <p><span className="font-semibold">Contacto:</span> {appointment.customerPhone || appointment.customerEmail || "-"}</p>
-                    <p><span className="font-semibold">Pago:</span> {appointment.paymentAmount} / {appointment.paymentStatus}</p>
-                    {appointment.notes ? <p><span className="font-semibold">Nota:</span> {appointment.notes}</p> : null}
-                  </div>
-                  {appointment.intakeResponses.length > 0 ? (
-                    <div className="grid gap-2 text-xs text-muted">
-                      {appointment.intakeResponses.map((response, responseIndex) => (
-                        <div className="grid gap-1" key={`${appointment.id}-${response.formName}-${responseIndex}`}>
-                          <p className="font-bold text-[rgb(var(--color-foreground))]">{response.formName}</p>
-                          {response.answers.slice(0, 4).map((answer, answerIndex) => (
-                            <p key={`${appointment.id}-${responseIndex}-${answer.label}-${answerIndex}`}>
-                              <span className="font-semibold">{answer.label}:</span> {answer.value}
-                            </p>
+            {rows.map((appointment) => {
+              const expanded = expandedAppointmentId === appointment.id;
+              return (
+                <article className="surface p-4" key={appointment.id}>
+                  <button
+                    aria-expanded={expanded}
+                    className="flex w-full items-start justify-between gap-3 text-left"
+                    onClick={() => setExpandedAppointmentId((current) => current === appointment.id ? null : appointment.id)}
+                    type="button"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">{statusLabels[appointment.status]}</p>
+                      <h3 className="mt-1 truncate text-base font-black">{appointment.customerName}</h3>
+                      <p className="mt-1 text-sm text-muted">{formatDate(appointment.startsAt)}</p>
+                      <p className="mt-1 truncate text-sm font-semibold">{appointment.serviceName}</p>
+                    </div>
+                    <ChevronDown aria-hidden="true" className={`mt-1 h-5 w-5 shrink-0 transition ${expanded ? "rotate-180" : ""}`} />
+                  </button>
+                  {expanded ? (
+                    <div className="mt-4 grid gap-4 border-t border-[rgb(var(--color-border))] pt-4">
+                      <div className="grid gap-2 text-sm">
+                        <p><span className="font-semibold">Contacto:</span> {appointment.customerPhone || appointment.customerEmail || "-"}</p>
+                        <p><span className="font-semibold">Pago:</span> {appointment.paymentAmount} / {appointment.paymentStatus}</p>
+                        {appointment.notes ? <p><span className="font-semibold">Nota:</span> {appointment.notes}</p> : null}
+                      </div>
+                      {appointment.intakeResponses.length > 0 ? (
+                        <div className="grid gap-2 text-xs text-muted">
+                          {appointment.intakeResponses.map((response, responseIndex) => (
+                            <div className="grid gap-1" key={`${appointment.id}-${response.formName}-${responseIndex}`}>
+                              <p className="font-bold text-[rgb(var(--color-foreground))]">{response.formName}</p>
+                              {response.answers.slice(0, 4).map((answer, answerIndex) => (
+                                <p key={`${appointment.id}-${responseIndex}-${answer.label}-${answerIndex}`}>
+                                  <span className="font-semibold">{answer.label}:</span> {answer.value}
+                                </p>
+                              ))}
+                            </div>
                           ))}
                         </div>
-                      ))}
+                      ) : null}
+                      {renderActions(appointment)}
                     </div>
                   ) : null}
-                  {renderActions(appointment)}
-                </div>
-              </details>
-            ))}
+                </article>
+              );
+            })}
           </div>
 
           <div className="surface hidden overflow-hidden md:block">
@@ -316,8 +327,9 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
       )}
 
       {deleteTarget ? (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-appointment-title">
-          <div className="surface w-full max-w-md p-5 shadow-2xl">
+        <div className="fixed inset-0 z-[180] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-appointment-title">
+          <button aria-label="Cancelar borrado" className="absolute inset-0 cursor-default bg-black/55" type="button" onClick={() => setDeleteTarget(null)} />
+          <div className="surface relative z-10 w-full max-w-md p-5 shadow-2xl">
             <div className="flex gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
                 <AlertTriangle aria-hidden="true" className="h-5 w-5" />

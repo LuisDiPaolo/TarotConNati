@@ -106,6 +106,14 @@ button, input, textarea, select {
   font: inherit;
 }
 
+button,
+a,
+summary,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .app-screen {
   min-height: 100dvh;
   min-height: max(var(--app-height), 100dvh);
@@ -122,16 +130,123 @@ button, input, textarea, select {
   padding-bottom: calc(var(--safe-bottom) + var(--app-keyboard-inset));
 }
 
-.app-bottom-nav,
-[data-app-bottom-nav="true"] {
-  padding-bottom: var(--safe-bottom);
+.public-tabbed-shell {
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 18px);
 }
 
-html[data-keyboard-open="true"] .app-bottom-nav,
-html[data-keyboard-open="true"] [data-app-bottom-nav="true"],
-body[data-keyboard-open="true"] .app-bottom-nav,
-body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
+.app-bottom-nav {
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 0;
+  z-index: 70;
+}
+
+.app-bottom-nav__surface {
+  background: rgb(var(--color-surface) / 0.9);
+  border-top: 1px solid rgb(var(--color-border) / 0.9);
+  box-shadow: 0 -16px 42px rgb(15 23 42 / 0.18), inset 0 1px 0 rgb(255 255 255 / 0.36);
+  overflow: hidden;
+  padding: 8px max(12px, var(--safe-right)) var(--safe-bottom) max(12px, var(--safe-left));
+  pointer-events: auto;
+  width: 100%;
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+}
+
+.app-bottom-nav__items {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  height: var(--bottom-nav-height);
+}
+
+.app-bottom-nav__item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 18px;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  min-width: 0;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-bottom-nav__item:active {
+  transform: scale(0.97);
+}
+
+.app-bottom-nav__active-pill {
+  background: rgb(var(--brand-primary) / 0.12);
+  border: 1px solid rgb(var(--brand-primary) / 0.14);
+  border-radius: 18px;
+  inset: 7px 4px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.app-bottom-nav__item[data-active="true"] .app-bottom-nav__active-pill {
+  opacity: 1;
+}
+
+.app-bottom-nav__icon {
+  height: 23px;
+  position: relative;
+  width: 23px;
+}
+
+.app-bottom-nav__label {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-bottom-nav__item[data-active="true"] {
+  color: rgb(var(--brand-primary));
+}
+
+[data-theme="brand"] .app-bottom-nav__surface {
+  background: rgb(var(--brand-surface) / 0.82);
+  border-color: rgb(var(--brand-surface-border) / 0.42);
+  box-shadow: 0 -20px 60px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.24);
+}
+
+[data-theme="dark"] .app-bottom-nav__surface {
+  background: rgb(24 24 27 / 0.88);
+  border-color: rgb(255 255 255 / 0.1);
+}
+
+html[data-surface-mode="touch"][data-keyboard-open="true"] .app-bottom-nav,
+html[data-surface-mode="touch"][data-keyboard-open="true"] [data-app-bottom-nav="true"],
+body[data-surface-mode="touch"][data-keyboard-open="true"] .app-bottom-nav,
+body[data-surface-mode="touch"][data-keyboard-open="true"] [data-app-bottom-nav="true"] {
   display: none !important;
+}
+
+html[data-surface-mode="desktop"] .app-bottom-nav {
+  bottom: 16px;
+  display: flex;
+  justify-content: center;
+  padding-inline: 16px;
+}
+
+html[data-surface-mode="desktop"] .app-bottom-nav__surface {
+  border: 1px solid rgb(var(--color-border) / 0.9);
+  border-radius: 24px;
+  max-width: 560px;
+  padding-bottom: 8px;
 }
 
 .sticky-safe-header {
@@ -208,6 +323,7 @@ body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
   justify-content: center;
   min-height: 44px;
   padding: 0 16px;
+  touch-action: manipulation;
 }
 
 .input-control {
@@ -236,6 +352,7 @@ body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
   display: inline-flex;
   height: 36px;
   justify-content: center;
+  touch-action: manipulation;
   width: 36px;
 }
 
@@ -261,6 +378,7 @@ body[data-keyboard-open="true"] [data-app-bottom-nav="true"] {
   justify-content: center;
   min-height: 44px;
   padding: 0 16px;
+  touch-action: manipulation;
 }
 
 .danger-action {

@@ -15,10 +15,35 @@ type SubmitState = "idle" | "submitting" | "success" | "error";
 
 type IntakeResponseValue = string | number | boolean | string[];
 
+type StoredHistoryItem = {
+  id: string;
+  serviceName: string;
+  serviceCategory: string;
+  startsAt: string;
+  createdAt: string;
+  status: "active" | "pending" | "completed";
+  kind: "appointment" | "request";
+  message: string;
+};
+
+const publicHistoryStorageKey = "turnos-public-history";
+
 function getPaymentRequirementLabel(service: PublicService) {
   if (service.paymentMode === "full") return `Pago total por adelantado: ${service.priceLabel}`;
   if (service.paymentMode === "deposit" && service.depositPesos > 0) return `Sena para reservar: ${service.depositLabel}`;
   return "Sin cobro online al reservar";
+}
+
+function persistPublicHistoryItem(item: StoredHistoryItem) {
+  try {
+    const rawValue = window.localStorage.getItem(publicHistoryStorageKey);
+    const currentItems = rawValue ? JSON.parse(rawValue) : [];
+    const nextItems = Array.isArray(currentItems) ? [item, ...currentItems].slice(0, 30) : [item];
+    window.localStorage.setItem(publicHistoryStorageKey, JSON.stringify(nextItems));
+    window.dispatchEvent(new Event("turnos-public-history-updated"));
+  } catch {
+    // Local history is best-effort and must never block the reservation flow.
+  }
 }
 
 function collectIntakeResponses(formData: FormData, forms: PublicIntakeForm[]) {
@@ -172,13 +197,27 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
       return;
     }
 
+    const successMessage = canReserveAutomatically ? "Reserva creada. El negocio ya puede verla en el panel." : "Solicitud enviada. El negocio la va a revisar y responder por WhatsApp.";
+    if (activeService) {
+      persistPublicHistoryItem({
+        id: `${Date.now()}-${activeService.id}`,
+        serviceName: activeService.name,
+        serviceCategory: activeService.category,
+        startsAt: canReserveAutomatically ? startsAt : "",
+        createdAt: new Date().toISOString(),
+        status: canReserveAutomatically ? "active" : "pending",
+        kind: canReserveAutomatically ? "appointment" : "request",
+        message: successMessage,
+      });
+    }
+
     if (payload?.checkoutUrl) {
       window.location.href = payload.checkoutUrl;
       return;
     }
 
     setState("success");
-    setMessage(canReserveAutomatically ? "Reserva creada. El negocio ya puede verla en el panel." : "Solicitud enviada. El negocio la va a revisar y responder por WhatsApp.");
+    setMessage(successMessage);
   }
 
   return (

@@ -25,6 +25,7 @@ Migraciones relevantes:
 - `0011_business_onboarding_pwa_names.sql`: onboarding sin seed, `admin_users.business_id` nullable y nombres PWA configurables.
 - `0012_business_logo_variants.sql`: variantes de logo para modo claro y modo oscuro.
 - `0013_service_public_images.sql`: imagen publica por servicio (`services.image_url`).
+- `0014_public_bottom_navigation.sql`: toggle por negocio para mostrar/ocultar la barra inferior publica (`business.public_bottom_nav_enabled`).
 
 Scripts demo:
 
@@ -36,7 +37,7 @@ Nota monetaria: la migracion `0007_rename_money_columns_to_pesos.sql` renombra l
 
 Orden recomendado para una base nueva:
 
-1. Correr migraciones `0001` a `0013` en orden.
+1. Correr migraciones `0001` a `0014` en orden.
 2. Correr `seed.sql` solo si se quiere demo.
 3. Correr `borrar-seed.sql` para limpiar demo.
 
@@ -58,6 +59,10 @@ Implementado:
 - Fallback de imagen de servicio: imagen propia, icono publico del negocio y placeholder visual.
 - Detalle/reserva de servicio en bottom sheet flotante desde abajo para mobile/PWA y desktop, con cierre por boton, backdrop y Escape.
 - Bloqueo de scroll del documento mientras el panel esta abierto; solo scrollea el cuerpo interno del panel.
+- Barra inferior publica opcional, activable desde Configuracion, con secciones `Servicios`, `Historial`, `Notificaciones` y `Cuenta`.
+- `Historial` guarda localmente las reservas/solicitudes creadas desde esta PWA en el dispositivo.
+- `Notificaciones` queda preparada para listar push recibidas como cards horizontales desde cache local.
+- `Cuenta` guarda datos basicos del cliente en `localStorage` y expone el estado/solicitud de permiso de notificaciones.
 
 Flujo publico esperado actual:
 
@@ -84,7 +89,7 @@ Secciones implementadas:
 - `Clientes`: listado y ficha con historial de turnos/solicitudes.
 - `Formularios`: formularios de admision y campos.
 - `Reportes`: resumen operativo basico.
-- `Configuracion`: negocio, URL/dominio, WhatsApp y colores basicos.
+- `Configuracion`: negocio, URL/dominio, WhatsApp, colores basicos y toggle para mostrar/ocultar la barra inferior de la app publica.
 
 Fase 2.5 implementada en codigo:
 
@@ -136,6 +141,9 @@ Implementado:
 - `themeColor` PWA oscuro alineado a negro/gris (`#0a0a0a`).
 - Turnos del panel adaptados a mobile/PWA con cards desplegables; la tabla larga queda solo para desktop.
 - Acciones destructivas con modal de confirmacion, icono de alerta, boton rojo de borrar y boton de cancelar.
+- Runtime PWA mantiene variables `--app-height`, `--app-keyboard-inset` y safe areas desde `visualViewport`; la barra inferior publica se oculta cuando iOS Safari/PWA abre teclado para evitar la franja inferior rota.
+- Fixes heredados de Pizza Willy/TEMPORAL aplicados a la barra inferior: full-width pegada abajo en touch/PWA, flotante solo en desktop, z-index por debajo de sheets/modales y guard CSS + React contra teclado abierto.
+- Controles tactiles endurecidos con `touch-action: manipulation`; los desplegables mobile de turnos del admin dejaron de depender de `details/summary` nativo y ahora abren/cierra con estado React para responder al primer toque.
 
 ## Push subscriptions
 
