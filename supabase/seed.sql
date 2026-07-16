@@ -4,6 +4,17 @@
 
 begin;
 
+do $$
+begin
+  if exists (
+    select 1
+    from public.business
+    where id <> '00000000-0000-4000-8000-000000000001'
+  ) then
+    raise exception 'No ejecutar seed demo sobre una instancia con negocio real. Usar datos del panel o limpiar demo/controladamente antes de continuar.';
+  end if;
+end $$;
+
 -- Rehacer el demo de forma idempotente.
 delete from appointment_status_events where business_id = '00000000-0000-4000-8000-000000000001';
 delete from appointment_intake_responses where business_id = '00000000-0000-4000-8000-000000000001';
