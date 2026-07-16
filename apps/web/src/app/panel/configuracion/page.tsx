@@ -10,13 +10,10 @@ import { requirePanelSession } from "@/lib/panel/auth";
 
 export default async function PanelConfigurationPage() {
   await requirePanelSession();
-  const [business, services, schedules, intakeForms, headerStore] = await Promise.all([
-    getPanelBusinessSettings(),
-    getPanelServices(),
-    getPanelSchedules(),
-    getPanelIntakeForms(),
-    headers(),
-  ]);
+  const [business, headerStore] = await Promise.all([getPanelBusinessSettings(), headers()]);
+  const [services, schedules, intakeForms] = business
+    ? await Promise.all([getPanelServices(), getPanelSchedules(), getPanelIntakeForms()])
+    : [[], [], []];
   const protocol = headerStore.get("x-forwarded-proto") ?? "http";
   const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
   const fallbackOrigin = host ? `${protocol}://${host}` : "";

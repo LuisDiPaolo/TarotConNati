@@ -36,21 +36,14 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (panelHost) {
-    if (pathname.startsWith(PANEL_PREFIX)) {
-      return withPanelSecurityHeaders(NextResponse.next());
-    }
+  if (pathname.startsWith(PANEL_PREFIX)) {
+    return withPanelSecurityHeaders(NextResponse.next());
+  }
 
+  if (panelHost) {
     const rewritten = request.nextUrl.clone();
     rewritten.pathname = pathname === "/" ? PANEL_PREFIX : `${PANEL_PREFIX}${pathname}`;
     return withPanelSecurityHeaders(NextResponse.rewrite(rewritten));
-  }
-
-  if (pathname.startsWith(PANEL_PREFIX)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.search = "";
-    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();

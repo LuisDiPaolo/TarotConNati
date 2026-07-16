@@ -1,5 +1,6 @@
--- Script de onboarding para crear o completar un negocio real sin cargar seed demo.
--- Ejecutar despues de migraciones 0001 a 0014.
+-- CARGAR NEGOCIO
+-- Crea o actualiza el unico negocio real de la instancia.
+-- No carga demo, servicios, clientes ni turnos.
 -- Antes de correrlo, cambiar los valores de la seccion CONFIG.
 
 begin;
