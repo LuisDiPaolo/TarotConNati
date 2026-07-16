@@ -1,10 +1,8 @@
 "use client";
 
 import { BarChart3, Bell, CalendarDays, ClipboardList, FileText, Loader2, MessageCircle, Settings, Users, Wrench } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import type { Route } from "next";
 import type { ComponentType, MouseEvent } from "react";
 
 type PanelNavItem = {
@@ -46,20 +44,19 @@ export function PanelNav() {
         const pending = pendingHref === href && !active;
 
         return (
-          <Link
+          <a
             aria-current={active ? "page" : undefined}
             aria-label={pending ? `Cargando ${label}` : label}
             className="panel-nav-link"
             data-active={active ? "true" : "false"}
             data-pending={pending ? "true" : "false"}
-            href={href as Route}
+            href={href}
             key={href}
             onClick={(event) => handleNavigation(event, href)}
-            prefetch
           >
             {pending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <Icon aria-hidden="true" className="h-4 w-4" />}
             <span>{label}</span>
-          </Link>
+          </a>
         );
       })}
     </nav>

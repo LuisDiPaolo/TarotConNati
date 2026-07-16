@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
-import { StudioEquisCredit } from "@/components/public/StudioEquisCredit";
-import { InstallInstructions } from "@/components/pwa/InstallInstructions";
+import { PanelHomePage } from "@/components/panel/PanelHomePage";
+import { PublicHomePage } from "@/components/public/PublicHomePage";
 import { isConfiguredPanelHost } from "@/lib/business/instance";
 
 export const dynamic = "force-dynamic";
@@ -11,17 +11,12 @@ function hostnameFromHeaders(headerStore: Headers) {
   return hostname.toLowerCase();
 }
 
-export default async function InstallPage() {
+export default async function HomePage() {
   const headerStore = await headers();
 
   if (isConfiguredPanelHost(hostnameFromHeaders(headerStore))) {
-    return <InstallInstructions surface="panel" />;
+    return <PanelHomePage />;
   }
 
-  return (
-    <>
-      <InstallInstructions surface="public" />
-      <StudioEquisCredit />
-    </>
-  );
+  return <PublicHomePage />;
 }

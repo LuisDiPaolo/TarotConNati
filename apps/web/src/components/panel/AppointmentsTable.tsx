@@ -1,8 +1,6 @@
 "use client";
 
 import { AlertTriangle, Check, ChevronDown, Eye, MessageCircle, Plus, RotateCcw, Trash2, X } from "lucide-react";
-import Link from "next/link";
-import type { Route } from "next";
 import { useState } from "react";
 import type { PanelAppointment } from "@/lib/operations/panel-appointments";
 import type { PanelServiceSettings } from "@/lib/operations/panel-settings.types";
@@ -155,9 +153,9 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
 
     return (
       <div className="flex flex-wrap justify-end gap-2">
-        <Link className="icon-action" href={`/turnos/${appointment.id}` as Route} title="Ver detalle">
+        <a className="icon-action" href={`/turnos/${appointment.id}`} title="Ver detalle">
           <Eye aria-hidden="true" className="h-4 w-4" />
-        </Link>
+        </a>
         {whatsappReminderUrl ? (
           <a className="icon-action" href={whatsappReminderUrl} rel="noopener noreferrer" target="_blank" title="Enviar recordatorio por WhatsApp">
             <MessageCircle aria-hidden="true" className="h-4 w-4" />

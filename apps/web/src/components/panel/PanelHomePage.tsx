@@ -6,7 +6,7 @@ import { getPanelAppointments } from "@/lib/operations/panel-appointments";
 import { getPanelBusinessSettings, getPanelServices } from "@/lib/operations/panel-settings";
 import { requirePanelSession } from "@/lib/panel/auth";
 
-export default async function PanelHomePage() {
+export async function PanelHomePage() {
   await requirePanelSession();
   const business = await getPanelBusinessSettings();
   const [appointments, services] = business ? await Promise.all([getPanelAppointments(), getPanelServices()]) : [[], []];

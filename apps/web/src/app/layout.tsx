@@ -6,23 +6,36 @@ import { PublicPwaManager } from "@/components/pwa/PublicPwaManager";
 import { OrientationGuard } from "@/components/layout/OrientationGuard";
 import { ViewportRuntime } from "@/components/layout/ViewportRuntime";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { isConfiguredPanelHost } from "@/lib/business/instance";
 import { resolveBusinessForHostname } from "@/lib/business/resolve";
 import { buildBrandStyle } from "@/lib/theme/brand-style";
 
-export const metadata: Metadata = {
-  title: "Turnos",
-  description: "Plataforma modular de turnos y reservas.",
-  manifest: "/api/pwa/public-manifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Turnos",
-  },
-  icons: {
-    icon: [{ url: "/pwa/public/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/pwa/public/icon.svg" }],
-  },
-};
+function hostnameFromHeaders(headerStore: Headers) {
+  const rawHost = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
+  const [hostname = ""] = rawHost.split(":");
+  return hostname.toLowerCase();
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const headerStore = await headers();
+  const isPanelHost = isConfiguredPanelHost(hostnameFromHeaders(headerStore));
+
+  return {
+    title: isPanelHost ? "Panel Turnos" : "Turnos",
+    description: isPanelHost ? "Panel operativo del negocio." : "Plataforma modular de turnos y reservas.",
+    manifest: isPanelHost ? "/api/pwa/panel-manifest" : "/api/pwa/public-manifest",
+    robots: isPanelHost ? { index: false, follow: false } : undefined,
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: isPanelHost ? "Panel Turnos" : "Turnos",
+    },
+    icons: {
+      icon: [{ url: isPanelHost ? "/pwa/panel/icon.svg" : "/pwa/public/icon.svg", type: "image/svg+xml" }],
+      apple: [{ url: isPanelHost ? "/pwa/panel/icon.svg" : "/pwa/public/icon.svg" }],
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

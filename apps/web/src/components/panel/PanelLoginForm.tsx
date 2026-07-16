@@ -1,12 +1,11 @@
 "use client";
 
 import { LogIn } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function PanelLoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,8 +29,7 @@ export function PanelLoginForm() {
       return;
     }
 
-    router.replace("/");
-    router.refresh();
+    window.location.replace("/");
   }
 
   return (

@@ -1,5 +1,3 @@
-import Link from "next/link";
-import type { Route } from "next";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { getPanelCustomers } from "@/lib/operations/panel-customers";
 import { requirePanelSession } from "@/lib/panel/auth";
@@ -36,7 +34,7 @@ export default async function PanelCustomersPage() {
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{customer.notes || "-"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link className="primary-action inline-flex" href={`/clientes/${customer.id}` as Route}>Ver ficha</Link>
+                    <a className="primary-action inline-flex" href={`/clientes/${customer.id}`}>Ver ficha</a>
                   </td>
                 </tr>
               ))}

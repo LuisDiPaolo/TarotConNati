@@ -1,8 +1,6 @@
 "use client";
 
 import { Check, ClipboardCheck, Eye, MessageCircle, X } from "lucide-react";
-import Link from "next/link";
-import type { Route } from "next";
 import { useState } from "react";
 import type { PanelServiceRequest } from "@/lib/operations/panel-service-requests";
 
@@ -118,9 +116,9 @@ export function ServiceRequestsTable({ requests }: ServiceRequestsTableProps) {
                 <td className="px-4 py-3">{statusLabels[request.status]}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
-                    <Link className="icon-action" href={`/solicitudes/${request.id}` as Route} title="Ver detalle">
+                    <a className="icon-action" href={`/solicitudes/${request.id}`} title="Ver detalle">
                       <Eye aria-hidden="true" className="h-4 w-4" />
-                    </Link>
+                    </a>
                     {request.status === "pending_review" ? (
                       <button className="icon-action" disabled={busyId !== null} onClick={() => updateStatus(request.id, "pending_coordination")} title="Pasar a coordinacion" type="button">
                         <MessageCircle aria-hidden="true" className="h-4 w-4" />

@@ -1,7 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getConfiguredPanelOrigin, isConfiguredPanelHost } from "@/lib/business/instance";
-
-const PANEL_PREFIX = "/panel";
+import { isConfiguredPanelHost } from "@/lib/business/instance";
 
 const PANEL_SECURITY_HEADERS = {
   "X-Frame-Options": "DENY",
@@ -16,12 +14,6 @@ function getHostname(request: NextRequest) {
   return hostname.toLowerCase();
 }
 
-function cleanPanelPath(pathname: string) {
-  const stripped = pathname.slice(PANEL_PREFIX.length);
-  if (!stripped || stripped === "/") return "/";
-  return stripped.startsWith("/") ? stripped : `/${stripped}`;
-}
-
 function withPanelSecurityHeaders(response: NextResponse) {
   for (const [key, value] of Object.entries(PANEL_SECURITY_HEADERS)) {
     response.headers.set(key, value);
@@ -30,38 +22,12 @@ function withPanelSecurityHeaders(response: NextResponse) {
 }
 
 export function proxy(request: NextRequest) {
-  const hostname = getHostname(request);
-  const panelHost = isConfiguredPanelHost(hostname);
-  const { pathname, search } = request.nextUrl;
-
-  if (pathname.startsWith("/api/")) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith(PANEL_PREFIX)) {
-    const cleanPath = cleanPanelPath(pathname);
-
-    if (panelHost) {
-      const redirected = request.nextUrl.clone();
-      redirected.pathname = cleanPath;
-      return withPanelSecurityHeaders(NextResponse.redirect(redirected));
-    }
-
-    const panelOrigin = getConfiguredPanelOrigin();
-    if (panelOrigin) {
-      return NextResponse.redirect(new URL(`${cleanPath}${search}`, panelOrigin));
-    }
-
-    const redirected = request.nextUrl.clone();
-    redirected.pathname = "/";
-    redirected.search = "";
-    return NextResponse.redirect(redirected);
-  }
-
-  if (panelHost) {
-    const rewritten = request.nextUrl.clone();
-    rewritten.pathname = pathname === "/" ? PANEL_PREFIX : `${PANEL_PREFIX}${pathname}`;
-    return withPanelSecurityHeaders(NextResponse.rewrite(rewritten));
+  if (isConfiguredPanelHost(getHostname(request))) {
+    return withPanelSecurityHeaders(NextResponse.next());
   }
 
   return NextResponse.next();

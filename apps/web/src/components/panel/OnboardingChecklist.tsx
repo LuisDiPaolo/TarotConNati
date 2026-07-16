@@ -1,7 +1,5 @@
 import { CheckCircle2, Circle, ExternalLink } from "lucide-react";
-import Link from "next/link";
 import { getConfiguredPublicOrigin } from "@/lib/business/instance";
-import type { Route } from "next";
 import type { PanelBusinessSettings } from "@/lib/operations/panel-settings.types";
 
 type ChecklistItem = {
@@ -26,10 +24,10 @@ function ChecklistRow({ item }: { item: ChecklistItem }) {
         </span>
       </span>
       {internalHref && item.href ? (
-        <Link className="secondary-action shrink-0" href={item.href as Route} title={item.label}>
+        <a className="secondary-action shrink-0" href={item.href} title={item.label}>
           {item.action ?? "Abrir"}
           <ExternalLink aria-hidden="true" className="h-4 w-4" />
-        </Link>
+        </a>
       ) : item.href ? (
         <a className="secondary-action shrink-0" href={item.href} title={item.label}>
           {item.action ?? "Abrir"}
