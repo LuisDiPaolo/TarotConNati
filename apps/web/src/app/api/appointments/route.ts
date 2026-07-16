@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
     payload: {
       title: amountPesos > 0 ? "Reserva pendiente de pago" : "Nueva reserva",
       body: `${String(service.name)} - ${customer.fullName}`,
-      url: `/panel/turnos/${appointment.id}`,
+      url: `/turnos/${appointment.id}`,
       tag: "appointment-created",
     },
   });

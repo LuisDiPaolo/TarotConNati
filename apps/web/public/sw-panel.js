@@ -39,13 +39,12 @@ function urlBase64ToUint8Array(value) {
 
 function resolveNotificationUrl(value) {
   try {
-    const url = new URL(value || "/panel", self.location.origin);
-    if (url.origin !== self.location.origin) return "/panel";
-    if (url.pathname.startsWith("/api/")) return "/panel";
-    if (!url.pathname.startsWith("/panel")) return "/panel";
+    const url = new URL(value || "/", self.location.origin);
+    if (url.origin !== self.location.origin) return "/";
+    if (url.pathname.startsWith("/api/")) return "/";
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
-    return "/panel";
+    return "/";
   }
 }
 

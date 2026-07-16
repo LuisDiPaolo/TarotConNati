@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isConfiguredPanelHost } from "@/lib/business/instance";
+import { getConfiguredPanelOrigin, isConfiguredPanelHost } from "@/lib/business/instance";
 
 const PANEL_PREFIX = "/panel";
 
@@ -16,8 +16,10 @@ function getHostname(request: NextRequest) {
   return hostname.toLowerCase();
 }
 
-function isPanelHost(hostname: string) {
-  return isConfiguredPanelHost(hostname);
+function cleanPanelPath(pathname: string) {
+  const stripped = pathname.slice(PANEL_PREFIX.length);
+  if (!stripped || stripped === "/") return "/";
+  return stripped.startsWith("/") ? stripped : `/${stripped}`;
 }
 
 function withPanelSecurityHeaders(response: NextResponse) {
@@ -29,15 +31,31 @@ function withPanelSecurityHeaders(response: NextResponse) {
 
 export function proxy(request: NextRequest) {
   const hostname = getHostname(request);
-  const panelHost = isPanelHost(hostname);
-  const { pathname } = request.nextUrl;
+  const panelHost = isConfiguredPanelHost(hostname);
+  const { pathname, search } = request.nextUrl;
 
   if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
   if (pathname.startsWith(PANEL_PREFIX)) {
-    return withPanelSecurityHeaders(NextResponse.next());
+    const cleanPath = cleanPanelPath(pathname);
+
+    if (panelHost) {
+      const redirected = request.nextUrl.clone();
+      redirected.pathname = cleanPath;
+      return withPanelSecurityHeaders(NextResponse.redirect(redirected));
+    }
+
+    const panelOrigin = getConfiguredPanelOrigin();
+    if (panelOrigin) {
+      return NextResponse.redirect(new URL(`${cleanPath}${search}`, panelOrigin));
+    }
+
+    const redirected = request.nextUrl.clone();
+    redirected.pathname = "/";
+    redirected.search = "";
+    return NextResponse.redirect(redirected);
   }
 
   if (panelHost) {

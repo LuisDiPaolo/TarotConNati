@@ -118,7 +118,7 @@ export function ServiceRequestsTable({ requests }: ServiceRequestsTableProps) {
                 <td className="px-4 py-3">{statusLabels[request.status]}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
-                    <Link className="icon-action" href={`/panel/solicitudes/${request.id}` as Route} title="Ver detalle">
+                    <Link className="icon-action" href={`/solicitudes/${request.id}` as Route} title="Ver detalle">
                       <Eye aria-hidden="true" className="h-4 w-4" />
                     </Link>
                     {request.status === "pending_review" ? (

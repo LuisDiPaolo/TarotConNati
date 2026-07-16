@@ -155,7 +155,7 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
 
     return (
       <div className="flex flex-wrap justify-end gap-2">
-        <Link className="icon-action" href={`/panel/turnos/${appointment.id}` as Route} title="Ver detalle">
+        <Link className="icon-action" href={`/turnos/${appointment.id}` as Route} title="Ver detalle">
           <Eye aria-hidden="true" className="h-4 w-4" />
         </Link>
         {whatsappReminderUrl ? (

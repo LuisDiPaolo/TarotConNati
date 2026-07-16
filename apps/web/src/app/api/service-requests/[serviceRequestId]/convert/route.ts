@@ -84,7 +84,7 @@ export async function POST(_request: Request, context: { params: Promise<{ servi
     payload: {
       title: "Solicitud convertida",
       body: `Turno operativo creado para ${String(serviceJoin?.name ?? "servicio")}`,
-      url: "/panel",
+      url: "/",
       tag: "service-request-converted",
     },
   });

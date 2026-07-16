@@ -16,23 +16,119 @@ begin
   end if;
 end $$;
 
-delete from appointment_status_events where business_id = (select id from public.business limit 1);
-delete from appointment_intake_responses where business_id = (select id from public.business limit 1);
-delete from service_request_intake_responses where business_id = (select id from public.business limit 1);
-delete from payments where business_id = (select id from public.business limit 1);
-delete from payment_webhook_events where business_id = (select id from public.business limit 1);
-delete from push_notification_records where business_id = (select id from public.business limit 1);
-delete from admin_notification_preferences where business_id = (select id from public.business limit 1);
-delete from push_delivery_events where business_id = (select id from public.business limit 1);
-delete from push_subscriptions where business_id = (select id from public.business limit 1);
-delete from service_requests where business_id = (select id from public.business limit 1);
-delete from appointments where business_id = (select id from public.business limit 1);
-delete from customers where business_id = (select id from public.business limit 1);
-delete from service_intake_forms where business_id = (select id from public.business limit 1);
-delete from intake_form_fields where business_id = (select id from public.business limit 1);
-delete from intake_forms where business_id = (select id from public.business limit 1);
-delete from schedule_overrides where business_id = (select id from public.business limit 1);
-delete from schedules where business_id = (select id from public.business limit 1);
-delete from services where business_id = (select id from public.business limit 1);
+delete from appointment_status_events
+where appointment_id in (
+  '40000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000002',
+  '40000000-0000-4000-8000-000000000003',
+  '40000000-0000-4000-8000-000000000004',
+  '40000000-0000-4000-8000-000000000005'
+);
+delete from appointment_intake_responses
+where appointment_id in (
+  '40000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000002',
+  '40000000-0000-4000-8000-000000000003',
+  '40000000-0000-4000-8000-000000000004',
+  '40000000-0000-4000-8000-000000000005'
+);
+delete from service_request_intake_responses
+where service_request_id in (
+  '50000000-0000-4000-8000-000000000001',
+  '50000000-0000-4000-8000-000000000002'
+);
+delete from payments
+where appointment_id in (
+  '40000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000002',
+  '40000000-0000-4000-8000-000000000003',
+  '40000000-0000-4000-8000-000000000004',
+  '40000000-0000-4000-8000-000000000005'
+)
+or external_reference in (
+  '40000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000002',
+  '40000000-0000-4000-8000-000000000003',
+  '40000000-0000-4000-8000-000000000004',
+  '40000000-0000-4000-8000-000000000005'
+)
+or provider_preference_id in ('demo-pref-001', 'demo-pref-002', 'demo-pref-003', 'demo-pref-004');
+delete from service_requests
+where id in (
+  '50000000-0000-4000-8000-000000000001',
+  '50000000-0000-4000-8000-000000000002'
+);
+delete from appointments
+where id in (
+  '40000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000002',
+  '40000000-0000-4000-8000-000000000003',
+  '40000000-0000-4000-8000-000000000004',
+  '40000000-0000-4000-8000-000000000005'
+);
+delete from customers
+where id in (
+  '30000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000002',
+  '30000000-0000-4000-8000-000000000003',
+  '30000000-0000-4000-8000-000000000004',
+  '30000000-0000-4000-8000-000000000005',
+  '30000000-0000-4000-8000-000000000006',
+  '30000000-0000-4000-8000-000000000007'
+);
+delete from service_intake_forms
+where service_id in (
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002',
+  '10000000-0000-4000-8000-000000000003',
+  '10000000-0000-4000-8000-000000000004',
+  '10000000-0000-4000-8000-000000000005'
+)
+or form_id in (
+  '20000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000002'
+);
+delete from intake_form_fields
+where form_id in (
+  '20000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000002'
+);
+delete from intake_forms
+where id in (
+  '20000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000002'
+);
+delete from schedule_overrides
+where id in (
+  '12000000-0000-4000-8000-000000000001',
+  '12000000-0000-4000-8000-000000000002'
+)
+or reason in ('Dia demo cerrado por mantenimiento', 'Franja reducida demo');
+delete from schedules
+where id in (
+  '11000000-0000-4000-8000-000000000000',
+  '11000000-0000-4000-8000-000000000001',
+  '11000000-0000-4000-8000-000000000002',
+  '11000000-0000-4000-8000-000000000003',
+  '11000000-0000-4000-8000-000000000004',
+  '11000000-0000-4000-8000-000000000005',
+  '11000000-0000-4000-8000-000000000006'
+)
+or (
+  business_id = (select id from public.business limit 1)
+  and starts_at = '00:00'
+  and ends_at = '23:59'
+  and break_starts_at is null
+  and break_ends_at is null
+  and active = true
+);
+delete from services
+where id in (
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002',
+  '10000000-0000-4000-8000-000000000003',
+  '10000000-0000-4000-8000-000000000004',
+  '10000000-0000-4000-8000-000000000005'
+);
 
 commit;

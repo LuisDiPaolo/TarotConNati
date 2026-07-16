@@ -540,9 +540,19 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   opacity: 0.6;
 }
 
-.panel-nav-link:hover {
+.panel-nav-link:hover:not(:disabled) {
   background: rgb(var(--brand-primary) / 0.1);
   color: rgb(var(--color-foreground));
+}
+
+.panel-nav-link:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.panel-nav-link[data-active="true"]:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .panel-nav-link:active {

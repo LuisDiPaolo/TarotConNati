@@ -1,4 +1,6 @@
 import { CheckCircle2, Circle, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { getConfiguredPublicOrigin } from "@/lib/business/instance";
 import type { PanelBusinessSettings } from "@/lib/operations/panel-settings.types";
 
 type ChecklistItem = {
@@ -11,6 +13,7 @@ type ChecklistItem = {
 
 function ChecklistRow({ item }: { item: ChecklistItem }) {
   const Icon = item.done ? CheckCircle2 : Circle;
+  const internalHref = item.href?.startsWith("/");
 
   return (
     <li className="flex min-h-20 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white/60 px-3 py-3 text-sm dark:border-neutral-700 dark:bg-neutral-900/40">
@@ -21,7 +24,12 @@ function ChecklistRow({ item }: { item: ChecklistItem }) {
           <span className="mt-1 block leading-5 text-muted">{item.copy}</span>
         </span>
       </span>
-      {item.href ? (
+      {internalHref && item.href ? (
+        <Link className="secondary-action shrink-0" href={item.href} title={item.label}>
+          {item.action ?? "Abrir"}
+          <ExternalLink aria-hidden="true" className="h-4 w-4" />
+        </Link>
+      ) : item.href ? (
         <a className="secondary-action shrink-0" href={item.href} title={item.label}>
           {item.action ?? "Abrir"}
           <ExternalLink aria-hidden="true" className="h-4 w-4" />
@@ -43,47 +51,48 @@ export function OnboardingChecklist({
   formsCount: number;
 }) {
   const hasBrandAssets = Boolean(business?.publicAppIconUrl || business?.logoUrl || business?.logoLightUrl || business?.logoDarkUrl);
+  const publicPreviewHref = getConfiguredPublicOrigin() || "/";
   const items: ChecklistItem[] = [
     {
       label: "Crear negocio",
       copy: business ? "El panel ya esta asociado a un negocio." : "Completa nombre, WhatsApp y presentacion para crear la base operativa.",
       done: Boolean(business),
-      href: "/panel/configuracion",
+      href: "/configuracion",
       action: business ? "Revisar" : "Completar",
     },
     {
       label: "Cargar servicios",
       copy: "Agrega lo que el cliente puede reservar o solicitar desde la pagina publica.",
       done: servicesCount > 0,
-      href: "/panel/servicios",
+      href: "/servicios",
       action: servicesCount > 0 ? "Editar" : "Cargar",
     },
     {
       label: "Definir disponibilidad",
       copy: "Configura horarios si algun servicio toma turnos con agenda.",
       done: schedulesCount > 0 || servicesCount === 0,
-      href: "/panel/agenda",
+      href: "/agenda",
       action: schedulesCount > 0 ? "Editar" : "Configurar",
     },
     {
       label: "Preguntas al cliente",
       copy: "Opcional: datos extra que el cliente completa al reservar.",
       done: formsCount > 0,
-      href: "/panel/formularios",
+      href: "/formularios",
       action: formsCount > 0 ? "Editar" : "Agregar",
     },
     {
       label: "Logo e imagen de app",
       copy: "Opcional, pero recomendado antes de compartir la app con clientes.",
       done: hasBrandAssets,
-      href: "/panel/configuracion",
+      href: "/configuracion",
       action: hasBrandAssets ? "Revisar" : "Cargar",
     },
     {
       label: "Probar reserva real",
       copy: "Abrir la web publica y crear una reserva o solicitud de prueba.",
       done: false,
-      href: "/",
+      href: publicPreviewHref,
       action: "Probar",
     },
   ];

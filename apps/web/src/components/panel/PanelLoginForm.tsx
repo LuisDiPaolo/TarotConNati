@@ -30,7 +30,7 @@ export function PanelLoginForm() {
       return;
     }
 
-    router.replace("/panel");
+    router.replace("/");
     router.refresh();
   }
 

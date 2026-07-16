@@ -36,7 +36,7 @@ export default async function PanelCustomersPage() {
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{customer.notes || "-"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link className="primary-action inline-flex" href={`/panel/clientes/${customer.id}` as Route}>Ver ficha</Link>
+                    <Link className="primary-action inline-flex" href={`/clientes/${customer.id}` as Route}>Ver ficha</Link>
                   </td>
                 </tr>
               ))}

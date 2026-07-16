@@ -3,44 +3,40 @@
 import { BarChart3, Bell, CalendarDays, ClipboardList, FileText, Loader2, MessageCircle, Settings, Users, Wrench } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Route } from "next";
 import type { ComponentType, MouseEvent } from "react";
 
 type PanelNavItem = {
-  href: string;
+  href: Route;
   label: string;
   icon: ComponentType<{ className?: string; "aria-hidden"?: "true" }>;
 };
 
 const navItems: PanelNavItem[] = [
-  { href: "/panel", label: "Turnos", icon: CalendarDays },
-  { href: "/panel/solicitudes", label: "Solicitudes", icon: MessageCircle },
-  { href: "/panel/configuracion", label: "Configuracion", icon: Settings },
-  { href: "/panel/servicios", label: "Servicios", icon: Wrench },
-  { href: "/panel/agenda", label: "Agenda", icon: ClipboardList },
-  { href: "/panel/clientes", label: "Clientes", icon: Users },
-  { href: "/panel/notificaciones", label: "Avisos", icon: Bell },
-  { href: "/panel/formularios", label: "Formularios", icon: FileText },
-  { href: "/panel/reportes", label: "Reportes", icon: BarChart3 },
+  { href: "/", label: "Turnos", icon: CalendarDays },
+  { href: "/solicitudes", label: "Solicitudes", icon: MessageCircle },
+  { href: "/configuracion", label: "Configuracion", icon: Settings },
+  { href: "/servicios", label: "Servicios", icon: Wrench },
+  { href: "/agenda", label: "Agenda", icon: ClipboardList },
+  { href: "/clientes", label: "Clientes", icon: Users },
+  { href: "/notificaciones", label: "Avisos", icon: Bell },
+  { href: "/formularios", label: "Formularios", icon: FileText },
+  { href: "/reportes", label: "Reportes", icon: BarChart3 },
 ];
 
-function isCurrentPath(pathname: string, href: string) {
-  if (href === "/panel") return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+function isCurrentPath(pathname: string, href: Route) {
+  const current = href as string;
+  if (current === "/") return pathname === "/";
+  return pathname === current || pathname.startsWith(`${current}/`);
 }
 
 export function PanelNav() {
   const pathname = usePathname();
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [pendingHref, setPendingHref] = useState<Route | null>(null);
 
-  useEffect(() => {
-    setPendingHref(null);
-  }, [pathname]);
-
-  function handleNavigation(event: MouseEvent<HTMLAnchorElement>, href: string) {
+  function handleNavigation(event: MouseEvent<HTMLAnchorElement>, href: Route) {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    if (isCurrentPath(pathname, href)) return;
     setPendingHref(href);
   }
 
@@ -53,10 +49,11 @@ export function PanelNav() {
         return (
           <Link
             aria-current={active ? "page" : undefined}
+            aria-label={pending ? `Cargando ${label}` : label}
             className="panel-nav-link"
             data-active={active ? "true" : "false"}
             data-pending={pending ? "true" : "false"}
-            href={href as Route}
+            href={href}
             key={href}
             onClick={(event) => handleNavigation(event, href)}
             prefetch

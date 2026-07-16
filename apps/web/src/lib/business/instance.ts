@@ -28,6 +28,22 @@ export function getConfiguredPanelDomain() {
   return `panel.${publicDomain}`;
 }
 
+export function getConfiguredPanelOrigin() {
+  const publicOrigin = getConfiguredPublicOrigin();
+  if (!publicOrigin) return "";
+
+  try {
+    const url = new URL(publicOrigin);
+    url.hostname = getConfiguredPanelDomain();
+    url.pathname = "";
+    url.search = "";
+    url.hash = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return "";
+  }
+}
+
 export function isLocalBusinessHost(hostname: string) {
   return (
     !hostname ||

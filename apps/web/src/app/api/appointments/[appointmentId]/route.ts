@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ a
     payload: {
       title: "Turno actualizado",
       body: `${serviceName}: ${statusLabel}`,
-      url: "/panel",
+      url: "/",
       tag: "appointment-status",
     },
   });

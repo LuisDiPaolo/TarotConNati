@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     payload: {
       title: nextStatus === "approved" ? "Pago aprobado" : "Pago actualizado",
       body: `Estado de pago: ${nextStatus}`,
-      url: `/panel/turnos/${typedPayment.appointment_id}`,
+      url: `/turnos/${typedPayment.appointment_id}`,
       tag: "payment-status",
     },
   });

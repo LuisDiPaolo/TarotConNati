@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
     payload: {
       title: "Solicitud actualizada",
       body: `${serviceName}: ${statusLabel}`,
-      url: "/panel/solicitudes",
+      url: "/solicitudes",
       tag: "service-request-status",
     },
   });

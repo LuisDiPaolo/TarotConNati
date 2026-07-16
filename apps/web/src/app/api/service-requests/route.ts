@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     payload: {
       title: "Nueva solicitud",
       body: `${customer.fullName} solicito ${String(service.name)}`,
-      url: "/panel/solicitudes",
+      url: "/solicitudes",
       tag: "service-request-created",
     },
   });

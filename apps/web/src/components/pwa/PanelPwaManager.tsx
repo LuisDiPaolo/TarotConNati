@@ -13,7 +13,7 @@ function sendBrandAssetsToWorker(registration: ServiceWorkerRegistration, assets
 
 export function PanelPwaManager() {
   useEffect(() => {
-    if (!isPanelHostname(window.location.hostname) && !window.location.pathname.startsWith("/panel")) return;
+    if (!isPanelHostname(window.location.hostname)) return;
 
     const assetsPromise = updatePwaHeadLinks("/api/pwa/panel-manifest", "/pwa/panel/icon.svg");
 

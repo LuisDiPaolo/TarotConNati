@@ -20,7 +20,7 @@ export function PanelSetupRequired({
         </div>
       </div>
       <div>
-        <Link className="primary-action inline-flex" href="/panel/configuracion">
+        <Link className="primary-action inline-flex" href="/configuracion">
           Completar negocio
           <ArrowRight aria-hidden="true" className="h-4 w-4" />
         </Link>
