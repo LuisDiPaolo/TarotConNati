@@ -1,6 +1,5 @@
-export const PANEL_SUBDOMAIN = "panel";
+import { isConfiguredPanelHost } from "@/lib/business/instance";
 
 export function isPanelHostname(hostname: string) {
-  const normalized = hostname.split(":")[0]?.toLowerCase() ?? "";
-  return normalized === PANEL_SUBDOMAIN || normalized.startsWith(`${PANEL_SUBDOMAIN}.`);
+  return isConfiguredPanelHost(hostname);
 }

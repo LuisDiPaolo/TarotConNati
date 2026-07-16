@@ -21,6 +21,7 @@ Queda pendiente validacion operativa en ambiente real: migraciones `0015` y `001
 - Push visible con app cerrada: el service worker ejecuta `showNotification()` dentro del evento `push` antes de intentar comunicar ventanas abiertas.
 - Servicio de notificaciones activo por defecto, con toggle en Configuracion para desactivarlo por negocio.
 - Historial publico local en PWA, alimentado por mensajes del service worker solo cuando hay una ventana abierta.
+- Accion manual de recordatorio por WhatsApp desde cada reserva, con texto prearmado y telefono normalizado para Argentina (`549...`, `54...` o numero local).
 
 ## Eventos implementados
 
@@ -49,6 +50,7 @@ Queda pendiente validacion operativa en ambiente real: migraciones `0015` y `001
 - Confirmar que el panel recibe su aviso y `/panel/notificaciones` registra el evento.
 - Cerrar completamente la PWA publica y confirmar que el cliente recibe aviso separado como notificacion del sistema.
 - Abrir la PWA publica y confirmar que el aviso queda guardado en la pestaña `Notificaciones`.
+- Desde una reserva con telefono de cliente argentino, abrir el recordatorio por WhatsApp y confirmar que `5491132800536`, `541132800536` y `1132800536` generan un link usable con mensaje prearmado.
 
 ## Fuera de alcance
 

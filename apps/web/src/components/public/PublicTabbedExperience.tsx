@@ -159,7 +159,9 @@ function PublicBottomNav({ activeTab, onChange }: { activeTab: PublicTab; onChan
                 className="app-bottom-nav__item"
                 data-active={active ? "true" : "false"}
                 key={tab.id}
-                onClick={() => onChange(tab.id)}
+                onClick={() => {
+                  if (!active) onChange(tab.id);
+                }}
                 style={{ WebkitTapHighlightColor: "transparent" }}
                 type="button"
               >
@@ -181,6 +183,7 @@ export function PublicTabbedExperience({ description, services, slotsByService, 
   const [notifications, setNotifications] = useState<PublicNotificationItem[]>([]);
   const [account, setAccount] = useState<PublicAccount>({ fullName: "", phone: "", email: "" });
   const [notificationPermission, setNotificationPermission] = useState("default");
+  const [notificationBusy, setNotificationBusy] = useState(false);
 
   useEffect(() => {
     const requestedTab = new URLSearchParams(window.location.search).get("tab");
@@ -235,13 +238,19 @@ export function PublicTabbedExperience({ description, services, slotsByService, 
   }
 
   async function requestNotificationPermission() {
-    if (typeof Notification === "undefined") {
-      setNotificationPermission("unsupported");
-      return;
+    if (notificationBusy) return;
+    setNotificationBusy(true);
+    try {
+      if (typeof Notification === "undefined") {
+        setNotificationPermission("unsupported");
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === "granted") await syncCurrentPushSubscription("public").catch(() => null);
+    } finally {
+      setNotificationBusy(false);
     }
-    const permission = await Notification.requestPermission();
-    setNotificationPermission(permission);
-    if (permission === "granted") await syncCurrentPushSubscription("public").catch(() => null);
   }
 
   const servicesSection = (
@@ -341,7 +350,7 @@ export function PublicTabbedExperience({ description, services, slotsByService, 
               <p className="text-sm font-bold">Notificaciones</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">Estado: {notificationPermission}</p>
             </div>
-            <button className="secondary-action" type="button" onClick={() => void requestNotificationPermission()}>Activar</button>
+            <button className="secondary-action" type="button" disabled={notificationBusy} onClick={() => void requestNotificationPermission()}>{notificationBusy ? "Activando" : "Activar"}</button>
           </div>
           <div className="rounded-lg border border-slate-200/80 p-3 dark:border-white/10">
             <p className="text-sm font-bold">Ubicacion</p>

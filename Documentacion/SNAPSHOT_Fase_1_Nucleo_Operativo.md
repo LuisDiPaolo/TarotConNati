@@ -36,7 +36,7 @@ Este bloque avanza Fase 1 sin incorporar modulos de fases futuras. Quedan fuera:
 ### Configuracion de negocio
 
 - `apps/web/src/app/panel/configuracion/page.tsx` agrega pantalla propia de negocio y marca.
-- `apps/web/src/components/panel/BusinessSettingsForm.tsx` edita nombre, slug, descripcion publica, WhatsApp, dominio publico y tokens visuales basicos.
+- `apps/web/src/components/panel/BusinessSettingsForm.tsx` funciona como asistente de alta: pide nombre, descripcion publica, WhatsApp y dominio opcional; deriva slug/nombres tecnicos y deja identidad visual/funciones como ajustes avanzados.
 - `apps/web/src/components/panel/BusinessQrCard.tsx` muestra QR y URL publica de reservas para imprimir o compartir. Por ahora usa generacion externa de QR para evitar dependencia nueva; se puede reemplazar por generacion local antes de produccion si se requiere autosuficiencia total.
 - `apps/web/src/app/api/panel/business/route.ts` actualiza la configuracion desde servidor con sesion Supabase y negocio asociado al admin.
 

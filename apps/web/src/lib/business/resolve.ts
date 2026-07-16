@@ -1,6 +1,12 @@
 import "server-only";
 
 import type { NextRequest } from "next/server";
+import {
+  isConfiguredPanelHost,
+  isConfiguredPublicHost,
+  isLocalBusinessHost,
+  normalizeConfiguredDomain,
+} from "@/lib/business/instance";
 import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -23,14 +29,16 @@ export type ResolvedBusiness = {
   appleTouchIconUrl?: string | null;
 };
 
-function normalizeHostname(value: string | null) {
-  const raw = value ?? "";
-  const [hostname = ""] = raw.split(":");
-  return hostname.toLowerCase();
+export function normalizeBusinessHostname(value: string | null) {
+  return normalizeConfiguredDomain((value ?? "").split(",")[0]);
+}
+
+export function isSafeBusinessFallbackHost(hostname: string) {
+  return isLocalBusinessHost(hostname) || isConfiguredPublicHost(hostname) || isConfiguredPanelHost(hostname);
 }
 
 export function getRequestHostname(request: NextRequest) {
-  return normalizeHostname(request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
+  return normalizeBusinessHostname(request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
 }
 
 type BusinessRow = {
@@ -73,27 +81,26 @@ function mapBusiness(row: BusinessRow): ResolvedBusiness {
   };
 }
 
+const BUSINESS_SELECT = "id, timezone, currency, locale, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url";
+
 export async function resolveBusinessForHostname(hostname: string): Promise<ResolvedBusiness | null> {
-  const normalizedHostname = normalizeHostname(hostname);
+  const normalizedHostname = normalizeBusinessHostname(hostname);
   const supabase = createSupabaseAdminClient();
 
-  const { data: exactMatch, error: exactError } = await supabase
-    .from("business")
-    .select("id, timezone, currency, locale, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
-    .or(`public_domain.eq.${normalizedHostname},panel_domain.eq.${normalizedHostname}`)
-    .maybeSingle();
-
-  if (!exactError && exactMatch) return mapBusiness(exactMatch as BusinessRow);
+  if (!isSafeBusinessFallbackHost(normalizedHostname)) return null;
 
   const { data: fallbackRows, error: fallbackError } = await supabase
     .from("business")
-    .select("id, timezone, currency, locale, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
-    .order("updated_at", { ascending: false })
-    .limit(10);
+    .select(BUSINESS_SELECT)
+    .order("created_at", { ascending: true })
+    .limit(2);
 
   if (fallbackError || !fallbackRows?.length) return null;
+
   const rows = fallbackRows as BusinessRow[];
-  return mapBusiness(rows[0]!);
+  if (rows.length === 1) return mapBusiness(rows[0]!);
+
+  return null;
 }
 
 export async function resolveBusinessForRequest(request: NextRequest): Promise<ResolvedBusiness | null> {

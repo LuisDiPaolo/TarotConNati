@@ -27,6 +27,7 @@ export function InstallInstructions({ surface }: InstallInstructionsProps) {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState("Notification" in globalThis ? Notification.permission : "unsupported");
+  const [busyAction, setBusyAction] = useState<"install" | "notifications" | null>(null);
   const [platform] = useState(() => resolvePlatform());
   const title = surface === "panel" ? "Instalar panel" : "Instalar reservas";
 
@@ -51,20 +52,30 @@ export function InstallInstructions({ surface }: InstallInstructionsProps) {
   }, []);
 
   async function requestInstall() {
-    if (!installEvent) return;
-    await installEvent.prompt();
-    await installEvent.userChoice.catch(() => null);
-    setInstallEvent(null);
+    if (!installEvent || busyAction) return;
+    setBusyAction("install");
+    try {
+      await installEvent.prompt();
+      await installEvent.userChoice.catch(() => null);
+      setInstallEvent(null);
+    } finally {
+      setBusyAction(null);
+    }
   }
 
   async function requestNotifications() {
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
-    const permission = await Notification.requestPermission();
-    setNotificationStatus(permission);
-    if (permission !== "granted") return;
+    if (busyAction || !("Notification" in window) || !("serviceWorker" in navigator)) return;
+    setBusyAction("notifications");
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationStatus(permission);
+      if (permission !== "granted") return;
 
-    const registration = await navigator.serviceWorker.ready;
-    await ensurePushSubscription(registration, surface);
+      const registration = await navigator.serviceWorker.ready;
+      await ensurePushSubscription(registration, surface);
+    } finally {
+      setBusyAction(null);
+    }
   }
 
   return (
@@ -95,13 +106,13 @@ export function InstallInstructions({ surface }: InstallInstructionsProps) {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <button className="primary-action" disabled={!installEvent || installed} onClick={requestInstall} type="button">
+          <button className="primary-action" disabled={!installEvent || installed || busyAction !== null} onClick={requestInstall} type="button">
             <Download aria-hidden="true" className="h-5 w-5" />
-            {installed ? "Instalada" : installEvent ? "Instalar" : platform === "ios" ? "Usar Compartir" : "Usar menu del navegador"}
+            {busyAction === "install" ? "Abriendo" : installed ? "Instalada" : installEvent ? "Instalar" : platform === "ios" ? "Usar Compartir" : "Usar menu del navegador"}
           </button>
-          <button className="primary-action bg-accent" disabled={notificationStatus === "unsupported" || notificationStatus === "granted"} onClick={requestNotifications} type="button">
+          <button className="primary-action bg-accent" disabled={busyAction !== null || notificationStatus === "unsupported" || notificationStatus === "granted"} onClick={requestNotifications} type="button">
             <Bell aria-hidden="true" className="h-5 w-5" />
-            {notificationStatus === "granted" ? "Notificaciones activas" : "Activar notificaciones"}
+            {busyAction === "notifications" ? "Activando" : notificationStatus === "granted" ? "Notificaciones activas" : "Activar notificaciones"}
           </button>
         </div>
       </section>

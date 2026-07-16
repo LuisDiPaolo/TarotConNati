@@ -427,7 +427,7 @@ export function BrandAssetCropper({ file, config, onCancel, onConfirm }: BrandAs
 
   return (
     <div className="fixed inset-0 z-[260] flex items-stretch justify-center bg-black/70 text-white backdrop-blur-sm md:items-center md:p-5">
-      <button aria-label="Cerrar recorte" className="absolute inset-0 cursor-default" onClick={exporting ? undefined : onCancel} type="button" />
+      <button aria-label="Cerrar recorte" className="absolute inset-0 cursor-default" disabled={exporting} onClick={onCancel} type="button" />
       <section className="relative h-full w-full overflow-hidden bg-neutral-950 md:h-auto md:max-h-[calc(100dvh-40px)] md:max-w-[680px] md:rounded-2xl md:border md:border-white/10 md:shadow-2xl">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img alt="" aria-hidden className="absolute inset-0 h-full w-full scale-105 object-cover opacity-70 blur-lg brightness-50" src={objectUrl} />

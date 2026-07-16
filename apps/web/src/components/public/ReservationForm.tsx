@@ -131,7 +131,7 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
     };
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setPanelOpen(false);
+      if (event.key === "Escape" && state !== "submitting") setPanelOpen(false);
     }
 
     document.documentElement.classList.add("booking-panel-open");
@@ -152,7 +152,7 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
       document.body.style.width = previousBodyStyles.width;
       window.scrollTo(0, scrollY);
     };
-  }, [panelOpen]);
+  }, [panelOpen, state]);
 
   function openServicePanel(nextServiceId: string) {
     setServiceId(nextServiceId);
@@ -163,6 +163,8 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
   }
 
   async function submitReservation(formData: FormData) {
+    if (state === "submitting") return;
+
     setState("submitting");
     setMessage("");
 
@@ -189,10 +191,10 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
         contactChannel: "whatsapp",
         intakeResponses,
       }),
-    });
+    }).catch(() => null);
 
-    const payload = await response.json().catch(() => null) as { appointmentId?: string; serviceRequestId?: string; checkoutUrl?: string; error?: { message?: string } } | null;
-    if (!response.ok) {
+    const payload = await response?.json().catch(() => null) as { appointmentId?: string; serviceRequestId?: string; checkoutUrl?: string; error?: { message?: string } } | null;
+    if (!response?.ok) {
       setState("error");
       setMessage(payload?.error?.message ?? "No se pudo crear la reserva.");
       return;
@@ -278,7 +280,14 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
       </div>
 
       {panelOpen && activeService ? (
-        <div className="booking-panel-backdrop fixed inset-0 z-[90] flex items-end justify-center px-0 pt-8 sm:px-5" onClick={() => setPanelOpen(false)}>
+        <div className="booking-panel-backdrop fixed inset-0 z-[90] flex items-end justify-center px-0 pt-8 sm:px-5">
+          <button
+            aria-label="Cerrar reserva"
+            className="absolute inset-0 cursor-default"
+            disabled={state === "submitting"}
+            onClick={() => setPanelOpen(false)}
+            type="button"
+          />
           <form
             action={submitReservation}
             aria-labelledby="booking-panel-title"
@@ -293,7 +302,7 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Reserva</p>
                 <h2 id="booking-panel-title" className="mt-1 text-xl font-black leading-tight sm:text-2xl">{activeService.name}</h2>
               </div>
-              <button className="icon-action bg-white/70 dark:bg-white/10" type="button" onClick={() => setPanelOpen(false)} title="Cerrar">
+              <button className="icon-action bg-white/70 dark:bg-white/10" disabled={state === "submitting"} type="button" onClick={() => setPanelOpen(false)} title="Cerrar">
                 <X aria-hidden="true" className="h-4 w-4" />
               </button>
             </div>
@@ -462,7 +471,7 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
             <div className="booking-panel-footer border-t p-4 backdrop-blur-xl sm:p-5">
               <button className="primary-action w-full justify-center disabled:cursor-not-allowed disabled:opacity-60" disabled={state === "submitting" || (canReserveAutomatically && !startsAt)} type="submit">
                 {state === "submitting" ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <CalendarCheck aria-hidden="true" className="h-4 w-4" />}
-                {canReserveAutomatically ? "Confirmar reserva" : "Enviar solicitud"}
+                {state === "submitting" ? "Procesando" : canReserveAutomatically ? "Confirmar reserva" : "Enviar solicitud"}
               </button>
             </div>
           </form>

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getCurrentPanelBusinessId } from "@/lib/operations/panel-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type PanelNotificationRecord = {
@@ -28,9 +29,13 @@ type NotificationRecordRow = {
 
 export async function getPanelNotificationRecords(): Promise<PanelNotificationRecord[]> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return [];
+
   const { data, error } = await supabase
     .from("push_notification_records")
     .select("id, surface, event_type, title, body, url, delivered_count, failed_count, created_at")
+    .eq("business_id", businessId)
     .order("created_at", { ascending: false })
     .limit(60);
 

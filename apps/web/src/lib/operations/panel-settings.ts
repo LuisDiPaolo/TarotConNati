@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getConfiguredPublicDomain } from "@/lib/business/instance";
 import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentPanelBusinessId } from "./panel-auth";
@@ -38,7 +39,7 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
     slug: data.slug,
     description: data.description ?? "",
     whatsappPhone: data.whatsapp_phone ?? "",
-    publicDomain: data.public_domain ?? "",
+    publicDomain: getConfiguredPublicDomain() || data.public_domain || "",
     publicAppName: data.public_app_name ?? "",
     panelAppName: data.panel_app_name ?? "",
     publicShortName: data.public_short_name ?? "",

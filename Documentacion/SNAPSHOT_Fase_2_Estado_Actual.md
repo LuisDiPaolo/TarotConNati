@@ -51,7 +51,7 @@ Si `0005` ya fue ejecutada, no repetirla sin `drop policy if exists`, porque Sup
 
 Implementado:
 
-- Resolucion de negocio por dominio/slug, con fallback que prefiere negocios con assets cargados para no quedar atado al seed demo.
+- Resolucion de negocio blindada por instancia: `NEXT_PUBLIC_SITE_URL` define la URL publica, `NEXT_PUBLIC_APP_URL` queda como fallback de compatibilidad y el panel se deriva como `panel.<dominio-publico>`. El admin no edita dominios desde el panel. La web publica/API/manifest solo resuelven si el host corresponde al dominio publico configurado, al panel derivado o a localhost, y si existe un unico negocio en la base.
 - Aplicacion de colores configurables desde `business.brand_primary`, `brand_accent` y `brand_radius`.
 - Logo/identidad visual desde assets del negocio; si hay logo cargado, reemplaza visualmente al titulo grande y deja el `h1` accesible.
 - Servicios con agenda: reserva con horario disponible.
@@ -93,8 +93,8 @@ Secciones implementadas:
 - `Clientes`: listado y ficha con historial de turnos/solicitudes.
 - `Formularios`: formularios de admision y campos.
 - `Reportes`: resumen operativo basico.
-- `Avisos`: historial operativo de notificaciones push enviadas a panel o cliente, con superficie y conteo de entregados/fallidos.
-- `Configuracion`: negocio, URL/dominio, WhatsApp, colores basicos, imagenes de marca, toggle para mostrar/ocultar la barra inferior de la app publica y toggle para activar/desactivar el servicio de notificaciones. Push queda activo por defecto. El slug y los nombres instalables se derivan automaticamente para no pedir decisiones tecnicas al admin. Si todavia no hay negocio, el panel guia al admin a completar esta pantalla antes de cargar servicios, agenda o formularios.
+- `Avisos`: historial operativo de notificaciones push enviadas a panel o cliente, filtrado por negocio del admin, con superficie y conteo de entregados/fallidos.
+- `Configuracion`: negocio, WhatsApp, colores basicos, imagenes de marca, toggle para mostrar/ocultar la barra inferior de la app publica y toggle para activar/desactivar el servicio de notificaciones. Push queda activo por defecto. El dominio, el slug y los nombres instalables se derivan automaticamente para no pedir decisiones tecnicas al admin. Si todavia no hay negocio, el panel guia al admin a completar esta pantalla antes de cargar servicios, agenda o formularios.
 
 Fase 2.5 implementada en codigo:
 
@@ -106,9 +106,10 @@ Fase 2.5 implementada en codigo:
 - Admin puede cargar variantes de logo para modo claro y modo oscuro, ademas del logo principal como fallback.
 - El recorte de iconos permite elegir color de fondo solido; se recomienda subir logo sin fondo para generar favicon/PWA/Apple touch con mejor contraste y peso controlado.
 - El favicon de desktop usa el mismo icono de app configurado para la PWA correspondiente.
-- `/panel/configuracion` permite crear/completar el negocio cuando la sesion no tiene `business_id`, enlazando el admin autenticado.
-- Admin puede configurar nombres instalables PWA publico/panel y nombres cortos.
-- Configuracion incluye checklist de puesta en marcha y preview PWA/navegador.
+- `/panel/configuracion` funciona como asistente de alta de negocio cuando la sesion no tiene `business_id`, enlazando el admin autenticado.
+- El asistente pide solo nombre, WhatsApp, presentacion e identidad visual inicial; dominio, slug, nombres instalables y valores tecnicos se derivan automaticamente.
+- Los ajustes visuales y funciones publicas quedan separados como opciones avanzadas para no bloquear la carga inicial.
+- Configuracion incluye checklist de puesta en marcha orientado a pasos operativos: negocio, servicios, disponibilidad, preguntas, marca y prueba publica.
 - Bucket publico `brand-assets` y endpoint `/api/panel/brand-assets` para guardar PNG/WebP recortados y limpiar versiones anteriores.
 
 Pendiente para cierre operativo de Fase 2.5:
@@ -168,21 +169,7 @@ Condiciones para funcionar:
 - `push_enabled=true` en `features` del negocio.
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` configuradas.
 - Navegador con permiso de notificaciones y subscription activa.
-- En seed demo, `push_enabled` viene en `false`; hay que activarlo manualmente para probar.
-
-SQL minimo demo para activar push:
-
-```sql
-update features
-set enabled = true
-where business_id = '00000000-0000-4000-8000-000000000001'
-  and feature_key = 'push_enabled';
-
-update app_runtime_config
-set value = 'true'
-where business_id = '00000000-0000-4000-8000-000000000001'
-  and key = 'push_enabled';
-```
+- En seed demo, `push_enabled` viene activo por defecto; se puede apagar desde Configuracion con el toggle `Servicio de notificaciones`.
 
 Cierre Fase 4 desarrollo/implementacion:
 
@@ -193,6 +180,7 @@ Cierre Fase 4 desarrollo/implementacion:
 
 ## Pendientes tecnicos
 
+- Validacion operativa de alta/seed/negocio en ambiente real: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_APP_URL`, `admin_users.business_id` y el unico negocio canonico de la Supabase del cliente deben quedar alineados despues de recargar seed o completar negocio real. En codigo, las lecturas operativas del panel ya filtran por `business_id` del admin y la web publica/API/manifest solo resuelven el negocio de la instancia si el host corresponde al dominio publico configurado, al panel derivado o a localhost, para no mezclar servicios, clientes, turnos, solicitudes, reportes ni manifest PWA entre negocios. La migracion `0017_single_business_instance.sql` impide mas de una fila en `business`; futuras sucursales deben ir en una entidad separada.
 - Ejecutar build/typecheck con variables reales.
 - Probar smoke test completo en navegador.
 - Smoke visual final pre-release en navegador real para Fase 2.6 (mobile, PWA y desktop).
@@ -211,6 +199,7 @@ Minimas:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_APP_URL`
 
 Segun modulos activos:

@@ -8,12 +8,12 @@ do $$
 declare
   -- CONFIG: editar estos valores para el cliente real.
   v_admin_email text := 'admin@tu-negocio.com';
-  v_business_id uuid := gen_random_uuid();
+  v_business_id uuid := gen_random_uuid(); -- id interno del unico negocio canonico de esta Supabase
   v_business_name text := 'Mi Negocio';
   v_business_slug text := 'mi-negocio';
   v_description text := 'Reserva turnos online para servicios profesionales.';
-  v_public_domain text := null; -- ejemplo: 'turnos.mi-negocio.com'
-  v_panel_domain text := null; -- opcional
+  v_public_domain text := null; -- dominio publico aprovisionado en DNS/Vercel, ejemplo: 'mi-negocio.com.ar'
+  v_panel_domain text := null; -- dominio de panel aprovisionado en DNS/Vercel, ejemplo: 'panel.mi-negocio.com.ar'
   v_whatsapp_phone text := null; -- ejemplo AR: '5493515550101'
   v_public_app_name text := 'Mi Negocio Turnos';
   v_panel_app_name text := 'Mi Negocio Panel';
@@ -42,8 +42,12 @@ begin
   select id
     into v_resolved_business_id
   from public.business
-  where slug = v_business_slug
+  order by created_at asc
   limit 1;
+
+  if (select count(*) from public.business) > 1 then
+    raise exception 'Esta instancia admite un solo negocio. Unificar filas en public.business antes de completar el alta.';
+  end if;
 
   v_resolved_business_id := coalesce(v_resolved_business_id, v_business_id);
 
@@ -93,7 +97,7 @@ begin
     'incomplete',
     v_public_bottom_nav_enabled
   )
-  on conflict (slug) do update
+  on conflict (id) do update
   set name = excluded.name,
       description = excluded.description,
       public_domain = excluded.public_domain,

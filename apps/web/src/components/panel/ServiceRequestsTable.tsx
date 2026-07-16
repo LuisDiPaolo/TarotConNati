@@ -36,14 +36,15 @@ export function ServiceRequestsTable({ requests }: ServiceRequestsTableProps) {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function updateStatus(requestId: string, status: PanelServiceRequest["status"], adminNotes = "") {
+    if (busyId) return;
     setBusyId(requestId);
     const response = await fetch(`/api/service-requests/${requestId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status, adminNotes }),
-    });
+    }).catch(() => null);
 
-    if (response.ok) {
+    if (response?.ok) {
       setRows((current) => current.map((request) => request.id === requestId ? { ...request, status, adminNotes } : request));
     }
 
@@ -51,10 +52,11 @@ export function ServiceRequestsTable({ requests }: ServiceRequestsTableProps) {
   }
 
   async function convertRequest(requestId: string) {
+    if (busyId) return;
     setBusyId(requestId);
-    const response = await fetch(`/api/service-requests/${requestId}/convert`, { method: "POST" });
+    const response = await fetch(`/api/service-requests/${requestId}/convert`, { method: "POST" }).catch(() => null);
 
-    if (response.ok) {
+    if (response?.ok) {
       setRows((current) => current.map((request) => request.id === requestId ? { ...request, status: "converted", adminNotes: "Convertida en turno operativo sin bloqueo de agenda." } : request));
     }
 
@@ -120,27 +122,27 @@ export function ServiceRequestsTable({ requests }: ServiceRequestsTableProps) {
                       <Eye aria-hidden="true" className="h-4 w-4" />
                     </Link>
                     {request.status === "pending_review" ? (
-                      <button className="icon-action" disabled={busyId === request.id} onClick={() => updateStatus(request.id, "pending_coordination")} title="Pasar a coordinacion" type="button">
+                      <button className="icon-action" disabled={busyId !== null} onClick={() => updateStatus(request.id, "pending_coordination")} title="Pasar a coordinacion" type="button">
                         <MessageCircle aria-hidden="true" className="h-4 w-4" />
                       </button>
                     ) : null}
                     {request.status === "pending_coordination" ? (
-                      <button className="icon-action" disabled={busyId === request.id} onClick={() => convertRequest(request.id)} title="Convertir en turno" type="button">
+                      <button className="icon-action" disabled={busyId !== null} onClick={() => convertRequest(request.id)} title="Convertir en turno" type="button">
                         <Check aria-hidden="true" className="h-4 w-4" />
                       </button>
                     ) : null}
                     {request.status === "pending_coordination" ? (
-                      <button className="icon-action" disabled={busyId === request.id} onClick={() => updateStatus(request.id, "closed")} title="Cerrar solicitud" type="button">
+                      <button className="icon-action" disabled={busyId !== null} onClick={() => updateStatus(request.id, "closed")} title="Cerrar solicitud" type="button">
                         <ClipboardCheck aria-hidden="true" className="h-4 w-4" />
                       </button>
                     ) : null}
                     {request.status === "closed" || request.status === "cancelled" ? (
-                      <button className="icon-action" disabled={busyId === request.id} onClick={() => updateStatus(request.id, "pending_review")} title="Reabrir" type="button">
+                      <button className="icon-action" disabled={busyId !== null} onClick={() => updateStatus(request.id, "pending_review")} title="Reabrir" type="button">
                         <Check aria-hidden="true" className="h-4 w-4" />
                       </button>
                     ) : null}
                     {request.status === "pending_review" || request.status === "pending_coordination" ? (
-                      <button className="icon-action" disabled={busyId === request.id} onClick={() => updateStatus(request.id, "cancelled")} title="Cancelar solicitud" type="button">
+                      <button className="icon-action" disabled={busyId !== null} onClick={() => updateStatus(request.id, "cancelled")} title="Cancelar solicitud" type="button">
                         <X aria-hidden="true" className="h-4 w-4" />
                       </button>
                     ) : null}

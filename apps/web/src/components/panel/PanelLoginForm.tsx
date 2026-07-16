@@ -15,14 +15,17 @@ export function PanelLoginForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError("");
 
     const supabase = createSupabaseBrowserClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password }).catch(() => ({
+      error: new Error("network_error"),
+    }));
 
-    setLoading(false);
     if (authError) {
+      setLoading(false);
       setError("Credenciales invalidas o usuario sin acceso al panel.");
       return;
     }

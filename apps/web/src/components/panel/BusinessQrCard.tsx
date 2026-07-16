@@ -1,13 +1,13 @@
 import { QrCode } from "lucide-react";
+import { getConfiguredPublicOrigin } from "@/lib/business/instance";
 import type { PanelBusinessSettings } from "@/lib/operations/panel-settings.types";
 
-function normalizePublicUrl(business: PanelBusinessSettings, fallbackOrigin: string) {
-  if (business.publicDomain) return `https://${business.publicDomain}`;
-  return fallbackOrigin || "/";
+function normalizePublicUrl(fallbackOrigin: string) {
+  return getConfiguredPublicOrigin() || process.env.APP_BASE_URL || fallbackOrigin || "/";
 }
 
 export function BusinessQrCard({ business, fallbackOrigin }: { business: PanelBusinessSettings; fallbackOrigin: string }) {
-  const publicUrl = normalizePublicUrl(business, fallbackOrigin);
+  const publicUrl = normalizePublicUrl(fallbackOrigin);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data=${encodeURIComponent(publicUrl)}`;
 
   return (

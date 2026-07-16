@@ -31,21 +31,27 @@ function formatDate(value: string) {
 export function AppointmentsTable({ appointments, services }: AppointmentsTableProps) {
   const [rows, setRows] = useState(appointments);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [createBusy, setCreateBusy] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "error">("success");
   const [deleteTarget, setDeleteTarget] = useState<PanelAppointment | null>(null);
 
   async function createAppointment(formData: FormData) {
+    if (createBusy) return;
     setMessage("");
+    setMessageTone("success");
     const serviceId = String(formData.get("serviceId") ?? "");
     const startsAtValue = String(formData.get("startsAt") ?? "");
     const service = services.find((item) => item.id === serviceId);
     if (!service || !startsAtValue) {
+      setMessageTone("error");
       setMessage("Completa servicio y horario.");
       return;
     }
 
+    setCreateBusy(true);
     const status = String(formData.get("status") ?? "confirmed") as PanelAppointment["status"];
     const response = await fetch("/api/panel/appointments", {
       method: "POST",
@@ -61,10 +67,18 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
           notes: String(formData.get("notes") ?? ""),
         },
       }),
-    });
+    }).catch(() => null);
+    if (!response) {
+      setCreateBusy(false);
+      setMessageTone("error");
+      setMessage("No se pudo crear el turno.");
+      return;
+    }
     const payload = await response.json().catch(() => null) as { id?: string; error?: { message?: string } } | null;
 
     if (!response.ok || !payload?.id) {
+      setCreateBusy(false);
+      setMessageTone("error");
       setMessage(payload?.error?.message ?? "No se pudo crear el turno.");
       return;
     }
@@ -87,40 +101,53 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
       intakeResponses: [],
     }, ...current]);
     setShowCreate(false);
+    setCreateBusy(false);
     setMessage("Turno creado.");
   }
 
   async function confirmDeleteAppointment() {
-    if (!deleteTarget) return;
+    if (!deleteTarget || busyId) return;
     setBusyId(deleteTarget.id);
     setMessage("");
-    const response = await fetch(`/api/appointments/${deleteTarget.id}`, { method: "DELETE" });
-    if (response.ok) {
+    setMessageTone("success");
+    const response = await fetch(`/api/appointments/${deleteTarget.id}`, { method: "DELETE" }).catch(() => null);
+    if (response?.ok) {
       setRows((current) => current.filter((appointment) => appointment.id !== deleteTarget.id));
       setMessage("Turno borrado.");
       setDeleteTarget(null);
     } else {
+      setMessageTone("error");
       setMessage("No se pudo borrar el turno.");
     }
     setBusyId(null);
   }
 
   async function updateStatus(appointmentId: string, status: PanelAppointment["status"], reason = "") {
+    if (busyId) return;
     setBusyId(appointmentId);
     setMessage("");
+    setMessageTone("success");
     const response = await fetch(`/api/appointments/${appointmentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status, reason }),
-    });
+    }).catch(() => null);
 
-    if (response.ok) {
+    if (response?.ok) {
       setRows((current) => current.map((appointment) => appointment.id === appointmentId ? { ...appointment, status } : appointment));
     } else {
+      setMessageTone("error");
       setMessage("No se pudo actualizar el turno.");
     }
 
     setBusyId(null);
+  }
+
+  function requestStatusWithReason(appointmentId: string, status: "cancelled" | "no_show", promptLabel: string) {
+    if (busyId) return;
+    const reason = window.prompt(promptLabel);
+    if (reason === null) return;
+    void updateStatus(appointmentId, status, reason.trim());
   }
 
   function renderActions(appointment: PanelAppointment) {
@@ -141,26 +168,26 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
           </button>
         )}
         {appointment.status === "pending" ? (
-          <button className="icon-action" disabled={busyId === appointment.id} onClick={() => updateStatus(appointment.id, "confirmed")} title="Confirmar" type="button">
+          <button className="icon-action" disabled={busyId !== null} onClick={() => updateStatus(appointment.id, "confirmed")} title="Confirmar" type="button">
             <Check aria-hidden="true" className="h-4 w-4" />
           </button>
         ) : null}
         {appointment.status === "confirmed" ? (
-          <button className="icon-action" disabled={busyId === appointment.id} onClick={() => updateStatus(appointment.id, "completed")} title="Marcar realizado" type="button">
+          <button className="icon-action" disabled={busyId !== null} onClick={() => updateStatus(appointment.id, "completed")} title="Marcar realizado" type="button">
             <Check aria-hidden="true" className="h-4 w-4" />
           </button>
         ) : null}
         {appointment.status === "confirmed" ? (
-          <button className="icon-action" disabled={busyId === appointment.id} onClick={() => updateStatus(appointment.id, "no_show", window.prompt("Motivo de ausencia") ?? "")} title="Marcar ausente" type="button">
+          <button className="icon-action" disabled={busyId !== null} onClick={() => requestStatusWithReason(appointment.id, "no_show", "Motivo de ausencia")} title="Marcar ausente" type="button">
             <RotateCcw aria-hidden="true" className="h-4 w-4" />
           </button>
         ) : null}
         {appointment.status === "pending" || appointment.status === "confirmed" ? (
-          <button className="icon-action" disabled={busyId === appointment.id} onClick={() => updateStatus(appointment.id, "cancelled", window.prompt("Motivo de cancelacion") ?? "")} title="Cancelar" type="button">
+          <button className="icon-action" disabled={busyId !== null} onClick={() => requestStatusWithReason(appointment.id, "cancelled", "Motivo de cancelacion")} title="Cancelar" type="button">
             <X aria-hidden="true" className="h-4 w-4" />
           </button>
         ) : null}
-        <button className="icon-action danger-icon-action" disabled={busyId === appointment.id} onClick={() => setDeleteTarget(appointment)} title="Borrar turno" type="button">
+        <button className="icon-action danger-icon-action" disabled={busyId !== null} onClick={() => setDeleteTarget(appointment)} title="Borrar turno" type="button">
           <Trash2 aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
@@ -170,7 +197,7 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
   return (
     <div className="grid gap-4">
       <div className="flex justify-end">
-        <button className="primary-action" type="button" onClick={() => setShowCreate((current) => !current)}>
+        <button className="primary-action" type="button" disabled={createBusy} onClick={() => setShowCreate((current) => !current)}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Crear turno
         </button>
@@ -220,15 +247,15 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
           </label>
 
           <div className="flex justify-end">
-            <button className="primary-action" type="submit">
+            <button className="primary-action" disabled={createBusy} type="submit">
               <Plus aria-hidden="true" className="h-4 w-4" />
-              Crear
+              {createBusy ? "Creando" : "Crear"}
             </button>
           </div>
         </form>
       ) : null}
 
-      {message ? <p className="text-sm font-semibold text-emerald-600">{message}</p> : null}
+      {message ? <p className={messageTone === "error" ? "text-sm font-semibold text-red-600" : "text-sm font-semibold text-emerald-600"}>{message}</p> : null}
 
       {rows.length === 0 ? (
         <div className="surface p-6">
@@ -340,7 +367,7 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
 
       {deleteTarget ? (
         <div className="fixed inset-0 z-[180] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-appointment-title">
-          <button aria-label="Cancelar borrado" className="absolute inset-0 cursor-default bg-black/55" type="button" onClick={() => setDeleteTarget(null)} />
+          <button aria-label="Cancelar borrado" className="absolute inset-0 cursor-default bg-black/55" disabled={busyId === deleteTarget.id} type="button" onClick={() => setDeleteTarget(null)} />
           <div className="surface relative z-10 w-full max-w-md p-5 shadow-2xl">
             <div className="flex gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
@@ -354,7 +381,7 @@ export function AppointmentsTable({ appointments, services }: AppointmentsTableP
               </div>
             </div>
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button className="secondary-action w-full sm:w-auto" type="button" onClick={() => setDeleteTarget(null)}>
+              <button className="secondary-action w-full sm:w-auto" type="button" disabled={busyId === deleteTarget.id} onClick={() => setDeleteTarget(null)}>
                 Cancelar
               </button>
               <button className="danger-action w-full sm:w-auto" type="button" onClick={confirmDeleteAppointment} disabled={busyId === deleteTarget.id}>

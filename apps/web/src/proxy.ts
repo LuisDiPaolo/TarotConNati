@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isConfiguredPanelHost } from "@/lib/business/instance";
 
 const PANEL_PREFIX = "/panel";
-const PANEL_SUBDOMAIN = "panel";
 
 const PANEL_SECURITY_HEADERS = {
   "X-Frame-Options": "DENY",
@@ -17,7 +17,7 @@ function getHostname(request: NextRequest) {
 }
 
 function isPanelHost(hostname: string) {
-  return hostname === PANEL_SUBDOMAIN || hostname.startsWith(`${PANEL_SUBDOMAIN}.`);
+  return isConfiguredPanelHost(hostname);
 }
 
 function withPanelSecurityHeaders(response: NextResponse) {

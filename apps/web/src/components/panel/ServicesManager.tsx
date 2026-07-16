@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, ImageIcon, Plus, Save, Trash2, Upload } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BrandAssetCropper, type BrandAssetCropConfig } from "@/components/panel/BrandAssetCropper";
 import type { PanelServiceSettings } from "@/lib/operations/panel-settings.types";
 
@@ -78,10 +78,13 @@ function emptyService(): DraftService {
 }
 
 export function ServicesManager({ services }: { services: PanelServiceSettings[] }) {
+  const fileInputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const [rows, setRows] = useState<DraftService[]>(services.map((service) => ({ ...service, draftId: service.id })));
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"success" | "error">("success");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [imageUploadingId, setImageUploadingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DraftService | null>(null);
   const [imageCropTarget, setImageCropTarget] = useState<{ row: DraftService; file: File } | null>(null);
 
@@ -91,6 +94,7 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
   }
 
   async function saveRow(row: DraftService) {
+    if (savingId || deletingId || imageUploadingId) return;
     setMessage("");
     setMessageTone("success");
 
@@ -155,12 +159,14 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
   }
 
   async function uploadServiceImage(row: DraftService, croppedFile: File) {
+    if (imageUploadingId) return;
     if (!row.id || row.isNew) {
       setMessageTone("error");
       setMessage("Guarda el servicio antes de cargar una imagen.");
       return;
     }
 
+    setImageUploadingId(row.draftId);
     setMessage("");
     setMessageTone("success");
     const formData = new FormData();
@@ -171,18 +177,20 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
     const data = await response?.json().catch(() => null) as { publicUrl?: string; error?: { message?: string } } | null;
 
     if (!response?.ok || !data?.publicUrl) {
+      setImageUploadingId(null);
       setMessageTone("error");
       setMessage(data?.error?.message ?? "No se pudo subir la imagen del servicio.");
       return;
     }
 
     updateRow(row.draftId, { imageUrl: data.publicUrl });
+    setImageUploadingId(null);
     setImageCropTarget(null);
     setMessage("Imagen del servicio guardada.");
   }
 
   async function confirmDeleteRow() {
-    if (!deleteTarget) return;
+    if (!deleteTarget || savingId || deletingId || imageUploadingId) return;
     setMessage("");
     setMessageTone("success");
     if (deleteTarget.isNew || !deleteTarget.id) {
@@ -191,8 +199,10 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       return;
     }
 
-    const response = await fetch(`/api/panel/services/${deleteTarget.id}`, { method: "DELETE" });
-    if (!response.ok) {
+    setDeletingId(deleteTarget.draftId);
+    const response = await fetch(`/api/panel/services/${deleteTarget.id}`, { method: "DELETE" }).catch(() => null);
+    if (!response?.ok) {
+      setDeletingId(null);
       setMessageTone("error");
       setMessage("No se pudo quitar el servicio.");
       return;
@@ -200,6 +210,7 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
 
     setRows((current) => current.filter((currentRow) => currentRow.id !== deleteTarget.id));
     setDeleteTarget(null);
+    setDeletingId(null);
     setMessage("Servicio quitado.");
   }
 
@@ -210,7 +221,7 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
           <h2 className="text-xl font-black">Servicios</h2>
           <p className="mt-1 text-sm text-muted">Carga lo que el cliente puede reservar o solicitar desde la pagina publica.</p>
         </div>
-        <button className="primary-action" type="button" onClick={() => setRows((current) => [...current, emptyService()])}>
+        <button className="primary-action" type="button" disabled={savingId !== null || deletingId !== null || imageUploadingId !== null} onClick={() => setRows((current) => [...current, emptyService()])}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Agregar servicio
         </button>
@@ -219,7 +230,7 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
       {rows.map((row) => (
         <article className="surface grid gap-5 p-5" key={row.draftId}>
           <div className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)]">
-            <label className={`group relative grid aspect-square overflow-hidden rounded-lg border ${row.isNew ? "cursor-not-allowed border-dashed border-slate-200 bg-slate-50 opacity-70 dark:border-white/10 dark:bg-white/5" : "cursor-pointer border-slate-200 bg-white/70 hover:border-primary dark:border-white/10 dark:bg-white/5"}`}>
+            <div className={`relative grid aspect-square overflow-hidden rounded-lg border ${row.isNew || imageUploadingId !== null ? "border-dashed border-slate-200 bg-slate-50 opacity-70 dark:border-white/10 dark:bg-white/5" : "border-slate-200 bg-white/70 hover:border-primary dark:border-white/10 dark:bg-white/5"}`}>
               {row.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img alt="" className="h-full w-full object-cover" src={row.imageUrl} />
@@ -229,22 +240,34 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
                   Imagen del servicio
                 </span>
               )}
-              <span className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-2 rounded-md bg-slate-950/80 px-3 py-2 text-xs font-bold text-white shadow-lg transition group-hover:bg-primary">
+              <button
+                aria-label={row.isNew ? "Guarda el servicio antes de cargar imagen" : row.imageUrl ? "Cambiar imagen del servicio" : "Cargar imagen del servicio"}
+                className="absolute inset-0 flex items-end justify-center p-3 text-left"
+                disabled={row.isNew || !row.id || imageUploadingId !== null}
+                onClick={() => fileInputRefs.current.get(row.draftId)?.click()}
+                type="button"
+              >
+                <span className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-slate-950/80 px-3 py-2 text-xs font-bold text-white shadow-lg transition hover:bg-primary">
                 <Upload aria-hidden="true" className="h-3.5 w-3.5" />
-                {row.isNew ? "Guarda primero" : row.imageUrl ? "Cambiar imagen" : "Cargar imagen"}
-              </span>
+                {imageUploadingId === row.draftId ? "Subiendo" : row.isNew ? "Guarda primero" : row.imageUrl ? "Cambiar imagen" : "Cargar imagen"}
+                </span>
+              </button>
               <input
                 accept="image/png,image/jpeg,image/webp"
                 className="sr-only"
-                disabled={row.isNew || !row.id}
+                disabled={row.isNew || !row.id || imageUploadingId !== null}
+                ref={(input) => {
+                  if (input) fileInputRefs.current.set(row.draftId, input);
+                  else fileInputRefs.current.delete(row.draftId);
+                }}
                 type="file"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   event.currentTarget.value = "";
-                  if (file) setImageCropTarget({ row, file });
+                  if (file && imageUploadingId === null) setImageCropTarget({ row, file });
                 }}
               />
-            </label>
+            </div>
 
             <div className="grid gap-3">
               <div className="grid gap-3 md:grid-cols-3">
@@ -329,10 +352,10 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
           </div>
 
           <div className="flex justify-end gap-2">
-            <button className="icon-action danger-icon-action" type="button" onClick={() => setDeleteTarget(row)} title="Quitar servicio">
+            <button className="icon-action danger-icon-action" type="button" disabled={savingId !== null || deletingId !== null || imageUploadingId !== null} onClick={() => setDeleteTarget(row)} title="Quitar servicio">
               <Trash2 aria-hidden="true" className="h-4 w-4" />
             </button>
-            <button className="primary-action disabled:opacity-60" type="button" disabled={savingId === row.draftId} onClick={() => saveRow(row)}>
+            <button className="primary-action disabled:opacity-60" type="button" disabled={savingId !== null || deletingId !== null || imageUploadingId !== null} onClick={() => saveRow(row)}>
               <Save aria-hidden="true" className="h-4 w-4" />
               {savingId === row.draftId ? "Guardando" : "Guardar"}
             </button>
@@ -346,14 +369,16 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
         <BrandAssetCropper
           config={serviceImageCropConfig}
           file={imageCropTarget.file}
-          onCancel={() => setImageCropTarget(null)}
+          onCancel={() => {
+            if (imageUploadingId === null) setImageCropTarget(null);
+          }}
           onConfirm={(croppedFile) => uploadServiceImage(imageCropTarget.row, croppedFile)}
         />
       ) : null}
 
       {deleteTarget ? (
         <div className="fixed inset-0 z-[180] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-service-title">
-          <button aria-label="Cancelar borrado" className="absolute inset-0 cursor-default bg-black/55" type="button" onClick={() => setDeleteTarget(null)} />
+          <button aria-label="Cancelar borrado" className="absolute inset-0 cursor-default bg-black/55" disabled={deletingId === deleteTarget.draftId} type="button" onClick={() => setDeleteTarget(null)} />
           <div className="surface relative z-10 w-full max-w-md p-5 shadow-2xl">
             <div className="flex gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
@@ -367,12 +392,12 @@ export function ServicesManager({ services }: { services: PanelServiceSettings[]
               </div>
             </div>
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button className="secondary-action w-full sm:w-auto" type="button" onClick={() => setDeleteTarget(null)}>
+              <button className="secondary-action w-full sm:w-auto" type="button" disabled={deletingId === deleteTarget.draftId} onClick={() => setDeleteTarget(null)}>
                 Cancelar
               </button>
-              <button className="danger-action w-full sm:w-auto" type="button" onClick={confirmDeleteRow}>
+              <button className="danger-action w-full sm:w-auto" type="button" disabled={deletingId === deleteTarget.draftId} onClick={confirmDeleteRow}>
                 <Trash2 aria-hidden="true" className="h-4 w-4" />
-                Quitar
+                {deletingId === deleteTarget.draftId ? "Quitando" : "Quitar"}
               </button>
             </div>
           </div>

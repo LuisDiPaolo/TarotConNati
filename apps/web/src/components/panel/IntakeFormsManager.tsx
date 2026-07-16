@@ -87,6 +87,8 @@ function parseOptions(value: string) {
 export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeFormSettings[]; services: PanelServiceSettings[] }) {
   const [rows, setRows] = useState<DraftForm[]>(forms.map(toDraftForm));
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "error">("success");
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   function updateForm(draftId: string, patch: Partial<DraftForm>) {
     setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...patch } : row));
@@ -114,7 +116,10 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
   }
 
   async function saveForm(row: DraftForm) {
+    if (savingId) return;
     setMessage("");
+    setMessageTone("success");
+    setSavingId(row.draftId);
     const payload = {
       name: row.name,
       description: row.description,
@@ -136,10 +141,12 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
       method: row.isNew ? "POST" : "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    });
-    const data = await response.json().catch(() => null) as { id?: string; error?: { message?: string } } | null;
+    }).catch(() => null);
+    const data = await response?.json().catch(() => null) as { id?: string; error?: { message?: string } } | null;
 
-    if (!response.ok) {
+    if (!response?.ok) {
+      setSavingId(null);
+      setMessageTone("error");
       setMessage(data?.error?.message ?? "No se pudo guardar el formulario.");
       return;
     }
@@ -147,13 +154,14 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
     if (row.isNew && data?.id) {
       updateForm(row.draftId, { id: data.id, draftId: data.id, isNew: false });
     }
+    setSavingId(null);
     setMessage("Formulario guardado.");
   }
 
   return (
     <div className="grid gap-4">
       <div className="flex justify-end">
-        <button className="primary-action" type="button" onClick={() => setRows((current) => [...current, emptyForm()])}>
+        <button className="primary-action" type="button" disabled={savingId !== null} onClick={() => setRows((current) => [...current, emptyForm()])}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Agregar formulario
         </button>
@@ -189,7 +197,7 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
           <section className="grid gap-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold">Campos</p>
-              <button className="icon-action" type="button" aria-label="Agregar campo" onClick={() => updateForm(row.draftId, { fields: [...row.fields, emptyField()] })}>
+              <button className="icon-action" type="button" aria-label="Agregar campo" disabled={savingId !== null} onClick={() => updateForm(row.draftId, { fields: [...row.fields, emptyField()] })}>
                 <Plus aria-hidden="true" className="h-4 w-4" />
               </button>
             </div>
@@ -211,7 +219,7 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
                       {Object.entries(fieldTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                     </select>
                   </label>
-                  <button className="icon-action self-end" type="button" aria-label="Quitar campo" disabled={row.fields.length <= 1} onClick={() => removeField(row.draftId, field.draftId)}>
+                  <button className="icon-action self-end" type="button" aria-label="Quitar campo" disabled={row.fields.length <= 1 || savingId !== null} onClick={() => removeField(row.draftId, field.draftId)}>
                     <Trash2 aria-hidden="true" className="h-4 w-4" />
                   </button>
                 </div>
@@ -235,15 +243,15 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
           </section>
 
           <div className="flex justify-end">
-            <button className="primary-action" type="button" onClick={() => saveForm(row)}>
+            <button className="primary-action" type="button" disabled={savingId !== null} onClick={() => saveForm(row)}>
               <Save aria-hidden="true" className="h-4 w-4" />
-              Guardar formulario
+              {savingId === row.draftId ? "Guardando" : "Guardar formulario"}
             </button>
           </div>
         </article>
       ))}
 
-      {message ? <p className="text-sm font-semibold text-emerald-600">{message}</p> : null}
+      {message ? <p className={messageTone === "error" ? "text-sm font-semibold text-red-600" : "text-sm font-semibold text-emerald-600"}>{message}</p> : null}
     </div>
   );
 }

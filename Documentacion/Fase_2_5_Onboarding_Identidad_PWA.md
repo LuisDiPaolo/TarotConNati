@@ -131,10 +131,11 @@ Problema detectado: si `seed.sql` queda cargado y el host no matchea exactamente
 
 Blindaje aplicado:
 
-- `resolveBusinessForHostname` mantiene prioridad por match exacto de `public_domain` o `panel_domain`.
-- Si no hay match exacto, busca hasta 10 negocios y prefiere uno con assets cargados.
+- `resolveBusinessForHostname` resuelve el unico negocio canonico de la instancia. `NEXT_PUBLIC_SITE_URL` define la URL publica, `NEXT_PUBLIC_APP_URL` queda como fallback de compatibilidad y el panel se deriva como `panel.<dominio-publico>`.
+- Si el host no corresponde al dominio publico configurado, al panel derivado o a localhost, no resuelve negocio.
+- Si hay mas de un negocio en la misma Supabase sin admin vinculado, no adivina: corta para evitar mezclar datos.
 - `buildBusinessManifest` aplica la misma regla para favicon/PWA.
-- Esto evita que los assets cargados queden invisibles por fallback al seed demo.
+- Esto evita que los assets cargados queden invisibles por fallback al seed demo o por una configuracion editable desde panel.
 
 ## Migraciones
 

@@ -26,13 +26,16 @@ function emptyOverride(): DraftOverride {
 export function ScheduleOverridesManager({ overrides }: { overrides: PanelScheduleOverrideSettings[] }) {
   const [rows, setRows] = useState<DraftOverride[]>(overrides.map((override) => ({ ...override, draftId: override.id })));
   const [message, setMessage] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   function updateRow(draftId: string, patch: Partial<DraftOverride>) {
     setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...patch } : row));
   }
 
   async function saveRow(row: DraftOverride) {
+    if (savingId) return;
     setMessage("");
+    setSavingId(row.draftId);
     const payload = {
       overrideDate: row.overrideDate,
       startsAt: row.closed ? "" : row.startsAt,
@@ -44,10 +47,11 @@ export function ScheduleOverridesManager({ overrides }: { overrides: PanelSchedu
       method: row.isNew ? "POST" : "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    });
-    const data = await response.json().catch(() => null) as { id?: string } | null;
+    }).catch(() => null);
+    const data = await response?.json().catch(() => null) as { id?: string } | null;
 
-    if (!response.ok) {
+    if (!response?.ok) {
+      setSavingId(null);
       setMessage("No se pudo guardar la excepcion.");
       return;
     }
@@ -55,6 +59,7 @@ export function ScheduleOverridesManager({ overrides }: { overrides: PanelSchedu
     if (row.isNew && data?.id) {
       updateRow(row.draftId, { id: data.id, draftId: data.id, isNew: false });
     }
+    setSavingId(null);
     setMessage("Excepcion guardada.");
   }
 
@@ -62,7 +67,7 @@ export function ScheduleOverridesManager({ overrides }: { overrides: PanelSchedu
     <section className="grid gap-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl font-black">Excepciones por fecha</h2>
-        <button className="primary-action" type="button" onClick={() => setRows((current) => [...current, emptyOverride()])}>
+        <button className="primary-action" type="button" disabled={savingId !== null} onClick={() => setRows((current) => [...current, emptyOverride()])}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Agregar excepcion
         </button>
@@ -99,7 +104,7 @@ export function ScheduleOverridesManager({ overrides }: { overrides: PanelSchedu
                   <input className="input-control" maxLength={160} value={row.reason} onChange={(event) => updateRow(row.draftId, { reason: event.target.value })} />
                 </td>
                 <td className="rounded-r-xl px-3 py-2 text-right">
-                  <button className="icon-action" type="button" onClick={() => saveRow(row)} aria-label="Guardar excepcion">
+                  <button className="icon-action" type="button" disabled={savingId !== null} onClick={() => saveRow(row)} aria-label="Guardar excepcion">
                     <Save aria-hidden="true" className="h-4 w-4" />
                   </button>
                 </td>

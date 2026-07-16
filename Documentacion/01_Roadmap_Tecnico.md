@@ -258,6 +258,14 @@ La tabla features contiene un flag booleano por módulo. El frontend consulta es
 
 Cuando el módulo ya se encuentra disponible en la versión instalada, puede habilitarse mediante un cambio de configuración. Si el módulo requiere una versión nueva, migraciones de base de datos o cambios de infraestructura, Estudio Equis realizará el despliegue correspondiente con acceso temporal a las cuentas del cliente.
 
+4.4 Contrato de integridad negocio / datos / web publica
+
+La web publica, el manifest PWA y el panel no deben inferir negocios por orden de edicion, datos demo ni campos editables desde el panel. Cada instancia desplegada usa una Supabase del cliente con un unico negocio canonico. `NEXT_PUBLIC_SITE_URL` define la URL publica de landing/PWA y `NEXT_PUBLIC_APP_URL` queda como compatibilidad/fallback; el panel se deriva automaticamente como `panel.<dominio-publico>`. Las columnas `business.public_domain` y `business.panel_domain` pueden quedar como metadata tecnica sincronizada, pero no son la fuente de verdad editable por el cliente.
+
+Todas las consultas operativas deben quedar ancladas a `business_id`: servicios, agenda, excepciones, formularios, clientes, turnos, solicitudes, pagos, push y reportes. El panel obtiene el `business_id` desde `admin_users` del usuario autenticado; la web publica, APIs y manifest resuelven el unico negocio de la instancia solo si el host corresponde al dominio publico configurado, al panel derivado o a localhost. Un deploy de nuevos modulos o una recarga de seed no debe cambiar que negocio muestra la web publica ni mezclar datos entre panel y landing.
+
+`business` es singleton por instancia/Supabase. No se agregan mas negocios dentro de una misma instancia. La expansion multi-sucursal debe modelarse como entidad separada de sucursales/ubicaciones, con telefono, direccion, disponibilidad, usuarios asignados y seleccion publica por disponibilidad o preferencia del cliente.
+
 5\. Fases de desarrollo previstas
 
 Fase 1 - Núcleo operativo
@@ -316,13 +324,13 @@ Fase 2.5 - Onboarding e identidad PWA del negocio
 
 _Objetivo: que el cliente pueda dejar lista su instancia desde el panel admin, sin depender del seed demo ni de cambios de codigo._
 
-• Alta o completado del negocio desde `/panel/configuracion` cuando no exista una fila valida en `business`.
+• Alta o completado del negocio desde `/panel/configuracion` como asistente de puesta en marcha cuando no exista una fila valida en `business`.
 
-• Configuracion completa del negocio: nombre comercial, slug, descripcion publica, WhatsApp, dominio publico, dominio/prefijo de panel, zona horaria, moneda y locale.
+• El admin carga solo datos comprensibles: nombre comercial, WhatsApp, presentacion breve y dominio publico opcional. El sistema deriva slug, nombres instalables y valores tecnicos.
 
-• Branding gestionable por el cliente: logo, icono PWA publico, icono PWA panel, icono maskable, Apple touch icon, colores, preset visual y vista previa.
+• Ajustes avanzados separados para identidad visual, colores, logo/iconos de app y funciones publicas como barra inferior o notificaciones.
 
-• Manifiestos PWA dinamicos por negocio para web publica y panel, con nombre, descripcion, theme color e iconos propios.
+• Manifiestos dinamicos por negocio para web publica y panel, con nombre, descripcion, theme color e iconos propios, sin exponer el concepto de manifest al usuario final del panel.
 
 • Bucket de assets de marca en Supabase Storage con validacion de tipo, peso, dimensiones y politicas de acceso para admins del negocio.
 
@@ -330,7 +338,7 @@ _Objetivo: que el cliente pueda dejar lista su instancia desde el panel admin, s
 
 • Empty states utiles para operar una base limpia despues de correr `limpiar-demo-conservar-negocio.sql`.
 
-_Criterio de cierre de Fase 2.5: una instancia sin seed demo puede configurarse desde el panel, instalar PWA publica y panel con identidad propia, y cargar servicios reales sin intervencion de codigo._
+_Criterio de cierre de Fase 2.5: una instancia sin seed demo puede darse de alta desde un asistente claro, cargar servicios reales, publicar la web sin configurar campos tecnicos y luego ajustar identidad/app desde opciones avanzadas sin intervencion de codigo._
 
 Fase 2.6 - Experiencia publica de servicios
 
@@ -340,7 +348,7 @@ _Objetivo: que la web publica presente los servicios como catalogo profesional y
 
 • Detalle de servicio como bottom sheet en mobile/PWA, cubriendo casi toda la pantalla, con scroll interno y cierre claro.
 
-• Detalle de servicio como modal centrado en desktop, con ancho maximo acotado y foco accesible.
+• Detalle de servicio como bottom sheet flotante tambien en desktop, pegado abajo, con ancho maximo acotado, scroll interno y cierre claro.
 
 • Formulario de reserva/solicitud dentro del detalle del servicio seleccionado, incluyendo horarios, requisitos, formularios de admision e instrucciones.
 
@@ -360,21 +368,19 @@ Fase 3 - Presencia digital
 
 • Consultas y contacto: formulario publico, registro en bandeja admin, ruteo a WhatsApp y conversion manual a reserva/turno cuando corresponda.
 
-Fase 4 - Fidelización y comunicación
+Fase 4 - Comunicacion transaccional y PWA publica
 
-• Notificaciones push transaccionales: confirmación, recordatorio y cancelación.
+• Notificaciones push transaccionales duales: panel y cliente, con eventos separados e idempotentes.
 
-• Campañas push manuales: el profesional redacta y envía mensajes a su base de clientes.
+• Push visible con PWA cerrada mediante service worker, siempre que existan VAPID y permiso del navegador.
 
-• Módulo de cupones con código y descuento.
+• Historial de notificaciones en panel y cache local publica para la pestana Notificaciones.
 
-• Gift cards digitales.
+• Servicio de notificaciones activo por defecto, con toggle por negocio en Configuracion para desactivarlo.
 
-• Paquetes de sesiones (cantidad de turnos a precio especial).
+• Recordatorio manual por WhatsApp desde cada reserva, con texto prearmado y telefono normalizado para Argentina (`549...`, `54...` o numero local).
 
-• Segmentación básica: clientes inactivos, frecuentes y nuevos.
-
-• Métricas de campañas: alcance y conversión a reserva.
+• Campanas push manuales, cupones, gift cards, paquetes, segmentacion y metricas comerciales pasan a una fase posterior de fidelizacion comercial.
 
 Fase 5 - Expansión y automatización
 

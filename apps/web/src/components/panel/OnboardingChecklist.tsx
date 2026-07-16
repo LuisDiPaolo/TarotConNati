@@ -3,21 +3,27 @@ import type { PanelBusinessSettings } from "@/lib/operations/panel-settings.type
 
 type ChecklistItem = {
   label: string;
+  copy: string;
   done: boolean;
   href?: string;
+  action?: string;
 };
 
 function ChecklistRow({ item }: { item: ChecklistItem }) {
   const Icon = item.done ? CheckCircle2 : Circle;
 
   return (
-    <li className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white/50 px-3 py-2 text-sm font-semibold dark:border-neutral-700 dark:bg-neutral-900/40">
-      <span className="flex min-w-0 items-center gap-2">
-        <Icon aria-hidden="true" className={item.done ? "h-4 w-4 shrink-0 text-emerald-600" : "h-4 w-4 shrink-0 text-muted"} />
-        {item.label}
+    <li className="flex min-h-20 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white/60 px-3 py-3 text-sm dark:border-neutral-700 dark:bg-neutral-900/40">
+      <span className="flex min-w-0 items-start gap-3">
+        <Icon aria-hidden="true" className={item.done ? "mt-0.5 h-5 w-5 shrink-0 text-emerald-600" : "mt-0.5 h-5 w-5 shrink-0 text-muted"} />
+        <span>
+          <span className="block font-black">{item.label}</span>
+          <span className="mt-1 block leading-5 text-muted">{item.copy}</span>
+        </span>
       </span>
       {item.href ? (
-        <a className="icon-action h-8 w-8" href={item.href} title={item.label}>
+        <a className="secondary-action shrink-0" href={item.href} title={item.label}>
+          {item.action ?? "Abrir"}
           <ExternalLink aria-hidden="true" className="h-4 w-4" />
         </a>
       ) : null}
@@ -36,16 +42,50 @@ export function OnboardingChecklist({
   schedulesCount: number;
   formsCount: number;
 }) {
-  const hasBrandAssets = Boolean(business?.publicAppIconUrl && business.panelAppIconUrl && business.maskableIconUrl && business.appleTouchIconUrl);
+  const hasBrandAssets = Boolean(business?.publicAppIconUrl || business?.logoUrl || business?.logoLightUrl || business?.logoDarkUrl);
   const items: ChecklistItem[] = [
-    { label: "Negocio creado", done: Boolean(business), href: "/panel/configuracion" },
-    { label: "Logo e iconos cargados", done: hasBrandAssets, href: "/panel/configuracion" },
-    { label: "Servicios cargados", done: servicesCount > 0, href: "/panel/servicios" },
-    { label: "Forma de reserva definida", done: schedulesCount > 0 || servicesCount > 0, href: "/panel/agenda" },
-    { label: "Preguntas al cliente cargadas", done: formsCount > 0, href: "/panel/formularios" },
-    { label: "Pagos revisados", done: false },
-    { label: "Avisos al cliente probados", done: false },
-    { label: "Reserva o solicitud de prueba", done: false, href: "/" },
+    {
+      label: "Crear negocio",
+      copy: business ? "El panel ya esta asociado a un negocio." : "Completa nombre, WhatsApp y presentacion para crear la base operativa.",
+      done: Boolean(business),
+      href: "/panel/configuracion",
+      action: business ? "Revisar" : "Completar",
+    },
+    {
+      label: "Cargar servicios",
+      copy: "Agrega lo que el cliente puede reservar o solicitar desde la pagina publica.",
+      done: servicesCount > 0,
+      href: "/panel/servicios",
+      action: servicesCount > 0 ? "Editar" : "Cargar",
+    },
+    {
+      label: "Definir disponibilidad",
+      copy: "Configura horarios si algun servicio toma turnos con agenda.",
+      done: schedulesCount > 0 || servicesCount === 0,
+      href: "/panel/agenda",
+      action: schedulesCount > 0 ? "Editar" : "Configurar",
+    },
+    {
+      label: "Preguntas al cliente",
+      copy: "Opcional: datos extra que el cliente completa al reservar.",
+      done: formsCount > 0,
+      href: "/panel/formularios",
+      action: formsCount > 0 ? "Editar" : "Agregar",
+    },
+    {
+      label: "Logo e imagen de app",
+      copy: "Opcional, pero recomendado antes de compartir la app con clientes.",
+      done: hasBrandAssets,
+      href: "/panel/configuracion",
+      action: hasBrandAssets ? "Revisar" : "Cargar",
+    },
+    {
+      label: "Probar reserva real",
+      copy: "Abrir la web publica y crear una reserva o solicitud de prueba.",
+      done: false,
+      href: "/",
+      action: "Probar",
+    },
   ];
   const completedCount = items.filter((item) => item.done).length;
 
@@ -53,12 +93,12 @@ export function OnboardingChecklist({
     <section className="surface grid gap-4 p-5 sm:p-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-black">Puesta en marcha</h2>
-          <p className="text-sm text-muted">Pasos basicos para dejar el negocio listo para recibir reservas.</p>
+          <h2 className="text-xl font-black">Asistente de puesta en marcha</h2>
+          <p className="text-sm text-muted">Orden recomendado para pasar de una base limpia a una pagina publica usable.</p>
         </div>
         <p className="text-sm font-black text-accent">{completedCount}/{items.length}</p>
       </div>
-      <ul className="grid gap-2 sm:grid-cols-2">
+      <ul className="grid gap-2">
         {items.map((item) => <ChecklistRow item={item} key={item.label} />)}
       </ul>
     </section>

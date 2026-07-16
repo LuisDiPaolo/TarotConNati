@@ -24,8 +24,9 @@ export default async function PanelConfigurationPage() {
   return (
     <PanelShell>
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Configuracion</p>
-        <h1 className="mt-2 text-3xl font-black sm:text-5xl">Negocio y marca</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Alta del negocio</p>
+        <h1 className="mt-2 text-3xl font-black sm:text-5xl">Asistente de puesta en marcha</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">Crea o revisa el negocio desde una guia simple. Lo tecnico se deriva automaticamente y los ajustes finos quedan para despues.</p>
       </header>
 
       <OnboardingChecklist

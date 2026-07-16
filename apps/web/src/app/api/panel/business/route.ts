@@ -13,7 +13,6 @@ function businessPayload(input: BusinessSettingsInput) {
     slug: input.slug,
     description: input.description || null,
     whatsapp_phone: input.whatsappPhone || null,
-    public_domain: input.publicDomain || null,
     public_app_name: input.publicAppName || null,
     panel_app_name: input.panelAppName || null,
     public_short_name: input.publicShortName || null,
@@ -54,7 +53,8 @@ async function syncPushNotifications(
 }
 
 export async function PATCH(request: NextRequest) {
-  const parsed = businessSettingsSchema.safeParse(await request.json().catch(() => null));
+  const body = await request.json().catch(() => null);
+  const parsed = businessSettingsSchema.safeParse(body);
   if (!parsed.success) return apiError(400, "VALIDATION_ERROR", "Revisa la configuracion del negocio.");
 
   const supabase = await createSupabaseServerClient();
@@ -72,52 +72,75 @@ export async function PATCH(request: NextRequest) {
 
   const input = parsed.data;
   const payload = businessPayload(input);
+  let targetBusinessId = adminUser?.business_id ?? null;
+  let mode: "updated" | "linked" | "created" = adminUser?.business_id ? "updated" : "linked";
 
-  if (adminUser?.business_id) {
+  if (!targetBusinessId) {
+    const { data: existingBusinesses, error: existingBusinessesError } = await adminSupabase
+      .from("business")
+      .select("id")
+      .order("created_at", { ascending: true })
+      .limit(2);
+
+    if (existingBusinessesError) return apiError(400, "VALIDATION_ERROR", "No se pudo revisar el negocio existente.");
+
+    if ((existingBusinesses?.length ?? 0) > 1) {
+      return apiError(
+        409,
+        "BUSINESS_SCOPE_CONFLICT",
+        "Hay mas de un negocio en esta base. Vincula el admin a un negocio antes de continuar.",
+      );
+    }
+
+    targetBusinessId = existingBusinesses?.[0]?.id ?? null;
+  }
+
+  if (targetBusinessId) {
     const { error } = await adminSupabase
       .from("business")
       .update(payload)
-      .eq("id", adminUser.business_id);
+      .eq("id", targetBusinessId)
+      .select("id")
+      .single();
 
-    if (error) return apiError(400, "VALIDATION_ERROR", "No se pudo actualizar el negocio.");
+    if (error) return apiError(400, "VALIDATION_ERROR", "No se pudo guardar el negocio.");
+  } else {
+    const { data: business, error: createBusinessError } = await adminSupabase
+      .from("business")
+      .insert(payload)
+      .select("id")
+      .single();
 
-    const pushError = await syncPushNotifications(adminSupabase, adminUser.business_id, input.notificationsEnabled);
-    if (pushError) return apiError(400, "VALIDATION_ERROR", "No se pudo guardar la configuracion de notificaciones.");
-
-    return NextResponse.json({ ok: true, mode: "updated" });
+    if (createBusinessError || !business) return apiError(400, "VALIDATION_ERROR", "No se pudo crear el negocio.");
+    targetBusinessId = business.id;
+    mode = "created";
   }
 
-  const { data: business, error: createBusinessError } = await adminSupabase
-    .from("business")
-    .insert(payload)
-    .select("id")
-    .single();
-
-  if (createBusinessError || !business) return apiError(400, "VALIDATION_ERROR", "No se pudo crear el negocio.");
-
-  const pushError = await syncPushNotifications(adminSupabase, business.id, input.notificationsEnabled);
+  const pushError = await syncPushNotifications(adminSupabase, targetBusinessId, input.notificationsEnabled);
   if (pushError) return apiError(400, "VALIDATION_ERROR", "No se pudo guardar la configuracion de notificaciones.");
 
-  if (adminUser?.id) {
-    const { error: linkError } = await adminSupabase
-      .from("admin_users")
-      .update({ business_id: business.id })
-      .eq("id", adminUser.id);
+  if (!adminUser?.business_id) {
+    if (adminUser?.id) {
+      const { error: linkError } = await adminSupabase
+        .from("admin_users")
+        .update({ business_id: targetBusinessId })
+        .eq("id", adminUser.id);
 
-    if (linkError) return apiError(400, "VALIDATION_ERROR", "No se pudo asociar el negocio al admin.");
-  } else {
-    const { error: createAdminError } = await adminSupabase
-      .from("admin_users")
-      .insert({
-        auth_user_id: userData.user.id,
-        email: userData.user.email ?? input.name,
-        full_name: typeof userData.user.user_metadata?.full_name === "string" ? userData.user.user_metadata.full_name : null,
-        role: "owner",
-        business_id: business.id,
-      });
+      if (linkError) return apiError(400, "VALIDATION_ERROR", "No se pudo asociar el negocio al admin.");
+    } else {
+      const { error: createAdminError } = await adminSupabase
+        .from("admin_users")
+        .insert({
+          auth_user_id: userData.user.id,
+          email: userData.user.email ?? input.name,
+          full_name: typeof userData.user.user_metadata?.full_name === "string" ? userData.user.user_metadata.full_name : null,
+          role: "owner",
+          business_id: targetBusinessId,
+        });
 
-    if (createAdminError) return apiError(400, "VALIDATION_ERROR", "No se pudo crear el admin del negocio.");
+      if (createAdminError) return apiError(400, "VALIDATION_ERROR", "No se pudo crear el admin del negocio.");
+    }
   }
 
-  return NextResponse.json({ ok: true, mode: "created", businessId: business.id });
+  return NextResponse.json({ ok: true, mode, businessId: targetBusinessId });
 }

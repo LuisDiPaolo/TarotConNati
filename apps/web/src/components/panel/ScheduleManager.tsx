@@ -25,13 +25,16 @@ function emptySchedule(): DraftSchedule {
 export function ScheduleManager({ schedules }: { schedules: PanelScheduleSettings[] }) {
   const [rows, setRows] = useState<DraftSchedule[]>(schedules.map((schedule) => ({ ...schedule, draftId: schedule.id })));
   const [message, setMessage] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   function updateRow(draftId: string, patch: Partial<DraftSchedule>) {
     setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...patch } : row));
   }
 
   async function saveRow(row: DraftSchedule) {
+    if (savingId) return;
     setMessage("");
+    setSavingId(row.draftId);
     const payload = {
       weekday: row.weekday,
       startsAt: row.startsAt,
@@ -44,10 +47,11 @@ export function ScheduleManager({ schedules }: { schedules: PanelScheduleSetting
       method: row.isNew ? "POST" : "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    });
-    const data = await response.json().catch(() => null) as { id?: string } | null;
+    }).catch(() => null);
+    const data = await response?.json().catch(() => null) as { id?: string } | null;
 
-    if (!response.ok) {
+    if (!response?.ok) {
+      setSavingId(null);
       setMessage("No se pudo guardar el horario.");
       return;
     }
@@ -55,13 +59,14 @@ export function ScheduleManager({ schedules }: { schedules: PanelScheduleSetting
     if (row.isNew && data?.id) {
       updateRow(row.draftId, { id: data.id, draftId: data.id, isNew: false });
     }
+    setSavingId(null);
     setMessage("Horario guardado.");
   }
 
   return (
     <div className="grid gap-4">
       <div className="flex justify-end">
-        <button className="primary-action" type="button" onClick={() => setRows((current) => [...current, emptySchedule()])}>
+        <button className="primary-action" type="button" disabled={savingId !== null} onClick={() => setRows((current) => [...current, emptySchedule()])}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Agregar horario
         </button>
@@ -104,7 +109,7 @@ export function ScheduleManager({ schedules }: { schedules: PanelScheduleSetting
                   <input type="checkbox" checked={row.active} onChange={(event) => updateRow(row.draftId, { active: event.target.checked })} />
                 </td>
                 <td className="rounded-r-xl px-3 py-2 text-right">
-                  <button className="icon-action" type="button" onClick={() => saveRow(row)} aria-label="Guardar horario">
+                  <button className="icon-action" type="button" disabled={savingId !== null} onClick={() => saveRow(row)} aria-label="Guardar horario">
                     <Save aria-hidden="true" className="h-4 w-4" />
                   </button>
                 </td>

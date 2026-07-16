@@ -157,6 +157,8 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
   const [message, setMessage] = useState("");
 
   function pickAsset(config: AssetConfig) {
+    if (state === "uploading") return;
+
     setSelectedConfig(config);
     setMessage("");
     fileInputRef.current?.click();
@@ -177,7 +179,7 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
   }
 
   async function uploadAsset(file: File) {
-    if (!selectedConfig) return;
+    if (!selectedConfig || state === "uploading") return;
     setState("uploading");
     setMessage("");
 
@@ -188,9 +190,9 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
     const response = await fetch("/api/panel/brand-assets", {
       method: "POST",
       body: formData,
-    });
+    }).catch(() => null);
 
-    if (!response.ok) {
+    if (!response?.ok) {
       setState("error");
       setMessage("No se pudo guardar la imagen.");
       return;
@@ -220,7 +222,7 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
           <article key={config.type} className="grid gap-3 rounded-lg border border-slate-200 bg-white/50 p-3 dark:border-neutral-700 dark:bg-neutral-900/40">
             <div className="flex items-center justify-between gap-3">
               <AssetPreview config={config} business={business} />
-              <button className="icon-action" onClick={() => pickAsset(config)} title={`Cargar ${config.label}`} type="button">
+              <button className="icon-action" disabled={state === "uploading"} onClick={() => pickAsset(config)} title={`Cargar ${config.label}`} type="button">
                 <Upload aria-hidden="true" className="h-4 w-4" />
               </button>
             </div>
@@ -240,6 +242,7 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
           file={cropSource}
           config={selectedConfig}
           onCancel={() => {
+            if (state === "uploading") return;
             setCropSource(null);
             setSelectedConfig(null);
           }}

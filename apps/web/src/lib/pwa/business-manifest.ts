@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { NextRequest } from "next/server";
-import { getRequestHostname } from "@/lib/business/resolve";
+import { getRequestHostname, isSafeBusinessFallbackHost } from "@/lib/business/resolve";
 import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -47,27 +47,26 @@ function firstStoragePath(...paths: Array<string | null | undefined>) {
   return paths.find((path) => Boolean(path?.trim())) ?? null;
 }
 
+const BUSINESS_MANIFEST_SELECT = "name, description, public_domain, panel_domain, public_app_name, panel_app_name, public_short_name, panel_short_name, brand_primary, theme_background, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url";
+
 async function getBusinessForManifest(request: NextRequest): Promise<BusinessManifestRow | null> {
   const hostname = getRequestHostname(request);
   const supabase = createSupabaseAdminClient();
 
-  const { data: exactMatch, error: exactError } = await supabase
-    .from("business")
-    .select("name, description, public_domain, panel_domain, public_app_name, panel_app_name, public_short_name, panel_short_name, brand_primary, theme_background, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
-    .or(`public_domain.eq.${hostname},panel_domain.eq.${hostname}`)
-    .maybeSingle();
-
-  if (!exactError && exactMatch) return exactMatch as BusinessManifestRow;
+  if (!isSafeBusinessFallbackHost(hostname)) return null;
 
   const { data: fallbackRows, error: fallbackError } = await supabase
     .from("business")
-    .select("name, description, public_domain, panel_domain, public_app_name, panel_app_name, public_short_name, panel_short_name, brand_primary, theme_background, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
-    .order("updated_at", { ascending: false })
-    .limit(10);
+    .select(BUSINESS_MANIFEST_SELECT)
+    .order("created_at", { ascending: true })
+    .limit(2);
 
   if (fallbackError || !fallbackRows?.length) return null;
+
   const rows = fallbackRows as BusinessManifestRow[];
-  return rows[0]!;
+  if (rows.length === 1) return rows[0]!;
+
+  return null;
 }
 
 export async function buildBusinessManifest(request: NextRequest, surface: ManifestSurface) {

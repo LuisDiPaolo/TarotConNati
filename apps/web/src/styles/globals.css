@@ -121,6 +121,13 @@ summary,
 }
 
 button,
+a[href],
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button,
 [role="button"] {
   cursor: pointer;
   min-height: 44px;
@@ -131,6 +138,7 @@ button,
 button:disabled,
 [aria-disabled="true"] {
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 button > svg,
@@ -235,8 +243,13 @@ input[type="radio"] {
   flex-direction: column;
   gap: 3px;
   justify-content: center;
+  line-height: 1;
+  min-height: 52px;
   min-width: 0;
   position: relative;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -386,8 +399,12 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   min-height: 44px;
   padding: 0 16px;
   position: relative;
+  line-height: 1;
+  text-align: center;
   touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
 }
 
 .input-control {
@@ -417,8 +434,11 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   height: 40px;
   justify-content: center;
   position: relative;
+  flex: 0 0 auto;
+  line-height: 1;
   touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
   width: 40px;
 }
 
@@ -445,8 +465,12 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   min-height: 44px;
   padding: 0 16px;
   position: relative;
+  line-height: 1;
+  text-align: center;
   touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
 }
 
 .danger-action {
@@ -463,8 +487,12 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   min-height: 44px;
   padding: 0 16px;
   position: relative;
+  line-height: 1;
+  text-align: center;
   touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
 }
 
 .danger-action:hover {
@@ -487,6 +515,8 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   position: relative;
   touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
 }
 
 .primary-action > *,
