@@ -2,6 +2,7 @@ import "server-only";
 
 import { formatARS } from "@turnos/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentPanelBusinessId } from "./panel-auth";
 
 export type PanelAppointmentIntakeResponse = {
   formName: string;
@@ -93,9 +94,13 @@ function mapAppointmentRow(appointment: AppointmentQueryRow): PanelAppointment {
 
 export async function getPanelAppointments(): Promise<PanelAppointment[]> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return [];
+
   const { data, error } = await supabase
     .from("appointments")
     .select("id, starts_at, ends_at, status, notes, customers(full_name, phone, email), services(name), payments(status, amount_pesos), appointment_intake_responses(form_snapshot, response)")
+    .eq("business_id", businessId)
     .is("deleted_at", null)
     .order("starts_at", { ascending: true })
     .limit(60);
@@ -107,10 +112,14 @@ export async function getPanelAppointments(): Promise<PanelAppointment[]> {
 
 export async function getPanelAppointmentDetail(appointmentId: string): Promise<PanelAppointment | null> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return null;
+
   const { data, error } = await supabase
     .from("appointments")
     .select("id, starts_at, ends_at, status, notes, customers(full_name, phone, email), services(name), payments(status, amount_pesos), appointment_intake_responses(form_snapshot, response)")
     .eq("id", appointmentId)
+    .eq("business_id", businessId)
     .is("deleted_at", null)
     .maybeSingle();
 

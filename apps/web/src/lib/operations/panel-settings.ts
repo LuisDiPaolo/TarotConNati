@@ -2,6 +2,7 @@ import "server-only";
 
 import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentPanelBusinessId } from "./panel-auth";
 import type {
   PanelBusinessSettings,
   PanelIntakeFieldSettings,
@@ -13,21 +14,13 @@ import type {
 
 export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings | null> {
   const supabase = await createSupabaseServerClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) return null;
-
-  const { data: adminUser, error: adminError } = await supabase
-    .from("admin_users")
-    .select("business_id")
-    .eq("auth_user_id", userData.user.id)
-    .maybeSingle();
-
-  if (adminError || !adminUser?.business_id) return null;
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return null;
 
   const { data, error } = await supabase
     .from("business")
     .select("id, name, slug, description, public_domain, whatsapp_phone, public_app_name, panel_app_name, public_short_name, panel_short_name, onboarding_status, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, public_bottom_nav_enabled, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
-    .eq("id", adminUser.business_id)
+    .eq("id", businessId)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -35,7 +28,7 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
   const { data: pushFeature } = await supabase
     .from("features")
     .select("enabled")
-    .eq("business_id", adminUser.business_id)
+    .eq("business_id", businessId)
     .eq("feature_key", "push_enabled")
     .maybeSingle();
 
@@ -70,9 +63,13 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
 
 export async function getPanelServices(): Promise<PanelServiceSettings[]> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return [];
+
   const { data, error } = await supabase
     .from("services")
     .select("id, name, description, category, image_url, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_pesos, deposit_pesos, payment_mode, active, sort_order")
+    .eq("business_id", businessId)
     .eq("active", true)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -104,9 +101,13 @@ export async function getPanelServices(): Promise<PanelServiceSettings[]> {
 
 export async function getPanelSchedules(): Promise<PanelScheduleSettings[]> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return [];
+
   const { data, error } = await supabase
     .from("schedules")
     .select("id, weekday, starts_at, ends_at, break_starts_at, break_ends_at, active")
+    .eq("business_id", businessId)
     .order("weekday", { ascending: true })
     .order("starts_at", { ascending: true });
 
@@ -125,9 +126,13 @@ export async function getPanelSchedules(): Promise<PanelScheduleSettings[]> {
 
 export async function getPanelScheduleOverrides(): Promise<PanelScheduleOverrideSettings[]> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return [];
+
   const { data, error } = await supabase
     .from("schedule_overrides")
     .select("id, override_date, starts_at, ends_at, closed, reason")
+    .eq("business_id", businessId)
     .order("override_date", { ascending: true });
 
   if (error || !data) return [];
@@ -168,9 +173,13 @@ type IntakeFormRow = {
 
 export async function getPanelIntakeForms(): Promise<PanelIntakeFormSettings[]> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return [];
+
   const { data, error } = await supabase
     .from("intake_forms")
     .select("id, name, description, active, intake_form_fields(id, field_key, label, help_text, field_type, required, sort_order, options), service_intake_forms(service_id)")
+    .eq("business_id", businessId)
     .is("deleted_at", null)
     .order("created_at", { ascending: true });
 

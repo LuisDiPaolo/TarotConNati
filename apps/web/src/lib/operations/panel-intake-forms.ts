@@ -19,15 +19,15 @@ export async function savePanelIntakeForm({ supabase, businessId, formId, input 
   };
 
   const formResult = formId
-    ? await supabase.from("intake_forms").update(formPayload).eq("id", formId).select("id").single()
+    ? await supabase.from("intake_forms").update(formPayload).eq("id", formId).eq("business_id", businessId).select("id").single()
     : await supabase.from("intake_forms").insert(formPayload).select("id").single();
 
   if (formResult.error || !formResult.data) return { id: null, error: formResult.error };
 
   const savedFormId = String(formResult.data.id);
 
-  await supabase.from("intake_form_fields").delete().eq("form_id", savedFormId);
-  await supabase.from("service_intake_forms").delete().eq("form_id", savedFormId);
+  await supabase.from("intake_form_fields").delete().eq("form_id", savedFormId).eq("business_id", businessId);
+  await supabase.from("service_intake_forms").delete().eq("form_id", savedFormId).eq("business_id", businessId);
 
   const fieldRows = input.fields.map((field, index) => ({
     business_id: businessId,

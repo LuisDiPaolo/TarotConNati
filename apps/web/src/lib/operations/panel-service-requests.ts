@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentPanelBusinessId } from "./panel-auth";
 
 export type PanelServiceRequestIntakeResponse = {
   formName: string;
@@ -95,9 +96,13 @@ function mapServiceRequestRow(request: ServiceRequestQueryRow): PanelServiceRequ
 
 export async function getPanelServiceRequests(): Promise<PanelServiceRequest[]> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return [];
+
   const { data, error } = await supabase
     .from("service_requests")
     .select("id, created_at, status, contact_channel, preferred_date, preferred_window, customer_notes, admin_notes, customers(full_name, phone, email), services(name), service_request_intake_responses(form_snapshot, response)")
+    .eq("business_id", businessId)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(80);
@@ -109,10 +114,14 @@ export async function getPanelServiceRequests(): Promise<PanelServiceRequest[]> 
 
 export async function getPanelServiceRequestDetail(serviceRequestId: string): Promise<PanelServiceRequest | null> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return null;
+
   const { data, error } = await supabase
     .from("service_requests")
     .select("id, created_at, status, contact_channel, preferred_date, preferred_window, customer_notes, admin_notes, customers(full_name, phone, email), services(name), service_request_intake_responses(form_snapshot, response)")
     .eq("id", serviceRequestId)
+    .eq("business_id", businessId)
     .is("deleted_at", null)
     .maybeSingle();
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentPanelBusinessId } from "./panel-auth";
 
 export type PanelCustomerSummary = {
   id: string;
@@ -24,9 +25,13 @@ function firstJoin<T>(value: T | T[] | null | undefined) {
 
 export async function getPanelCustomers(): Promise<PanelCustomerSummary[]> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return [];
+
   const { data, error } = await supabase
     .from("customers")
     .select("id, full_name, phone, email, notes, created_at")
+    .eq("business_id", businessId)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(120);
@@ -45,17 +50,22 @@ export async function getPanelCustomers(): Promise<PanelCustomerSummary[]> {
 
 export async function getPanelCustomerDetail(customerId: string): Promise<PanelCustomerDetail | null> {
   const supabase = await createSupabaseServerClient();
+  const businessId = await getCurrentPanelBusinessId(supabase);
+  if (!businessId) return null;
+
   const [{ data: customer, error: customerError }, { data: appointments }, { data: requests }] = await Promise.all([
     supabase
       .from("customers")
       .select("id, full_name, phone, email, notes, created_at")
       .eq("id", customerId)
+      .eq("business_id", businessId)
       .is("deleted_at", null)
       .maybeSingle(),
     supabase
       .from("appointments")
       .select("id, starts_at, status, services(name)")
       .eq("customer_id", customerId)
+      .eq("business_id", businessId)
       .is("deleted_at", null)
       .order("starts_at", { ascending: false })
       .limit(40),
@@ -63,6 +73,7 @@ export async function getPanelCustomerDetail(customerId: string): Promise<PanelC
       .from("service_requests")
       .select("id, created_at, status, preferred_date, preferred_window, services(name)")
       .eq("customer_id", customerId)
+      .eq("business_id", businessId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(40),
