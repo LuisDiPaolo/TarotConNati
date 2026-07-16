@@ -1,5 +1,6 @@
 import { ArrowRight, Store } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 
 export function PanelSetupRequired({
   title = "Primero crea el negocio",
@@ -20,7 +21,7 @@ export function PanelSetupRequired({
         </div>
       </div>
       <div>
-        <Link className="primary-action inline-flex" href="/configuracion">
+        <Link className="primary-action inline-flex" href={"/configuracion" as Route}>
           Completar negocio
           <ArrowRight aria-hidden="true" className="h-4 w-4" />
         </Link>

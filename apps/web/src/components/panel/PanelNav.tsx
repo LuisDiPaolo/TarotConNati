@@ -8,7 +8,7 @@ import type { Route } from "next";
 import type { ComponentType, MouseEvent } from "react";
 
 type PanelNavItem = {
-  href: Route;
+  href: string;
   label: string;
   icon: ComponentType<{ className?: string; "aria-hidden"?: "true" }>;
 };
@@ -25,17 +25,16 @@ const navItems: PanelNavItem[] = [
   { href: "/reportes", label: "Reportes", icon: BarChart3 },
 ];
 
-function isCurrentPath(pathname: string, href: Route) {
-  const current = href as string;
-  if (current === "/") return pathname === "/";
-  return pathname === current || pathname.startsWith(`${current}/`);
+function isCurrentPath(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function PanelNav() {
   const pathname = usePathname();
-  const [pendingHref, setPendingHref] = useState<Route | null>(null);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
-  function handleNavigation(event: MouseEvent<HTMLAnchorElement>, href: Route) {
+  function handleNavigation(event: MouseEvent<HTMLAnchorElement>, href: string) {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     setPendingHref(href);
   }
@@ -53,7 +52,7 @@ export function PanelNav() {
             className="panel-nav-link"
             data-active={active ? "true" : "false"}
             data-pending={pending ? "true" : "false"}
-            href={href}
+            href={href as Route}
             key={href}
             onClick={(event) => handleNavigation(event, href)}
             prefetch
