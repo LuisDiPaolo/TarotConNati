@@ -540,20 +540,25 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   background: rgb(var(--brand-primary) / 0.1);
 }
 
-@keyframes studioEquisCreditPulse {
-  0%, 72%, 100% {
-    transform: scale(1);
-  }
-
-  36% {
-    transform: scale(1.05);
-  }
+.studio-equis-credit-button {
+  cursor: pointer;
+  transform-origin: center;
+  transition: border-color 160ms ease, opacity 160ms ease, transform 160ms ease;
 }
 
-.studio-equis-credit-button {
-  animation: studioEquisCreditPulse 3.8s ease-in-out infinite;
-  transform-origin: center;
-  will-change: transform;
+.studio-equis-credit-button:hover {
+  border-color: rgb(var(--brand-accent) / 0.46);
+  opacity: 0.94;
+  transform: translateY(-1px);
+}
+
+.studio-equis-credit-button:active {
+  transform: scale(0.96);
+}
+
+.studio-equis-credit-button:focus-visible {
+  outline: 2px solid rgb(var(--brand-accent) / 0.7);
+  outline-offset: 3px;
 }
 
 .theme-toggle {
