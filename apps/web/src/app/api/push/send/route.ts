@@ -1,4 +1,4 @@
-import { apiError } from "@turnos/shared";
+import { apiError } from "@/shared";
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { claimPushEvent, isValidInternalSecret, markPushEventStatus, sendPushToSubscribers } from "@/lib/push/server";

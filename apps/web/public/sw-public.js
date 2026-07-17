@@ -1,5 +1,5 @@
-const CACHE_NAME = "turnos-public-v2";
-const STATIC_CACHE = "turnos-public-static-v2";
+const CACHE_NAME = "turnos-public-v3";
+const STATIC_CACHE = "turnos-public-static-v3";
 const PRECACHE_URLS = ["/"];
 const NEVER_CACHE_PREFIXES = ["/api/", "/panel"];
 let vapidPublicKey = null;
@@ -18,11 +18,11 @@ function isSafeStaticRequest(request, url) {
 }
 
 async function cacheFirst(request, cacheName) {
-  const cached = await caches.match(request);
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
   if (cached) return cached;
   const response = await fetch(request);
   if (response.ok && response.type !== "opaque") {
-    const cache = await caches.open(cacheName);
     await cache.put(request, response.clone());
   }
   return response;
@@ -37,7 +37,8 @@ async function networkFirstNavigation(request) {
     }
     return response;
   } catch {
-    return (await caches.match(request)) ?? (await caches.match("/")) ?? new Response("Sin conexion", { status: 503 });
+    const cache = await caches.open(CACHE_NAME);
+    return (await cache.match(request)) ?? (await cache.match("/")) ?? new Response("Sin conexion", { status: 503 });
   }
 }
 

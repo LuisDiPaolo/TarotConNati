@@ -1,4 +1,4 @@
-import { apiError, buildWhatsAppUrl } from "@turnos/shared";
+import { apiError, buildWhatsAppUrl } from "@/shared";
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";

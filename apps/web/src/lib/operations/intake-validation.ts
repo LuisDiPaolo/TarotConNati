@@ -1,4 +1,4 @@
-import type { PublicIntakeResponseInput } from "@turnos/shared";
+import type { PublicIntakeResponseInput } from "@/shared";
 
 export type IntakeFieldRow = {
   field_key: string;

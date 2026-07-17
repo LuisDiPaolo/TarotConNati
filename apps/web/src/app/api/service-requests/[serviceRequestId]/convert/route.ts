@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { calculateAppointmentEnd } from "@turnos/shared";
+import { calculateAppointmentEnd } from "@/shared";
 import { sendTransactionalPush } from "@/lib/push/transactional";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 

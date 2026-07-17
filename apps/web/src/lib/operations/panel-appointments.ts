@@ -1,6 +1,6 @@
 import "server-only";
 
-import { formatARS } from "@turnos/shared";
+import { formatARS } from "@/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentPanelBusinessId } from "./panel-auth";
 

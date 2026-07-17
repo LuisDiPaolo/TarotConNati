@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { calculateAppointmentEnd, publicReservationSchema } from "@turnos/shared";
+import { calculateAppointmentEnd, publicReservationSchema } from "@/shared";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { buildValidatedIntakePayload, type IntakeLinkRow } from "@/lib/operations/intake-validation";
 import { getRequestBaseUrl } from "@/lib/http/base-url";

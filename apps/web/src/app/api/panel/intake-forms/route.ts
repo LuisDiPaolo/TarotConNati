@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { intakeFormSchema } from "@turnos/shared";
+import { intakeFormSchema } from "@/shared";
 import { savePanelIntakeForm } from "@/lib/operations/panel-intake-forms";
 import { getAdminBusinessContext } from "@/lib/panel/business";
 

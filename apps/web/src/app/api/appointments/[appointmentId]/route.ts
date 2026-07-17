@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { canTransitionAppointment, updateAppointmentStatusSchema, type AppointmentStatus } from "@turnos/shared";
+import { canTransitionAppointment, updateAppointmentStatusSchema, type AppointmentStatus } from "@/shared";
 import { sendTransactionalPush } from "@/lib/push/transactional";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 

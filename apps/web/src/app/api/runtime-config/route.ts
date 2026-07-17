@@ -1,4 +1,4 @@
-import { apiError, DEFAULT_RESERVATION_CUTOFF_MINUTES, serializeBusinessHoursConfig } from "@turnos/shared";
+import { apiError, DEFAULT_RESERVATION_CUTOFF_MINUTES, serializeBusinessHoursConfig } from "@/shared";
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";

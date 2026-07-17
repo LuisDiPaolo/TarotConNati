@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { businessSettingsSchema, type BusinessSettingsInput } from "@turnos/shared";
+import { businessSettingsSchema, type BusinessSettingsInput } from "@/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 

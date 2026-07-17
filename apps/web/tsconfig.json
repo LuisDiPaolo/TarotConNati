@@ -3,9 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@turnos/shared": ["../../packages/shared/src/index.ts"],
-      "@turnos/shared/*": ["../../packages/shared/src/*"]
+      "@/*": ["src/*"]
     },
     "plugins": [{ "name": "next" }]
   },

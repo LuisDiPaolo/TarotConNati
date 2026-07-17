@@ -1,6 +1,6 @@
 import "server-only";
 
-import { calculateAppointmentEnd, formatARS, resolveEffectiveSchedulesForDate } from "@turnos/shared";
+import { calculateAppointmentEnd, formatARS, resolveEffectiveSchedulesForDate } from "@/shared";
 import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { ResolvedBusiness } from "@/lib/business/resolve";

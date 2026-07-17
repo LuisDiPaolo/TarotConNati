@@ -2,7 +2,7 @@
 
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
-import type { IntakeFieldInput } from "@turnos/shared";
+import type { IntakeFieldInput } from "@/shared";
 import type { PanelIntakeFormSettings, PanelServiceSettings } from "@/lib/operations/panel-settings.types";
 
 type DraftField = IntakeFieldInput & { draftId: string; optionsText: string };

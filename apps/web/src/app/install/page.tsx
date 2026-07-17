@@ -1,23 +1,7 @@
-import { headers } from "next/headers";
 import { StudioEquisCredit } from "@/components/public/StudioEquisCredit";
 import { InstallInstructions } from "@/components/pwa/InstallInstructions";
-import { isConfiguredPanelHost } from "@/lib/business/instance";
 
-export const dynamic = "force-dynamic";
-
-function hostnameFromHeaders(headerStore: Headers) {
-  const rawHost = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
-  const [hostname = ""] = rawHost.split(":");
-  return hostname.toLowerCase();
-}
-
-export default async function InstallPage() {
-  const headerStore = await headers();
-
-  if (isConfiguredPanelHost(hostnameFromHeaders(headerStore))) {
-    return <InstallInstructions surface="panel" />;
-  }
-
+export default function InstallPage() {
   return (
     <>
       <InstallInstructions surface="public" />

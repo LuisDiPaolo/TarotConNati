@@ -10,13 +10,11 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test",
     "check:client-secrets": "node scripts/check-client-secrets.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.8.0",
     "@supabase/supabase-js": "2.84.0",
-    "@turnos/shared": "workspace:*",
     "clsx": "2.1.1",
     "lucide-react": "0.561.0",
     "next": "16.2.9",
@@ -28,7 +26,6 @@
     "zod": "4.1.13"
   },
   "devDependencies": {
-    "@playwright/test": "1.57.0",
     "@types/node": "22.13.14",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",

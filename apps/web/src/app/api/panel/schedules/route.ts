@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { weeklyScheduleSchema } from "@turnos/shared";
+import { weeklyScheduleSchema } from "@/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function apiError(status: number, code: string, message: string) {

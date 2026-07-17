@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { publicServiceRequestSchema } from "@turnos/shared";
+import { publicServiceRequestSchema } from "@/shared";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { buildValidatedIntakePayload, type IntakeLinkRow } from "@/lib/operations/intake-validation";
 import { sendTransactionalPush } from "@/lib/push/transactional";

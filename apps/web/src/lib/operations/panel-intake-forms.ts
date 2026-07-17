@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { IntakeFormInput } from "@turnos/shared";
+import type { IntakeFormInput } from "@/shared";
 
 type SaveIntakeFormParams = {
   supabase: SupabaseClient;

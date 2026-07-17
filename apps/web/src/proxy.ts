@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isConfiguredPanelHost } from "@/lib/business/instance";
 
+const PANEL_INTERNAL_BASE = "/panel";
+
 const PANEL_SECURITY_HEADERS = {
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
@@ -14,6 +16,14 @@ function getHostname(request: NextRequest) {
   return hostname.toLowerCase();
 }
 
+function isStaticAsset(pathname: string) {
+  return /\.(?:avif|css|gif|ico|jpg|jpeg|js|json|map|png|svg|ttf|txt|webp|woff|woff2)$/i.test(pathname);
+}
+
+function isSharedRuntimeRoute(pathname: string) {
+  return pathname === "/auth" || pathname.startsWith("/auth/");
+}
+
 function withPanelSecurityHeaders(response: NextResponse) {
   for (const [key, value] of Object.entries(PANEL_SECURITY_HEADERS)) {
     response.headers.set(key, value);
@@ -22,15 +32,32 @@ function withPanelSecurityHeaders(response: NextResponse) {
 }
 
 export function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/api/")) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith("/api/") || pathname.startsWith("/_next/") || isStaticAsset(pathname) || isSharedRuntimeRoute(pathname)) {
     return NextResponse.next();
   }
 
-  if (isConfiguredPanelHost(getHostname(request))) {
-    return withPanelSecurityHeaders(NextResponse.next());
+  const panelHost = isConfiguredPanelHost(getHostname(request));
+  const internalPanelPath = pathname === PANEL_INTERNAL_BASE || pathname.startsWith(`${PANEL_INTERNAL_BASE}/`);
+
+  if (!panelHost) {
+    if (internalPanelPath) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  if (internalPanelPath) {
+    const cleanUrl = request.nextUrl.clone();
+    cleanUrl.pathname = pathname.slice(PANEL_INTERNAL_BASE.length) || "/";
+    return withPanelSecurityHeaders(NextResponse.redirect(cleanUrl));
+  }
+
+  const rewriteUrl = request.nextUrl.clone();
+  rewriteUrl.pathname = pathname === "/" ? PANEL_INTERNAL_BASE : `${PANEL_INTERNAL_BASE}${pathname}`;
+  return withPanelSecurityHeaders(NextResponse.rewrite(rewriteUrl));
 }
 
 export const config = {

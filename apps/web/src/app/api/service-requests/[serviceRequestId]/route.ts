@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateServiceRequestSchema } from "@turnos/shared";
+import { updateServiceRequestSchema } from "@/shared";
 import { sendTransactionalPush } from "@/lib/push/transactional";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 

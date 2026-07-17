@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { calculateAppointmentEnd, createPanelAppointmentSchema } from "@turnos/shared";
+import { calculateAppointmentEnd, createPanelAppointmentSchema } from "@/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function apiError(status: number, code: string, message: string) {

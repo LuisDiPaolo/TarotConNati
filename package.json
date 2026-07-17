@@ -8,16 +8,14 @@
   },
   "scripts": {
     "dev": "pnpm --filter @turnos/web dev",
-    "build": "pnpm --filter @turnos/shared build && pnpm --filter @turnos/web build",
-    "lint": "pnpm --filter @turnos/shared lint && pnpm --filter @turnos/web lint",
-    "typecheck": "pnpm --filter @turnos/shared typecheck && pnpm --filter @turnos/web typecheck",
-    "test": "pnpm --filter @turnos/shared test && pnpm --filter @turnos/web test",
-    "test:e2e": "pnpm --filter @turnos/web test:e2e",
+    "build": "pnpm --filter @turnos/web build",
+    "lint": "pnpm --filter @turnos/web lint",
+    "typecheck": "pnpm --filter @turnos/web typecheck",
+    "test": "pnpm --filter @turnos/web test",
     "check:client-secrets": "pnpm --filter @turnos/web check:client-secrets",
     "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:client-secrets && pnpm build"
   },
   "devDependencies": {
-    "@playwright/test": "1.57.0",
     "@types/node": "22.13.14",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
