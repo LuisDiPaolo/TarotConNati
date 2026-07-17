@@ -196,6 +196,57 @@ input[type="radio"] {
   padding: calc(var(--safe-top) + 16px) max(16px, var(--safe-right)) calc(var(--safe-bottom) + 16px) max(16px, var(--safe-left));
 }
 
+.panel-route-frame {
+  min-height: 100dvh;
+  min-height: max(var(--app-height), 100dvh);
+  position: relative;
+}
+
+.panel-route-frame .panel-shell {
+  min-height: auto;
+  padding-top: 16px;
+}
+
+.panel-safe-area-glass {
+  background: linear-gradient(to bottom, rgb(var(--color-surface) / 0.82), rgb(var(--color-surface) / 0.54) 68%, transparent);
+  height: calc(var(--safe-top) + 42px);
+  left: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 50;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
+.panel-brand-masthead {
+  margin: 0 auto;
+  max-width: 720px;
+  padding: calc(var(--safe-top) + 22px) max(20px, var(--safe-right)) 8px max(20px, var(--safe-left));
+  position: relative;
+  text-align: center;
+  z-index: 1;
+}
+
+.panel-brand-masthead__fallback {
+  align-items: center;
+  background: rgb(var(--brand-primary));
+  border-radius: 18px;
+  color: white;
+  display: inline-flex;
+  font-size: 2rem;
+  font-weight: 900;
+  height: 88px;
+  justify-content: center;
+  margin-top: 20px;
+  width: 88px;
+}
+
+[data-theme="brand"] .panel-safe-area-glass {
+  background: linear-gradient(to bottom, rgb(var(--brand-surface) / 0.82), rgb(var(--brand-surface) / 0.54) 68%, transparent);
+}
+
 .bottom-safe-area {
   padding-bottom: calc(var(--safe-bottom) + var(--app-keyboard-inset));
 }
@@ -686,6 +737,19 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   z-index: 80;
 }
 
+.public-compact-header::before {
+  background: linear-gradient(to bottom, rgb(var(--color-surface) / 0.82), rgb(var(--color-surface) / 0.54) 68%, transparent);
+  content: "";
+  height: calc(var(--safe-top) + 34px);
+  left: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 0;
+  top: 0;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
 .public-compact-header--visible {
   opacity: 1;
   pointer-events: auto;
@@ -818,6 +882,10 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   background: rgb(var(--brand-surface) / 0.9);
   border-color: rgb(var(--brand-surface-border) / 0.42);
   color: rgb(var(--brand-surface-foreground));
+}
+
+[data-theme="brand"] .public-compact-header::before {
+  background: linear-gradient(to bottom, rgb(var(--brand-surface) / 0.82), rgb(var(--brand-surface) / 0.54) 68%, transparent);
 }
 
 @media (min-width: 768px) {
