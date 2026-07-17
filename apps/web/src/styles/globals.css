@@ -208,16 +208,7 @@ input[type="radio"] {
 }
 
 .panel-safe-area-glass {
-  background: linear-gradient(to bottom, rgb(var(--color-surface) / 0.82), rgb(var(--color-surface) / 0.54) 68%, transparent);
-  height: calc(var(--safe-top) + 42px);
-  left: 0;
-  pointer-events: none;
-  position: fixed;
-  right: 0;
-  top: 0;
-  z-index: 50;
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  backdrop-filter: blur(18px) saturate(150%);
+  display: none;
 }
 
 .panel-brand-masthead {
@@ -727,7 +718,7 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
 .public-compact-header {
   left: 0;
   opacity: 0;
-  padding: calc(var(--safe-top) + 8px) max(10px, var(--safe-right)) 0 max(10px, var(--safe-left));
+  padding: calc(var(--safe-top) + 6px) max(10px, var(--safe-right)) 6px max(10px, var(--safe-left));
   pointer-events: none;
   position: fixed;
   right: 0;
@@ -737,17 +728,8 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   z-index: 80;
 }
 
-.public-compact-header::before {
-  background: linear-gradient(to bottom, rgb(var(--color-surface) / 0.82), rgb(var(--color-surface) / 0.54) 68%, transparent);
-  content: "";
-  height: calc(var(--safe-top) + 34px);
-  left: 0;
-  pointer-events: none;
-  position: fixed;
-  right: 0;
-  top: 0;
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  backdrop-filter: blur(18px) saturate(150%);
+.public-safe-area-glass {
+  display: none;
 }
 
 .public-compact-header--visible {
@@ -884,8 +866,26 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   color: rgb(var(--brand-surface-foreground));
 }
 
-[data-theme="brand"] .public-compact-header::before {
-  background: linear-gradient(to bottom, rgb(var(--brand-surface) / 0.82), rgb(var(--brand-surface) / 0.54) 68%, transparent);
+[data-theme="brand"] .public-safe-area-glass,
+[data-theme="brand"] .panel-safe-area-glass {
+  background: linear-gradient(to bottom, rgb(var(--brand-surface) / 0.76), rgb(var(--brand-surface) / 0.4) 58%, transparent);
+}
+
+@media (max-width: 767px) {
+  .public-safe-area-glass,
+  .panel-safe-area-glass {
+    background: linear-gradient(to bottom, rgb(var(--color-surface) / 0.76), rgb(var(--color-surface) / 0.4) 58%, transparent);
+    display: block;
+    height: calc(var(--safe-top) + 22px);
+    left: 0;
+    pointer-events: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 50;
+    -webkit-backdrop-filter: blur(14px) saturate(145%);
+    backdrop-filter: blur(14px) saturate(145%);
+  }
 }
 
 @media (min-width: 768px) {

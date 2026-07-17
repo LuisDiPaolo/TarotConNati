@@ -81,6 +81,8 @@ export function PublicBookingAssist({ businessName, installHref, lightLogoUrl, d
 
   return (
     <>
+      <div className="public-safe-area-glass" aria-hidden="true" />
+
       {compactHeaderVisible ? (
         <div className="public-compact-header public-compact-header--visible">
           <div className="public-compact-header__surface">
