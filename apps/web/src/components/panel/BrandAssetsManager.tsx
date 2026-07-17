@@ -2,7 +2,6 @@
 
 import { ImageIcon, Upload } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
 import { updatePwaHeadLinks } from "@/lib/pwa/head-links";
 import { BrandAssetCropper, type BrandAssetCropConfig } from "./BrandAssetCropper";
 import type { PanelBusinessSettings } from "@/lib/operations/panel-settings.types";
@@ -173,42 +172,43 @@ export function BrandAssetsManager({
   business: PanelBusinessSettings;
   onBusinessChange?: (business: PanelBusinessSettings) => void;
 }) {
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedConfig, setSelectedConfig] = useState<AssetConfig | null>(null);
-  const [cropSource, setCropSource] = useState<File | null>(null);
+  const pendingConfigRef = useRef<AssetConfig | null>(null);
+  const [cropTarget, setCropTarget] = useState<{ config: AssetConfig; file: File } | null>(null);
   const [state, setState] = useState<"idle" | "uploading" | "error">("idle");
   const [message, setMessage] = useState("");
 
   function pickAsset(config: AssetConfig) {
     if (state === "uploading") return;
 
-    setSelectedConfig(config);
+    pendingConfigRef.current = config;
     setMessage("");
     fileInputRef.current?.click();
   }
 
   function handleFileSelected(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
+    const config = pendingConfigRef.current;
+    pendingConfigRef.current = null;
     event.target.value = "";
 
-    if (!file) return;
+    if (!file || !config) return;
     if (!file.type.startsWith("image/")) {
       setState("error");
       setMessage("Selecciona un archivo de imagen valido.");
       return;
     }
 
-    setCropSource(file);
+    setCropTarget({ config, file });
   }
 
-  async function uploadAsset(file: File) {
-    if (!selectedConfig || state === "uploading") return;
+  async function uploadAsset(file: File, config: AssetConfig) {
+    if (state === "uploading") return;
     setState("uploading");
     setMessage("");
 
     const formData = new FormData();
-    formData.set("assetType", selectedConfig.type);
+    formData.set("assetType", config.type);
     formData.set("file", file);
 
     const response = await fetch("/api/panel/brand-assets", {
@@ -224,20 +224,18 @@ export function BrandAssetsManager({
       return;
     }
 
-    const assetSettingKey = ASSET_SETTING_KEYS[selectedConfig.type];
+    const assetSettingKey = ASSET_SETTING_KEYS[config.type];
     const updatedBusiness: PanelBusinessSettings = { ...business, [assetSettingKey]: data.publicUrl };
     onBusinessChange?.(updatedBusiness);
     setState("idle");
-    setCropSource(null);
-    setSelectedConfig(null);
+    setCropTarget(null);
     setMessage("Imagen guardada.");
 
-    if (PANEL_HEAD_REFRESH_ASSETS.has(selectedConfig.type)) {
+    if (PANEL_HEAD_REFRESH_ASSETS.has(config.type)) {
       const assets = await updatePwaHeadLinks("/api/pwa/panel-manifest", "/pwa/panel/icon.svg");
       navigator.serviceWorker?.controller?.postMessage({ type: "SET_BRAND_ASSETS", value: assets });
     }
 
-    router.refresh();
   }
 
   return (
@@ -273,16 +271,15 @@ export function BrandAssetsManager({
       {message ? <p className={`text-sm font-semibold ${state === "error" ? "text-red-600" : "text-emerald-600"}`}>{message}</p> : null}
       {state === "uploading" ? <p className="text-sm font-semibold text-muted">Subiendo imagen...</p> : null}
 
-      {cropSource && selectedConfig ? (
+      {cropTarget ? (
         <BrandAssetCropper
-          file={cropSource}
-          config={selectedConfig}
+          file={cropTarget.file}
+          config={cropTarget.config}
           onCancel={() => {
             if (state === "uploading") return;
-            setCropSource(null);
-            setSelectedConfig(null);
+            setCropTarget(null);
           }}
-          onConfirm={uploadAsset}
+          onConfirm={(file) => uploadAsset(file, cropTarget.config)}
         />
       ) : null}
     </section>
