@@ -20,7 +20,7 @@ export async function PublicHomePage() {
 
     return (
       <>
-        <main className="app-screen flex items-center justify-center py-10">
+        <main className="app-screen flex flex-col items-center justify-center py-10">
           <section className="surface w-full max-w-xl p-6">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Reservas no disponibles</p>
             <h1 className="mt-3 text-3xl font-black">El negocio todavia no esta configurado</h1>
@@ -29,8 +29,8 @@ export async function PublicHomePage() {
               Ir al panel
             </a>
           </section>
+          <StudioEquisCredit />
         </main>
-        <StudioEquisCredit />
       </>
     );
   }
@@ -80,9 +80,9 @@ export async function PublicHomePage() {
               serviceImageFallbackUrl={publicBusiness.publicAppIconUrl}
             />
           </div>
+          <StudioEquisCredit elevated={publicBusiness.publicBottomNavEnabled} />
         </section>
       </main>
-      <StudioEquisCredit elevated={publicBusiness.publicBottomNavEnabled} />
     </>
   );
 }

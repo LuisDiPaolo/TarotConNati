@@ -2,6 +2,7 @@
 
 import { Bell, Download, MonitorSmartphone, Share, Smartphone } from "lucide-react";
 import { useEffect, useState } from "react";
+import { StudioEquisCredit } from "@/components/public/StudioEquisCredit";
 import { ensurePushSubscription } from "@/lib/pwa/push-client";
 
 type BeforeInstallPromptEvent = Event & {
@@ -79,7 +80,7 @@ export function InstallInstructions({ surface }: InstallInstructionsProps) {
   }
 
   return (
-    <main className="app-screen flex items-center justify-center py-10">
+    <main className="app-screen flex flex-col items-center justify-center py-10">
       <section className="w-full max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Acceso rapido</p>
         <h1 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">{title}</h1>
@@ -115,6 +116,7 @@ export function InstallInstructions({ surface }: InstallInstructionsProps) {
             {busyAction === "notifications" ? "Activando" : notificationStatus === "granted" ? "Notificaciones activas" : "Activar notificaciones"}
           </button>
         </div>
+        <StudioEquisCredit />
       </section>
     </main>
   );
