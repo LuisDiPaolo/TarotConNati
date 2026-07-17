@@ -109,9 +109,14 @@ export function PublicBookingAssist({ businessName, installHref, lightLogoUrl, d
       ) : null}
 
       {!compactHeaderVisible ? (
-        <button className="public-help-button public-help-button--floating" type="button" aria-label="Abrir ayuda" title="Ayuda" onClick={() => setHelpOpen(true)}>
-          <HelpCircle aria-hidden="true" className="h-4 w-4" />
-        </button>
+        <>
+          <button className="public-help-button public-help-button--floating" type="button" aria-label="Abrir ayuda" title="Ayuda" onClick={() => setHelpOpen(true)}>
+            <HelpCircle aria-hidden="true" className="h-4 w-4" />
+          </button>
+          <div className="public-theme-toggle--floating">
+            <ThemeToggle variant="inline" />
+          </div>
+        </>
       ) : null}
 
       {helpOpen ? (
