@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 
 type ThemeMode = "light" | "brand" | "dark";
 
+type ThemeToggleProps = {
+  variant?: "fixed" | "inline";
+};
+
 const STORAGE_KEY = "turnos-theme";
 const THEME_SEQUENCE: ThemeMode[] = ["light", "brand", "dark"];
 
@@ -28,7 +32,7 @@ function applyTheme(theme: ThemeMode) {
   root.style.colorScheme = theme === "dark" ? "dark" : "light";
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ variant = "fixed" }: ThemeToggleProps) {
   const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme());
 
   useEffect(() => {
@@ -50,7 +54,7 @@ export function ThemeToggle() {
     <button
       type="button"
       aria-label={`Activar modo ${nextLabel}`}
-      className="theme-toggle"
+      className={variant === "inline" ? "theme-toggle theme-toggle--inline" : "theme-toggle"}
       onClick={toggleTheme}
       title={`Activar modo ${nextLabel}`}
     >

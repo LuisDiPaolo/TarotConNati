@@ -1,5 +1,5 @@
-import { CalendarDays, Clock, CreditCard } from "lucide-react";
 import { headers } from "next/headers";
+import { PublicBookingAssist } from "@/components/public/PublicBookingAssist";
 import { PublicTabbedExperience } from "@/components/public/PublicTabbedExperience";
 import { StudioEquisCredit } from "@/components/public/StudioEquisCredit";
 import { getConfiguredPanelOrigin } from "@/lib/business/instance";
@@ -36,6 +36,9 @@ export async function PublicHomePage() {
   }
 
   const { business: publicBusiness, services, slotsByService, intakeFormsByService } = bookingData;
+  const protocol = headerStore.get("x-forwarded-proto") ?? "https";
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
+  const installHref = host ? `${protocol}://${host}/install` : "/install";
   const lightLogoUrl = publicBusiness.logoLightUrl || publicBusiness.logoUrl || publicBusiness.publicAppIconUrl;
   const darkLogoUrl = publicBusiness.logoDarkUrl || publicBusiness.logoUrl || publicBusiness.publicAppIconUrl;
   const hasLogo = Boolean(lightLogoUrl || darkLogoUrl);
@@ -44,7 +47,7 @@ export async function PublicHomePage() {
     <>
       <main className="app-screen py-8 sm:py-12" style={buildBrandStyle(publicBusiness)}>
         <section className="mx-auto w-full max-w-6xl">
-          <header className="mx-auto max-w-3xl text-center">
+          <header id="public-brand-anchor" className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--color-foreground))]">Reservas online</p>
             {hasLogo ? (
               <>
@@ -65,35 +68,7 @@ export async function PublicHomePage() {
             )}
           </header>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <article className="surface flex gap-4 p-5 shadow-sm sm:p-6">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <CalendarDays aria-hidden="true" className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-lg font-bold">Servicios</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Elegis la atencion que necesitas y ves la informacion clave antes de avanzar.</p>
-              </div>
-            </article>
-            <article className="surface flex gap-4 p-5 shadow-sm sm:p-6">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Clock aria-hidden="true" className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-lg font-bold">Horarios</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Seleccionas un turno disponible o envias una consulta si el servicio se coordina aparte.</p>
-              </div>
-            </article>
-            <article className="surface flex gap-4 p-5 shadow-sm sm:p-6">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <CreditCard aria-hidden="true" className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-lg font-bold">Pagos</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Cuando corresponde, podes dejar una seña o pagar online para confirmar la reserva.</p>
-              </div>
-            </article>
-          </div>
+          <PublicBookingAssist businessName={publicBusiness.name} installHref={installHref} lightLogoUrl={lightLogoUrl} darkLogoUrl={darkLogoUrl} />
 
           <div className="mt-8">
             <PublicTabbedExperience

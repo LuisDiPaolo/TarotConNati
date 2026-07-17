@@ -51,7 +51,9 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const headerStore = await headers();
-  const business = await resolveBusinessForHostname(headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "");
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
+  const business = await resolveBusinessForHostname(host);
+  const isPanelHost = isConfiguredPanelHost(hostnameFromHeaders(headerStore));
   const defaultThemeMode = business?.defaultThemeMode ?? "light";
 
   return (
@@ -71,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <OrientationGuard />
         <PublicPwaManager />
         <PanelPwaManager />
-        <ThemeToggle />
+        {isPanelHost ? <ThemeToggle /> : null}
         {children}
       </body>
     </html>
