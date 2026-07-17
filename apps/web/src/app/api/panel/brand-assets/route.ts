@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -151,5 +152,5 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, path: nextPath }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ ok: true, path: nextPath, publicUrl: buildBrandAssetUrl(nextPath) }, { headers: { "Cache-Control": "no-store" } });
 }

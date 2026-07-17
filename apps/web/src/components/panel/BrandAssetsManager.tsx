@@ -3,6 +3,7 @@
 import { ImageIcon, Upload } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { updatePwaHeadLinks } from "@/lib/pwa/head-links";
 import { BrandAssetCropper, type BrandAssetCropConfig } from "./BrandAssetCropper";
 import type { PanelBusinessSettings } from "@/lib/operations/panel-settings.types";
 
@@ -13,6 +14,23 @@ type AssetConfig = BrandAssetCropConfig & {
   label: string;
   currentUrl: (business: PanelBusinessSettings) => string;
 };
+
+type BrandAssetUploadResponse = {
+  publicUrl?: string;
+  error?: { message?: string };
+};
+
+const ASSET_SETTING_KEYS = {
+  logo: "logoUrl",
+  logoLight: "logoLightUrl",
+  logoDark: "logoDarkUrl",
+  publicIcon: "publicAppIconUrl",
+  panelIcon: "panelAppIconUrl",
+  maskableIcon: "maskableIconUrl",
+  appleTouchIcon: "appleTouchIconUrl",
+} as const satisfies Record<BrandAssetType, keyof PanelBusinessSettings>;
+
+const PANEL_HEAD_REFRESH_ASSETS = new Set<BrandAssetType>(["panelIcon", "maskableIcon", "appleTouchIcon"]);
 
 const ASSET_CONFIGS: AssetConfig[] = [
   {
@@ -148,7 +166,13 @@ function AssetPreview({ config, business }: { config: AssetConfig; business: Pan
   );
 }
 
-export function BrandAssetsManager({ business }: { business: PanelBusinessSettings }) {
+export function BrandAssetsManager({
+  business,
+  onBusinessChange,
+}: {
+  business: PanelBusinessSettings;
+  onBusinessChange?: (business: PanelBusinessSettings) => void;
+}) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedConfig, setSelectedConfig] = useState<AssetConfig | null>(null);
@@ -192,15 +216,27 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
       body: formData,
     }).catch(() => null);
 
-    if (!response?.ok) {
+    const data = await response?.json().catch(() => null) as BrandAssetUploadResponse | null;
+
+    if (!response?.ok || !data?.publicUrl) {
       setState("error");
-      setMessage("No se pudo guardar la imagen.");
+      setMessage(data?.error?.message ?? "No se pudo guardar la imagen.");
       return;
     }
 
+    const assetSettingKey = ASSET_SETTING_KEYS[selectedConfig.type];
+    const updatedBusiness: PanelBusinessSettings = { ...business, [assetSettingKey]: data.publicUrl };
+    onBusinessChange?.(updatedBusiness);
     setState("idle");
     setCropSource(null);
     setSelectedConfig(null);
+    setMessage("Imagen guardada.");
+
+    if (PANEL_HEAD_REFRESH_ASSETS.has(selectedConfig.type)) {
+      const assets = await updatePwaHeadLinks("/api/pwa/panel-manifest", "/pwa/panel/icon.svg");
+      navigator.serviceWorker?.controller?.postMessage({ type: "SET_BRAND_ASSETS", value: assets });
+    }
+
     router.refresh();
   }
 
@@ -234,7 +270,7 @@ export function BrandAssetsManager({ business }: { business: PanelBusinessSettin
         ))}
       </div>
 
-      {message ? <p className="text-sm font-semibold text-red-600">{message}</p> : null}
+      {message ? <p className={`text-sm font-semibold ${state === "error" ? "text-red-600" : "text-emerald-600"}`}>{message}</p> : null}
       {state === "uploading" ? <p className="text-sm font-semibold text-muted">Subiendo imagen...</p> : null}
 
       {cropSource && selectedConfig ? (

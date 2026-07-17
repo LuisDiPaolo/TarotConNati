@@ -1,10 +1,9 @@
 import { headers } from "next/headers";
-import { BrandAssetsManager } from "@/components/panel/BrandAssetsManager";
+import { BrandConfigurationAssetsSection } from "@/components/panel/BrandConfigurationAssetsSection";
 import { BusinessQrCard } from "@/components/panel/BusinessQrCard";
 import { BusinessSettingsForm } from "@/components/panel/BusinessSettingsForm";
 import { OnboardingChecklist } from "@/components/panel/OnboardingChecklist";
 import { PanelShell } from "@/components/panel/PanelShell";
-import { PwaBrandPreview } from "@/components/panel/PwaBrandPreview";
 import { getPanelBusinessSettings, getPanelIntakeForms, getPanelSchedules, getPanelServices } from "@/lib/operations/panel-settings";
 import { requirePanelSession } from "@/lib/panel/auth";
 
@@ -35,8 +34,7 @@ export default async function PanelConfigurationPage() {
       <BusinessSettingsForm business={business} />
       {business ? (
         <>
-          <BrandAssetsManager business={business} />
-          <PwaBrandPreview business={business} />
+          <BrandConfigurationAssetsSection business={business} />
           <BusinessQrCard business={business} fallbackOrigin={fallbackOrigin} />
         </>
       ) : null}
