@@ -52,13 +52,17 @@ export function PanelFeatureToggle({ featureKey, label, enabled }: PanelFeatureT
     }
   }
 
-  const statusText = isSaving ? "Guardando..." : isEnabled ? "Activo" : "Inactivo";
+  const statusText = isEnabled ? "Activo" : "Inactivo";
 
   return (
-    <div className="inline-flex items-center gap-3 text-sm">
+    <div className="surface inline-flex items-center gap-3 px-3 py-2 text-sm">
       <div className="grid leading-tight">
         <span className="whitespace-nowrap font-bold">{label}</span>
-        <span className="whitespace-nowrap text-xs font-semibold text-muted">{statusText}</span>
+        <span
+          className={`mt-1 w-fit rounded-full px-2 py-0.5 text-[11px] font-black ${isEnabled ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-red-500/10 text-red-700 dark:text-red-300"}`}
+        >
+          {statusText}
+        </span>
         {error ? <span className="mt-1 whitespace-nowrap text-xs font-bold text-red-500">{error}</span> : null}
       </div>
       {isSaving ? <Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin text-muted" /> : null}
@@ -72,7 +76,9 @@ export function PanelFeatureToggle({ featureKey, label, enabled }: PanelFeatureT
         role="switch"
         style={{
           width: 56,
+          minWidth: 44,
           height: 28,
+          minHeight: 28,
           backgroundColor: isEnabled ? "rgb(var(--color-foreground) / 0.10)" : "rgb(var(--color-muted) / 0.10)",
           borderColor: isEnabled ? "rgb(var(--color-foreground) / 0.22)" : "rgb(var(--color-border))",
           borderWidth: 1.5,
