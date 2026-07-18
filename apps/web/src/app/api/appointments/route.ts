@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { calculateAppointmentEnd, publicReservationSchema } from "@/shared";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
+import { confirmCheckoutCoupon, getBusinessDateKey, releaseCheckoutCoupon, reserveCheckoutCoupon, resolveCheckoutCoupon } from "@/lib/commerce/coupons";
 import { buildValidatedIntakePayload, type IntakeLinkRow } from "@/lib/operations/intake-validation";
 import { getRequestBaseUrl } from "@/lib/http/base-url";
 import { createMercadoPagoPreference } from "@/lib/payments/mercado-pago";
@@ -10,6 +11,11 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 const RATE_LIMIT_WINDOW_MS = 10 * 60_000;
 const RATE_LIMIT_MAX = 6;
 const reservationAttempts = new Map<string, { count: number; resetAt: number }>();
+
+type OperationResult = {
+  ok?: boolean;
+  code?: string;
+};
 
 function apiError(status: number, code: string, message: string) {
   return NextResponse.json({ error: { code, message } }, { status });
@@ -64,6 +70,8 @@ export async function POST(request: NextRequest) {
   const startsAtDate = new Date(startsAt);
   if (startsAtDate <= new Date()) return apiError(400, "VALIDATION_ERROR", "El horario elegido ya no está disponible.");
 
+  await supabase.rpc("release_expired_coupon_redemptions", { p_business_id: business.id });
+
   const { data: service, error: serviceError } = await supabase
     .from("services")
     .select("id, name, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, requires_manual_confirmation, deposit_pesos, price_pesos, payment_mode")
@@ -110,6 +118,32 @@ export async function POST(request: NextRequest) {
     return apiError(409, "VALIDATION_ERROR", "Ese horario acaba de ocuparse. Elegí otro turno.");
   }
 
+  const paymentMode = service.payment_mode ?? "deposit";
+  const subtotalPesos = paymentMode === "full"
+    ? Number(service.price_pesos)
+    : paymentMode === "deposit"
+      ? Number(service.deposit_pesos)
+      : 0;
+  const couponTargetDate = getBusinessDateKey(startsAtDate, business.timezone);
+  const couponResult = parsed.data.couponCode && subtotalPesos > 0 ? await resolveCheckoutCoupon({
+    supabase,
+    businessId: business.id,
+    code: parsed.data.couponCode,
+    scope: "services",
+    subtotalPesos,
+    quantity: 1,
+    targetDate: couponTargetDate,
+  }) : null;
+
+  if (couponResult && !couponResult.ok) {
+    const status = couponResult.code === "feature_disabled" ? 403 : couponResult.code === "internal_error" ? 500 : 404;
+    return apiError(status, couponResult.code.toUpperCase(), couponResult.message);
+  }
+
+  const coupon = couponResult?.ok ? couponResult.data.coupon : null;
+  const discountPesos = couponResult?.ok ? couponResult.data.discountPesos : 0;
+  const amountPesos = Math.max(0, subtotalPesos - discountPesos);
+
   const { data: createdCustomer, error: customerError } = await supabase
     .from("customers")
     .insert({
@@ -124,13 +158,7 @@ export async function POST(request: NextRequest) {
 
   if (customerError || !createdCustomer) return apiError(500, "VALIDATION_ERROR", "No se pudo crear el cliente.");
 
-  const paymentMode = service.payment_mode ?? "deposit";
-  const amountPesos = paymentMode === "full"
-    ? Number(service.price_pesos)
-    : paymentMode === "deposit"
-      ? Number(service.deposit_pesos)
-      : 0;
-
+  const initialStatus = amountPesos > 0 || service.requires_manual_confirmation ? "pending" : "confirmed";
   const { data: appointment, error: appointmentError } = await supabase
     .from("appointments")
     .insert({
@@ -141,7 +169,11 @@ export async function POST(request: NextRequest) {
       ends_at: endsAtDate.toISOString(),
       calendar_starts_at: calendarRange.startsAt.toISOString(),
       calendar_ends_at: calendarRange.endsAt.toISOString(),
-      status: amountPesos > 0 || service.requires_manual_confirmation ? "pending" : "confirmed",
+      status: initialStatus,
+      subtotal_pesos: subtotalPesos,
+      discount_pesos: discountPesos,
+      coupon_id: coupon?.id ?? null,
+      coupon_code: coupon?.code ?? null,
       notes: customer.notes || null,
     })
     .select("id")
@@ -161,6 +193,30 @@ export async function POST(request: NextRequest) {
     if (intakeError) return apiError(500, "VALIDATION_ERROR", "No se pudo guardar la informacion adicional.");
   }
 
+  const couponExpiresAt = new Date(Date.now() + 30 * 60_000).toISOString();
+  let couponReserved = false;
+  if (coupon && discountPesos > 0) {
+    const { data: reservation, error: reservationError } = await reserveCheckoutCoupon({
+      supabase,
+      businessId: business.id,
+      couponId: coupon.id,
+      customerId: createdCustomer.id,
+      appointmentId: appointment.id,
+      purchaserName: customer.fullName,
+      purchaserPhone: customer.phone,
+      purchaserEmail: customer.email || null,
+      discountPesos,
+      expiresAt: couponExpiresAt,
+      metadata: { scope: "services", subtotalPesos, startsAt, targetDate: couponTargetDate },
+    });
+    const typedReservation = reservation as OperationResult | null;
+    if (reservationError || !typedReservation?.ok) {
+      await supabase.from("appointments").update({ status: "cancelled" }).eq("id", appointment.id).eq("business_id", business.id);
+      return apiError(409, "VALIDATION_ERROR", "El cupon ya no esta disponible.");
+    }
+    couponReserved = true;
+  }
+
   let checkoutUrl: string | null = null;
 
   if (amountPesos > 0) {
@@ -177,31 +233,43 @@ export async function POST(request: NextRequest) {
       .select("id")
       .single();
 
-    if (paymentError || !payment) return apiError(500, "VALIDATION_ERROR", "No se pudo registrar el pago.");
+    if (paymentError || !payment) {
+      if (couponReserved && coupon) await releaseCheckoutCoupon({ supabase, businessId: business.id, couponId: coupon.id, appointmentId: appointment.id });
+      return apiError(500, "VALIDATION_ERROR", "No se pudo registrar el pago.");
+    }
 
     const accessToken = process.env.MP_ACCESS_TOKEN;
     if (accessToken) {
-      const origin = getRequestBaseUrl(request);
-      const preference = await createMercadoPagoPreference({
-        accessToken,
-        title: `${paymentMode === "full" ? "Pago total" : "Seña"} - ${String(service.name)}`,
-        quantity: 1,
-        unitPrice: amountPesos,
-        externalReference: appointment.id,
-        notificationUrl: `${origin}/api/webhooks/mercado-pago`,
-        backUrls: {
-          success: `${origin}/?payment=success`,
-          failure: `${origin}/?payment=failure`,
-          pending: `${origin}/?payment=pending`,
-        },
-      });
+      try {
+        const origin = getRequestBaseUrl(request);
+        const preference = await createMercadoPagoPreference({
+          accessToken,
+          title: `${paymentMode === "full" ? "Pago total" : "Sena"} - ${String(service.name)}`,
+          quantity: 1,
+          unitPrice: amountPesos,
+          externalReference: appointment.id,
+          notificationUrl: `${origin}/api/webhooks/mercado-pago`,
+          backUrls: {
+            success: `${origin}/?payment=success`,
+            failure: `${origin}/?payment=failure`,
+            pending: `${origin}/?payment=pending`,
+          },
+        });
 
-      checkoutUrl = preference.init_point ?? preference.sandbox_init_point ?? null;
-      await supabase
-        .from("payments")
-        .update({ provider_preference_id: preference.id, checkout_url: checkoutUrl })
-        .eq("id", payment.id);
+        checkoutUrl = preference.init_point ?? preference.sandbox_init_point ?? null;
+        await supabase
+          .from("payments")
+          .update({ provider_preference_id: preference.id, checkout_url: checkoutUrl })
+          .eq("id", payment.id);
+      } catch {
+        if (couponReserved && coupon) await releaseCheckoutCoupon({ supabase, businessId: business.id, couponId: coupon.id, appointmentId: appointment.id });
+        await supabase.from("payments").update({ status: "cancelled" }).eq("id", payment.id).eq("business_id", business.id);
+        await supabase.from("appointments").update({ status: "cancelled" }).eq("id", appointment.id).eq("business_id", business.id);
+        return apiError(502, "PAYMENT_PROVIDER_ERROR", "No se pudo iniciar el pago.");
+      }
     }
+  } else if (couponReserved && coupon) {
+    await confirmCheckoutCoupon({ supabase, businessId: business.id, couponId: coupon.id, appointmentId: appointment.id });
   }
 
   await sendTransactionalPush({
@@ -223,6 +291,6 @@ export async function POST(request: NextRequest) {
     appointmentId: appointment.id,
     customerId: createdCustomer.id,
     checkoutUrl,
-    status: amountPesos > 0 ? "pending_payment" : "confirmed",
+    status: amountPesos > 0 ? "pending_payment" : initialStatus,
   });
 }

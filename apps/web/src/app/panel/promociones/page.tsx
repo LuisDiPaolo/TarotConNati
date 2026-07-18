@@ -1,0 +1,54 @@
+import { Tags } from "lucide-react";
+import { PanelShell } from "@/components/panel/PanelShell";
+import { PanelSetupRequired } from "@/components/panel/PanelSetupRequired";
+import { PromotionsManager } from "@/components/panel/PromotionsManager";
+import { getPanelBusinessSettings } from "@/lib/operations/panel-settings";
+import { getPanelPromotions } from "@/lib/operations/panel-promotions";
+import { requirePanelSession } from "@/lib/panel/auth";
+
+export default async function PanelPromotionsPage() {
+  await requirePanelSession();
+  const business = await getPanelBusinessSettings();
+  const { enabled, promotions } = business ? await getPanelPromotions() : { enabled: false, promotions: [] };
+  const activeCount = promotions.filter((promotion) => promotion.active).length;
+
+  return (
+    <PanelShell>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Comercio</p>
+          <h1 className="mt-2 text-3xl font-black sm:text-5xl">Promociones</h1>
+        </div>
+      </header>
+
+      {!business ? (
+        <PanelSetupRequired text="Crea el negocio para poder cargar promociones que van a aparecer en la pagina publica." />
+      ) : enabled ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <article className="surface p-5">
+              <Tags aria-hidden="true" className="h-6 w-6 text-accent" />
+              <h2 className="mt-4 text-lg font-bold">Promociones</h2>
+              <p className="mt-2 text-3xl font-black">{promotions.length}</p>
+            </article>
+            <article className="surface p-5">
+              <Tags aria-hidden="true" className="h-6 w-6 text-accent" />
+              <h2 className="mt-4 text-lg font-bold">Publicadas</h2>
+              <p className="mt-2 text-3xl font-black">{activeCount}</p>
+            </article>
+          </div>
+
+          <PromotionsManager promotions={promotions} />
+        </>
+      ) : (
+        <section className="surface p-6 sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Modulo no habilitado</p>
+          <h2 className="mt-3 text-2xl font-black">Promociones</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+            Este negocio todavia no tiene activo el modulo de promociones. Cuando se habilite, vas a poder publicar descuentos y precios especiales con fechas de vigencia.
+          </p>
+        </section>
+      )}
+    </PanelShell>
+  );
+}
