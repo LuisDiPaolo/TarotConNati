@@ -56,13 +56,14 @@ export function PanelFeatureToggle({ featureKey, label, enabled }: PanelFeatureT
         {isSaving || isPending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin text-muted" /> : null}
         <button
           aria-checked={isEnabled}
-          className={`relative h-8 w-14 rounded-full border transition ${isEnabled ? "border-accent bg-accent" : "border-border bg-muted/20"}`}
+          className={`relative h-8 w-14 rounded-full border shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 ${isEnabled ? "border-emerald-500 bg-emerald-500 focus-visible:ring-emerald-500" : "border-red-500 bg-red-500 focus-visible:ring-red-500"}`}
           disabled={isSaving || isPending}
           onClick={() => updateFeature(!isEnabled)}
           role="switch"
           type="button"
         >
           <span
+            aria-hidden="true"
             className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-lg transition-transform ${isEnabled ? "translate-x-6" : "translate-x-1"}`}
           />
         </button>
