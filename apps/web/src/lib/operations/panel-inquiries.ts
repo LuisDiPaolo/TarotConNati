@@ -55,17 +55,17 @@ function mapInquiryRow(row: InquiryQueryRow): PanelInquiry {
   };
 }
 
-export async function getPanelInquiries(): Promise<PanelInquiry[]> {
+export async function getPanelInquiries(): Promise<{ enabled: boolean; inquiries: PanelInquiry[] }> {
   const supabase = await createSupabaseServerClient();
   const businessId = await getCurrentPanelBusinessId(supabase);
-  if (!businessId) return [];
+  if (!businessId) return { enabled: false, inquiries: [] };
 
   const { data: enabled } = await supabase.rpc("has_feature", {
     p_business_id: businessId,
     p_feature_key: "inquiries_enabled",
   });
 
-  if (!enabled) return [];
+  if (!enabled) return { enabled: false, inquiries: [] };
 
   const { data, error } = await supabase
     .from("inquiries")
@@ -74,6 +74,6 @@ export async function getPanelInquiries(): Promise<PanelInquiry[]> {
     .order("created_at", { ascending: false })
     .limit(120);
 
-  if (error || !data) return [];
-  return (data as InquiryQueryRow[]).map(mapInquiryRow);
+  if (error || !data) return { enabled: true, inquiries: [] };
+  return { enabled: true, inquiries: (data as InquiryQueryRow[]).map(mapInquiryRow) };
 }

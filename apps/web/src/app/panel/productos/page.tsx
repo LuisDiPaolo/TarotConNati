@@ -1,5 +1,6 @@
 import { Package } from "lucide-react";
 import { PanelShell } from "@/components/panel/PanelShell";
+import { PanelFeatureToggle } from "@/components/panel/PanelFeatureToggle";
 import { PanelSetupRequired } from "@/components/panel/PanelSetupRequired";
 import { ProductsManager } from "@/components/panel/ProductsManager";
 import { getPanelBusinessSettings } from "@/lib/operations/panel-settings";
@@ -20,6 +21,7 @@ export default async function PanelProductsPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Comercio</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Productos</h1>
         </div>
+        {business ? <PanelFeatureToggle enabled={enabled} featureKey="products_enabled" label="Modulo productos" /> : null}
       </header>
 
       {!business ? (

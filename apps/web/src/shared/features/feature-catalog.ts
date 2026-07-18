@@ -17,7 +17,7 @@ export const FEATURE_CATALOG = [
   { key: "promotions_enabled", pack: "profesional", requiresMigration: true, governedTables: ["promotions"] },
   { key: "inquiries_enabled", pack: "esencial", requiresMigration: true, governedTables: ["inquiries"] },
   { key: "push_enabled", pack: "profesional", requiresMigration: true, governedTables: ["push_subscriptions", "push_delivery_events"] },
-  { key: "push_campaigns_enabled", pack: "comercial", requiresMigration: true, governedTables: ["push_campaigns"] },
+  { key: "push_campaigns_enabled", pack: "comercial", requiresMigration: true, governedTables: ["push_alert_campaigns"] },
   { key: "campaigns_enabled", pack: "comercial", requiresMigration: true, governedTables: ["campaigns"] },
   { key: "coupons_enabled", pack: "comercial", requiresMigration: true, governedTables: ["coupons", "coupon_redemptions"] },
   { key: "gift_cards_enabled", pack: "comercial", requiresMigration: true, governedTables: ["gift_cards", "payments"] },

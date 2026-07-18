@@ -1,6 +1,8 @@
 import { Bell, Send } from "lucide-react";
+import { PanelFeatureToggle } from "@/components/panel/PanelFeatureToggle";
 import { PanelShell } from "@/components/panel/PanelShell";
-import { getPanelNotificationRecords } from "@/lib/operations/panel-notifications";
+import { PushAlertsManager } from "@/components/panel/PushAlertsManager";
+import { getPanelNotificationRecords, getPanelPushAlertCampaigns, getPanelPushAlertFeatureState } from "@/lib/operations/panel-notifications";
 import { requirePanelSession } from "@/lib/panel/auth";
 
 function formatDate(value: string) {
@@ -16,16 +18,37 @@ function formatDate(value: string) {
 
 export default async function PanelNotificationsPage() {
   await requirePanelSession();
-  const records = await getPanelNotificationRecords();
+  const [records, campaigns, alertsEnabled] = await Promise.all([
+    getPanelNotificationRecords(),
+    getPanelPushAlertCampaigns(),
+    getPanelPushAlertFeatureState(),
+  ]);
 
   return (
     <PanelShell>
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Notificaciones</p>
-        <h1 className="mt-2 text-3xl font-black sm:text-5xl">Avisos enviados</h1>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Notificaciones</p>
+          <h1 className="mt-2 text-3xl font-black sm:text-5xl">Avisos push</h1>
+        </div>
+        <PanelFeatureToggle enabled={alertsEnabled} featureKey="push_campaigns_enabled" label="Modulo alertas push" />
       </header>
 
+      {alertsEnabled ? (
+        <PushAlertsManager initialCampaigns={campaigns} />
+      ) : (
+        <section className="surface p-6 sm:p-8">
+          <Bell aria-hidden="true" className="h-8 w-8 text-accent" />
+          <h2 className="mt-4 text-xl font-black">Modulo no habilitado</h2>
+          <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-muted">Activa alertas push para enviar avisos inmediatos o programados a clientes suscriptos.</p>
+        </section>
+      )}
+
       <section className="surface grid gap-4 p-5">
+        <div>
+          <h2 className="text-xl font-black">Historial transaccional</h2>
+          <p className="mt-1 text-sm font-semibold text-muted">Reservas, compras y cambios de estado.</p>
+        </div>
         {records.length > 0 ? records.map((record) => (
           <article className="flex gap-3 rounded-lg border border-slate-200/80 p-4 dark:border-white/10" key={record.id}>
             <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
@@ -34,7 +57,7 @@ export default async function PanelNotificationsPage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="truncate text-base font-black">{record.title}</h2>
+                  <h3 className="truncate text-base font-black">{record.title}</h3>
                   <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">{record.body}</p>
                 </div>
                 <span className="rounded-full bg-slate-950/5 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">

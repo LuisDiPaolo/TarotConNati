@@ -1,4 +1,5 @@
 import { Archive, Inbox, MessageCircle } from "lucide-react";
+import { PanelFeatureToggle } from "@/components/panel/PanelFeatureToggle";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { InquiriesTable } from "@/components/panel/InquiriesTable";
 import { getPanelInquiries } from "@/lib/operations/panel-inquiries";
@@ -6,7 +7,7 @@ import { requirePanelSession } from "@/lib/panel/auth";
 
 export default async function PanelInquiriesPage() {
   await requirePanelSession();
-  const inquiries = await getPanelInquiries();
+  const { enabled, inquiries } = await getPanelInquiries();
   const newCount = inquiries.filter((inquiry) => inquiry.status === "new").length;
   const routedCount = inquiries.filter((inquiry) => inquiry.status === "routed_whatsapp").length;
   const archivedCount = inquiries.filter((inquiry) => inquiry.status === "archived").length;
@@ -18,6 +19,7 @@ export default async function PanelInquiriesPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Consultas</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Bandeja de contacto</h1>
         </div>
+        <PanelFeatureToggle enabled={enabled} featureKey="inquiries_enabled" label="Modulo consultas" />
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">

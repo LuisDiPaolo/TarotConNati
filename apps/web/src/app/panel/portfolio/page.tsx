@@ -1,4 +1,5 @@
 import { Images } from "lucide-react";
+import { PanelFeatureToggle } from "@/components/panel/PanelFeatureToggle";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { PanelSetupRequired } from "@/components/panel/PanelSetupRequired";
 import { PortfolioManager } from "@/components/panel/PortfolioManager";
@@ -19,6 +20,7 @@ export default async function PanelPortfolioPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Presencia</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Portfolio</h1>
         </div>
+        {business ? <PanelFeatureToggle enabled={enabled} featureKey="portfolio_enabled" label="Modulo portfolio" /> : null}
       </header>
 
       {!business ? (

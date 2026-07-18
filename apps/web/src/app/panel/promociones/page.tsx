@@ -1,5 +1,6 @@
 import { Tags } from "lucide-react";
 import { CouponsManager } from "@/components/panel/CouponsManager";
+import { PanelFeatureToggle } from "@/components/panel/PanelFeatureToggle";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { PanelSetupRequired } from "@/components/panel/PanelSetupRequired";
 import { PromotionsManager } from "@/components/panel/PromotionsManager";
@@ -19,11 +20,17 @@ export default async function PanelPromotionsPage() {
 
   return (
     <PanelShell>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Comercio</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Promociones</h1>
         </div>
+        {business ? (
+          <div className="grid w-full gap-3 sm:w-auto sm:min-w-72">
+            <PanelFeatureToggle enabled={enabled} featureKey="promotions_enabled" label="Modulo promociones" />
+            <PanelFeatureToggle enabled={couponsEnabled} featureKey="coupons_enabled" label="Modulo cupones" />
+          </div>
+        ) : null}
       </header>
 
       {!business ? (
