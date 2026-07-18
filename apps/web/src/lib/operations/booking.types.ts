@@ -42,6 +42,37 @@ export type PublicSlot = {
   label: string;
 };
 
+export type PublicPortfolioItem = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  imageUrl: string;
+  instagramUrl: string;
+};
+
+export type PublicPromotion = {
+  id: string;
+  title: string;
+  description: string;
+  discountType: "percent" | "fixed_amount";
+  discountValue: number;
+  discountLabel: string;
+  startsAt: string;
+  endsAt: string;
+};
+
+export type PublicProduct = {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  imageUrl: string;
+  pricePesos: number;
+  priceLabel: string;
+  stockQuantity: number | null;
+};
+
 export type PublicBookingData = {
   business: {
     id: string;
@@ -57,8 +88,16 @@ export type PublicBookingData = {
     logoDarkUrl: string;
     publicAppIconUrl: string;
     publicBottomNavEnabled: boolean;
+    inquiriesEnabled: boolean;
+    portfolioEnabled: boolean;
+    productsEnabled: boolean;
+    promotionsEnabled: boolean;
+    giftCardsEnabled: boolean;
   };
   services: PublicService[];
+  portfolioItems: PublicPortfolioItem[];
+  products: PublicProduct[];
+  promotions: PublicPromotion[];
   slotsByService: Record<string, PublicSlot[]>;
   intakeFormsByService: Record<string, PublicIntakeForm[]>;
 };

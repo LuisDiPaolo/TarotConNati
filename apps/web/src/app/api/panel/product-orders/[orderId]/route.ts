@@ -41,6 +41,24 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ o
   if (!enabled) return NextResponse.json(apiError("FEATURE_NOT_ENABLED", "Productos no esta activo para este negocio."), { status: 403 });
 
   const status = parsed.data.status;
+  if (status === "paid" || status === "fulfilled") {
+    const { data: stockResult, error: stockError } = await supabase.rpc("confirm_product_order_stock", {
+      p_business_id: businessId,
+      p_order_id: orderId,
+    });
+    const typedStockResult = stockResult as { ok?: boolean; code?: string } | null;
+    if (stockError || !typedStockResult?.ok) {
+      return NextResponse.json(apiError("VALIDATION_ERROR", typedStockResult?.code === "insufficient_stock" ? "No hay stock suficiente para marcar esta compra." : "No se pudo validar el stock de la compra."), { status: 409 });
+    }
+  }
+
+  if (status === "cancelled") {
+    await supabase.rpc("release_product_order_stock", {
+      p_business_id: businessId,
+      p_order_id: orderId,
+    });
+  }
+
   const { error } = await supabase
     .from("product_orders")
     .update({

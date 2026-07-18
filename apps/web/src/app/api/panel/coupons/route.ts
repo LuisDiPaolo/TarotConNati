@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { apiError, couponSettingsSchema, normalizeCouponCode } from "@/shared";
+import { apiError, couponSettingsSchema, normalizeCouponCode, type CouponSettingsInput } from "@/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 async function getAdminContext() {
@@ -24,7 +24,7 @@ async function getAdminContext() {
   return { supabase, businessId: businessId as string, enabled: Boolean(enabled) };
 }
 
-function couponPayload(input: ReturnType<typeof couponSettingsSchema.parse>, businessId: string) {
+function couponPayload(input: CouponSettingsInput, businessId: string) {
   return {
     business_id: businessId,
     code: normalizeCouponCode(input.code),

@@ -21,6 +21,7 @@ export const publicProductOrderSchema = z.object({
     email: z.string().trim().email().max(160).optional().or(z.literal("")),
     notes: z.string().trim().max(500).optional().or(z.literal("")),
   }),
+  couponCode: z.string().trim().max(40).optional().or(z.literal("")),
 });
 
 export type ProductSettingsInput = z.infer<typeof productSettingsSchema>;

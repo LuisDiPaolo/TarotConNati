@@ -16,6 +16,10 @@ declare
   item_record record;
   updated_product_id uuid;
 begin
+  if auth.role() = 'authenticated' and current_admin_business_id() is distinct from p_business_id then
+    return jsonb_build_object('ok', false, 'code', 'unauthorized');
+  end if;
+
   select * into order_record
   from product_orders
   where id = p_order_id
@@ -63,3 +67,6 @@ begin
   return jsonb_build_object('ok', true);
 end;
 $$;
+
+revoke all on function decrement_product_order_stock(uuid, uuid) from public;
+grant execute on function decrement_product_order_stock(uuid, uuid) to authenticated, service_role;

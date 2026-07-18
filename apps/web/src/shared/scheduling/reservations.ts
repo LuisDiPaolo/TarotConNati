@@ -12,6 +12,7 @@ export const publicReservationSchema = z.object({
   serviceId: z.string().uuid(),
   startsAt: z.string().datetime({ offset: true }),
   customer: publicCustomerSchema,
+  couponCode: z.string().trim().max(40).optional().or(z.literal("")),
   intakeResponses: publicIntakeResponseSchema.optional(),
 });
 

@@ -42,7 +42,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ p
       title: input.title,
       description: input.description || null,
       category: input.category || null,
-      image_url: input.imageUrl || null,
       instagram_url: input.instagramUrl || null,
       active: input.active,
       sort_order: input.sortOrder,

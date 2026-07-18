@@ -114,3 +114,12 @@ create index products_business_category_idx on products(business_id, category);
 create index product_orders_business_status_created_idx on product_orders(business_id, status, created_at desc);
 create index product_order_items_order_idx on product_order_items(order_id);
 create index payments_product_order_id_idx on payments(product_order_id);
+
+insert into notification_event_types (event_key, audience, title, description, default_enabled)
+values ('product_order.created', 'panel', 'Nueva compra', 'Avisa al panel cuando entra una compra de producto.', true)
+on conflict (event_key) do update set
+  audience = excluded.audience,
+  title = excluded.title,
+  description = excluded.description,
+  default_enabled = excluded.default_enabled,
+  updated_at = now();

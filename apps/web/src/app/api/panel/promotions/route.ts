@@ -25,7 +25,9 @@ async function getAdminContext() {
 }
 
 function toDateValue(value: string | undefined) {
-  return value?.trim() ? new Date(value).toISOString() : null;
+  if (!value?.trim()) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : "invalid";
 }
 
 export async function POST(request: NextRequest) {
@@ -37,6 +39,10 @@ export async function POST(request: NextRequest) {
   if (!enabled) return NextResponse.json(apiError("FEATURE_NOT_ENABLED", "Promociones no esta activo para este negocio."), { status: 403 });
 
   const input = parsed.data;
+  const startsAt = toDateValue(input.startsAt);
+  const endsAt = toDateValue(input.endsAt);
+  if (startsAt === "invalid" || endsAt === "invalid") return NextResponse.json(apiError("VALIDATION_ERROR", "Revisa las fechas de vigencia."), { status: 400 });
+
   const { data, error } = await supabase
     .from("promotions")
     .insert({
@@ -45,8 +51,8 @@ export async function POST(request: NextRequest) {
       description: input.description || null,
       discount_type: input.discountType,
       discount_value: input.discountValue,
-      starts_at: toDateValue(input.startsAt),
-      ends_at: toDateValue(input.endsAt),
+      starts_at: startsAt,
+      ends_at: endsAt,
       active: input.active,
     })
     .select("id")

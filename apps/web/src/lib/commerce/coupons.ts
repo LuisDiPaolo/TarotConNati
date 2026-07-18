@@ -1,12 +1,16 @@
 import "server-only";
 import { normalizeCouponCode } from "@/shared";
 
+type QueryChain<T> = {
+  eq: (column: string, value: unknown) => QueryChain<T>;
+  or: (filter: string) => QueryChain<T>;
+  maybeSingle: () => Promise<{ data: T | null; error: unknown }>;
+};
+
 type SupabaseClientLike = {
-  rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+  rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
   from: (table: string) => {
-    select: (columns: string) => {
-      eq: (column: string, value: unknown) => unknown;
-    };
+    select: (columns: string) => unknown;
   };
 };
 
@@ -40,11 +44,7 @@ export type CouponLookupResult =
   | { ok: false; code: "feature_disabled" | "not_found" | "invalid_scope" | "expired" | "used_up" | "internal_error"; message: string };
 
 function queryBuilder<T>(value: unknown) {
-  return value as {
-    eq: (column: string, value: unknown) => unknown;
-    or: (filter: string) => unknown;
-    maybeSingle: () => Promise<{ data: T | null; error: unknown }>;
-  };
+  return value as QueryChain<T>;
 }
 
 export function getBusinessDateKey(date: Date, timeZone: string) {
@@ -110,14 +110,14 @@ export async function resolveCheckoutCoupon(input: {
   if (featureError) return { ok: false, code: "internal_error", message: "No se pudo validar el cupon." };
   if (!enabled) return { ok: false, code: "feature_disabled", message: "Cupones no esta habilitado para este negocio." };
 
-  const selected = input.supabase
+  const selected = queryBuilder<CheckoutCouponRow>(input.supabase
     .from("coupons")
-    .select("id, code, description, discount_type, discount_value, applies_to_services, applies_to_products, usage_limit, used_count, validity_type, valid_on_date, valid_weekdays, starts_on, ends_on")
+    .select("id, code, description, discount_type, discount_value, applies_to_services, applies_to_products, usage_limit, used_count, validity_type, valid_on_date, valid_weekdays, starts_on, ends_on"))
     .eq("business_id", input.businessId)
     .eq("code", code)
     .eq("active", true)
     .eq(input.scope === "products" ? "applies_to_products" : "applies_to_services", true);
-  const { data, error } = await queryBuilder<CheckoutCouponRow>(selected)
+  const { data, error } = await selected
     .or(`starts_at.is.null,starts_at.lte.${new Date().toISOString()}`)
     .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
     .maybeSingle();
@@ -140,7 +140,7 @@ export async function resolveCheckoutCoupon(input: {
   };
 }
 
-export async function redeemCheckoutCoupon(input: {
+export async function reserveCheckoutCoupon(input: {
   supabase: SupabaseClientLike;
   businessId: string;
   couponId: string;
@@ -154,9 +154,10 @@ export async function redeemCheckoutCoupon(input: {
   recipientPhone?: string | null;
   recipientEmail?: string | null;
   discountPesos: number;
+  expiresAt: string;
   metadata?: Record<string, unknown>;
 }) {
-  return await input.supabase.rpc("redeem_coupon_for_checkout", {
+  return await input.supabase.rpc("reserve_coupon_for_checkout", {
     p_business_id: input.businessId,
     p_coupon_id: input.couponId,
     p_customer_id: input.customerId,
@@ -169,6 +170,37 @@ export async function redeemCheckoutCoupon(input: {
     p_recipient_phone: input.recipientPhone ?? input.purchaserPhone ?? null,
     p_recipient_email: input.recipientEmail ?? input.purchaserEmail ?? null,
     p_discount_pesos: Math.max(0, Math.round(input.discountPesos)),
+    p_expires_at: input.expiresAt,
     p_metadata: input.metadata ?? {},
+  });
+}
+
+export async function confirmCheckoutCoupon(input: {
+  supabase: SupabaseClientLike;
+  businessId: string;
+  couponId: string;
+  appointmentId?: string | null;
+  productOrderId?: string | null;
+}) {
+  return await input.supabase.rpc("confirm_coupon_for_checkout", {
+    p_business_id: input.businessId,
+    p_coupon_id: input.couponId,
+    p_appointment_id: input.appointmentId ?? null,
+    p_product_order_id: input.productOrderId ?? null,
+  });
+}
+
+export async function releaseCheckoutCoupon(input: {
+  supabase: SupabaseClientLike;
+  businessId: string;
+  couponId: string;
+  appointmentId?: string | null;
+  productOrderId?: string | null;
+}) {
+  return await input.supabase.rpc("release_coupon_for_checkout", {
+    p_business_id: input.businessId,
+    p_coupon_id: input.couponId,
+    p_appointment_id: input.appointmentId ?? null,
+    p_product_order_id: input.productOrderId ?? null,
   });
 }

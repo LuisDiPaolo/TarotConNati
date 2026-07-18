@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { apiError, publicProductOrderSchema } from "@/shared";
+import { apiError, publicProductOrderSchema, type ApiErrorCode } from "@/shared";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { getRequestBaseUrl } from "@/lib/http/base-url";
 import { confirmCheckoutCoupon, getBusinessDateKey, releaseCheckoutCoupon, reserveCheckoutCoupon, resolveCheckoutCoupon } from "@/lib/commerce/coupons";
@@ -39,6 +39,12 @@ function enforceRateLimit(key: string) {
   if (current.count >= RATE_LIMIT_MAX) return false;
   current.count += 1;
   return true;
+}
+
+function couponErrorCode(code: string): ApiErrorCode {
+  if (code === "feature_disabled") return "FEATURE_NOT_ENABLED";
+  if (code === "internal_error") return "INTERNAL_ERROR";
+  return "COUPON_NOT_AVAILABLE";
 }
 
 export async function POST(request: NextRequest) {
@@ -91,7 +97,7 @@ export async function POST(request: NextRequest) {
 
   if (couponResult && !couponResult.ok) {
     const status = couponResult.code === "feature_disabled" ? 403 : couponResult.code === "internal_error" ? 500 : 404;
-    return NextResponse.json(apiError(couponResult.code.toUpperCase(), couponResult.message), { status });
+    return NextResponse.json(apiError(couponErrorCode(couponResult.code), couponResult.message), { status });
   }
 
   const coupon = couponResult?.ok ? couponResult.data.coupon : null;
@@ -121,7 +127,7 @@ export async function POST(request: NextRequest) {
       customer_phone: input.customer.phone,
       customer_email: input.customer.email || null,
       notes: input.customer.notes || null,
-      status: totalPesos > 0 ? "pending_payment" : "paid",
+      status: "pending_payment",
       subtotal_pesos: subtotalPesos,
       discount_pesos: discountPesos,
       coupon_id: coupon?.id ?? null,
@@ -205,6 +211,12 @@ export async function POST(request: NextRequest) {
     if (couponReserved && coupon) {
       await confirmCheckoutCoupon({ supabase, businessId: business.id, couponId: coupon.id, productOrderId: order.id });
     }
+
+    await supabase
+      .from("product_orders")
+      .update({ status: "paid" })
+      .eq("id", order.id)
+      .eq("business_id", business.id);
 
     await sendTransactionalPush({
       businessId: business.id,

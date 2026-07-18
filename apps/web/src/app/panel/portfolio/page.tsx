@@ -1,12 +1,15 @@
 import { Images } from "lucide-react";
 import { PanelShell } from "@/components/panel/PanelShell";
+import { PanelSetupRequired } from "@/components/panel/PanelSetupRequired";
 import { PortfolioManager } from "@/components/panel/PortfolioManager";
+import { getPanelBusinessSettings } from "@/lib/operations/panel-settings";
 import { getPanelPortfolioItems } from "@/lib/operations/panel-portfolio";
 import { requirePanelSession } from "@/lib/panel/auth";
 
 export default async function PanelPortfolioPage() {
   await requirePanelSession();
-  const { enabled, items } = await getPanelPortfolioItems();
+  const business = await getPanelBusinessSettings();
+  const { enabled, items } = business ? await getPanelPortfolioItems() : { enabled: false, items: [] };
   const visibleCount = items.filter((item) => item.active).length;
 
   return (
@@ -18,7 +21,9 @@ export default async function PanelPortfolioPage() {
         </div>
       </header>
 
-      {enabled ? (
+      {!business ? (
+        <PanelSetupRequired text="Crea el negocio para poder cargar el portfolio que va a aparecer en la pagina publica." />
+      ) : enabled ? (
         <>
           <div className="grid gap-4 md:grid-cols-3">
             <article className="surface p-5">

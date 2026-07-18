@@ -22,7 +22,7 @@ export type PanelProductOrder = {
   customerPhone: string;
   customerEmail: string;
   notes: string;
-  status: "pending_payment" | "paid" | "cancelled" | "fulfilled";
+  status: "pending_payment" | "paid" | "stock_conflict" | "cancelled" | "fulfilled";
   totalPesos: number;
   createdAt: string;
   items: Array<{
@@ -75,6 +75,10 @@ export async function getPanelProducts(): Promise<{ enabled: boolean; products: 
   });
 
   if (!enabled) return { enabled: false, products: [], orders: [] };
+
+  await supabase.rpc("release_expired_product_order_stock", {
+    p_business_id: businessId,
+  });
 
   const [{ data: productsData }, { data: ordersData }] = await Promise.all([
     supabase

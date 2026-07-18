@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { DiscountInput } from "./pricing";
 
 export type PromotionConfig = {
@@ -7,6 +8,65 @@ export type PromotionConfig = {
   endsAt?: string | null;
   usageLimit?: number | null;
 };
+
+export const couponSettingsSchema = z.object({
+  id: z.string().uuid().optional(),
+  code: z.string().trim().min(2).max(40),
+  description: z.string().trim().max(500).optional().or(z.literal("")),
+  discountType: z.enum(["percent", "fixed_amount", "two_for_one"]),
+  discountValue: z.coerce.number().int().min(0).max(10_000_000),
+  appliesToServices: z.boolean().default(true),
+  appliesToProducts: z.boolean().default(false),
+  validityType: z.enum(["always", "single_date", "weekly", "range"]),
+  validOnDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+  validWeekdays: z.array(z.coerce.number().int().min(1).max(7)).max(7).default([]),
+  startsOn: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+  endsOn: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
+  usageLimit: z.coerce.number().int().min(1).max(100_000).nullable().optional(),
+  active: z.boolean().default(true),
+}).refine((value) => value.appliesToServices || value.appliesToProducts, {
+  path: ["appliesToServices"],
+  message: "El cupon debe aplicar a servicios, productos o ambos.",
+}).refine((value) => value.discountType !== "percent" || (value.discountValue >= 1 && value.discountValue <= 100), {
+  path: ["discountValue"],
+  message: "El descuento porcentual debe estar entre 1 y 100%.",
+}).refine((value) => value.discountType !== "fixed_amount" || value.discountValue > 0, {
+  path: ["discountValue"],
+  message: "El monto fijo debe ser mayor a cero.",
+}).refine((value) => value.discountType !== "two_for_one" || value.discountValue === 0, {
+  path: ["discountValue"],
+  message: "El descuento 2x1 no usa monto.",
+}).refine((value) => value.validityType !== "single_date" || Boolean(value.validOnDate), {
+  path: ["validOnDate"],
+  message: "Elegí el día puntual del cupón.",
+}).refine((value) => value.validityType !== "weekly" || value.validWeekdays.length > 0, {
+  path: ["validWeekdays"],
+  message: "Elegí al menos un día semanal.",
+}).refine((value) => value.validWeekdays.length === new Set(value.validWeekdays).size, {
+  path: ["validWeekdays"],
+  message: "No repitas dias semanales.",
+}).refine((value) => value.validityType !== "range" || Boolean(value.startsOn && value.endsOn && value.startsOn <= value.endsOn), {
+  path: ["endsOn"],
+  message: "Revisa el periodo de vigencia.",
+});
+
+export type CouponSettingsInput = z.infer<typeof couponSettingsSchema>;
+
+export const promotionSettingsSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(500).optional().or(z.literal("")),
+  discountType: z.enum(["percent", "fixed_amount"]),
+  discountValue: z.coerce.number().int().min(1).max(10_000_000),
+  startsAt: z.string().trim().optional().or(z.literal("")),
+  endsAt: z.string().trim().optional().or(z.literal("")),
+  active: z.boolean().default(true),
+}).refine((value) => value.discountType !== "percent" || value.discountValue <= 100, {
+  path: ["discountValue"],
+  message: "El descuento porcentual no puede superar 100%.",
+});
+
+export type PromotionSettingsInput = z.infer<typeof promotionSettingsSchema>;
 
 export type CouponValidationInput = {
   code: string;

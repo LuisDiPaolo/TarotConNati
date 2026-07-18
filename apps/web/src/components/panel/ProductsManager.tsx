@@ -43,6 +43,7 @@ function emptyProduct(): DraftProduct {
 
 function statusLabel(status: PanelProductOrder["status"]) {
   if (status === "paid") return "Pagada";
+  if (status === "stock_conflict") return "Stock a revisar";
   if (status === "fulfilled") return "Entregada";
   if (status === "cancelled") return "Cancelada";
   return "Pendiente";
@@ -51,6 +52,7 @@ function statusLabel(status: PanelProductOrder["status"]) {
 export function ProductsManager({ products, orders }: { products: PanelProduct[]; orders: PanelProductOrder[] }) {
   const fileInputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const [rows, setRows] = useState<DraftProduct[]>(products.map((product) => ({ ...product, draftId: product.id })));
+  const [orderRows, setOrderRows] = useState(orders);
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"success" | "error">("success");
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -136,6 +138,27 @@ export function ProductsManager({ products, orders }: { products: PanelProduct[]
     setImageUploadingId(null);
     setImageCropTarget(null);
     setMessage("Imagen de producto guardada.");
+  }
+
+  async function updateOrderStatus(orderId: string, status: "paid" | "cancelled" | "fulfilled") {
+    if (savingId || deletingId || imageUploadingId) return;
+    setMessage("");
+    setMessageTone("success");
+    const response = await fetch(`/api/panel/product-orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).catch(() => null);
+    const data = await response?.json().catch(() => null) as { error?: { message?: string } } | null;
+
+    if (!response?.ok) {
+      setMessageTone("error");
+      setMessage(data?.error?.message ?? "No se pudo actualizar la compra.");
+      return;
+    }
+
+    setOrderRows((current) => current.map((order) => order.id === orderId ? { ...order, status } : order));
+    setMessage("Compra actualizada.");
   }
 
   async function confirmDeleteRow() {
@@ -270,7 +293,7 @@ export function ProductsManager({ products, orders }: { products: PanelProduct[]
           <h2 className="text-xl font-black">Compras</h2>
         </div>
         <div className="mt-4 grid gap-3">
-          {orders.map((order) => (
+          {orderRows.map((order) => (
             <article className="rounded-lg border border-slate-200 p-4 dark:border-white/10" key={order.id}>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -286,9 +309,14 @@ export function ProductsManager({ products, orders }: { products: PanelProduct[]
                 {order.items.map((item) => <p key={item.id}>{item.quantity} x {item.productName} - {formatARS(item.totalPesos)}</p>)}
                 {order.notes ? <p>Nota: {order.notes}</p> : null}
               </div>
+              <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3 dark:border-white/10">
+                {order.status === "pending_payment" || order.status === "stock_conflict" ? <button className="secondary-action" type="button" onClick={() => void updateOrderStatus(order.id, "paid")}>Marcar pagada</button> : null}
+                {order.status !== "fulfilled" && order.status !== "cancelled" ? <button className="primary-action" type="button" onClick={() => void updateOrderStatus(order.id, "fulfilled")}>Marcar entregada</button> : null}
+                {order.status !== "cancelled" && order.status !== "fulfilled" ? <button className="secondary-action" type="button" onClick={() => void updateOrderStatus(order.id, "cancelled")}>Cancelar</button> : null}
+              </div>
             </article>
           ))}
-          {orders.length === 0 ? <p className="text-sm font-semibold text-muted">Todavia no hay compras.</p> : null}
+          {orderRows.length === 0 ? <p className="text-sm font-semibold text-muted">Todavia no hay compras.</p> : null}
         </div>
       </section>
 

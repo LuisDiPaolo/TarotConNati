@@ -1,4 +1,4 @@
-import { apiError, normalizeCouponCode } from "@/shared";
+import { apiError, normalizeCouponCode, type ApiErrorCode } from "@/shared";
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveBusinessForRequest } from "@/lib/business/resolve";
 import { resolveCheckoutCoupon, type CouponScope } from "@/lib/commerce/coupons";
@@ -12,6 +12,12 @@ function parseNonNegativeInt(value: string | null, fallback: number) {
 function parsePositiveInt(value: string | null, fallback: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function couponErrorCode(code: string): ApiErrorCode {
+  if (code === "feature_disabled") return "FEATURE_NOT_ENABLED";
+  if (code === "internal_error") return "INTERNAL_ERROR";
+  return "COUPON_NOT_AVAILABLE";
 }
 
 export async function GET(request: NextRequest) {
@@ -42,7 +48,7 @@ export async function GET(request: NextRequest) {
 
   if (!result.ok) {
     const status = result.code === "feature_disabled" ? 403 : result.code === "internal_error" ? 500 : 404;
-    return NextResponse.json(apiError(result.code.toUpperCase(), result.message), { status });
+    return NextResponse.json(apiError(couponErrorCode(result.code), result.message), { status });
   }
 
   return NextResponse.json({

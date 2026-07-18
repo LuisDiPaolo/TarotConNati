@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bell, CalendarDays, ClipboardList, FileText, Loader2, MessageCircle, Settings, Users, Wrench } from "lucide-react";
+import { BarChart3, Bell, CalendarDays, ClipboardList, FileText, Images, Loader2, Mail, MessageCircle, Package, Settings, Tags, Users, Wrench } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { ComponentType, MouseEvent } from "react";
@@ -14,6 +14,10 @@ type PanelNavItem = {
 const navItems: PanelNavItem[] = [
   { href: "/", label: "Turnos", icon: CalendarDays },
   { href: "/solicitudes", label: "Solicitudes", icon: MessageCircle },
+  { href: "/consultas", label: "Consultas", icon: Mail },
+  { href: "/portfolio", label: "Portfolio", icon: Images },
+  { href: "/productos", label: "Productos", icon: Package },
+  { href: "/promociones", label: "Promos", icon: Tags },
   { href: "/configuracion", label: "Configuracion", icon: Settings },
   { href: "/servicios", label: "Servicios", icon: Wrench },
   { href: "/agenda", label: "Agenda", icon: ClipboardList },

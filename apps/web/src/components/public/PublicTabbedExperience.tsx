@@ -2,8 +2,13 @@
 
 import { Bell, CalendarDays, History, UserRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { PublicGiftCards } from "@/components/public/PublicGiftCards";
+import { PublicInquiryForm } from "@/components/public/PublicInquiryForm";
+import { PublicPortfolioGallery } from "@/components/public/PublicPortfolioGallery";
+import { PublicProductsCatalog } from "@/components/public/PublicProductsCatalog";
+import { PublicPromotionsBanner } from "@/components/public/PublicPromotionsBanner";
 import { ReservationForm } from "@/components/public/ReservationForm";
-import type { PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
+import type { PublicIntakeForm, PublicPortfolioItem, PublicProduct, PublicPromotion, PublicService, PublicSlot } from "@/lib/operations/booking.types";
 import { syncCurrentPushSubscription } from "@/lib/pwa/push-client";
 
 type PublicTab = "services" | "history" | "notifications" | "account";
@@ -50,6 +55,11 @@ type PublicTabbedExperienceProps = {
   intakeFormsByService: Record<string, PublicIntakeForm[]>;
   serviceImageFallbackUrl: string;
   bottomNavigationEnabled: boolean;
+  inquiriesEnabled: boolean;
+  portfolioItems: PublicPortfolioItem[];
+  products: PublicProduct[];
+  promotions: PublicPromotion[];
+  giftCardsEnabled: boolean;
 };
 
 const historyStorageKey = "turnos-public-history";
@@ -177,7 +187,7 @@ function PublicBottomNav({ activeTab, onChange }: { activeTab: PublicTab; onChan
   );
 }
 
-export function PublicTabbedExperience({ description, services, slotsByService, intakeFormsByService, serviceImageFallbackUrl, bottomNavigationEnabled }: PublicTabbedExperienceProps) {
+export function PublicTabbedExperience({ description, services, slotsByService, intakeFormsByService, serviceImageFallbackUrl, bottomNavigationEnabled, inquiriesEnabled, portfolioItems, products, promotions, giftCardsEnabled }: PublicTabbedExperienceProps) {
   const [activeTab, setActiveTab] = useState<PublicTab>("services");
   const [history, setHistory] = useState<PublicHistoryItem[]>([]);
   const [notifications, setNotifications] = useState<PublicNotificationItem[]>([]);
@@ -273,7 +283,12 @@ export function PublicTabbedExperience({ description, services, slotsByService, 
         </div>
       </section>
 
+      <PublicPromotionsBanner promotions={promotions} />
       <ReservationForm services={services} slotsByService={slotsByService} intakeFormsByService={intakeFormsByService} serviceImageFallbackUrl={serviceImageFallbackUrl} />
+      <PublicProductsCatalog products={products} />
+      {giftCardsEnabled ? <PublicGiftCards services={services} /> : null}
+      <PublicPortfolioGallery items={portfolioItems} />
+      {inquiriesEnabled ? <PublicInquiryForm /> : null}
     </div>
   );
 

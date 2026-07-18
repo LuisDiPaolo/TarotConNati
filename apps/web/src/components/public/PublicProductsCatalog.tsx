@@ -199,7 +199,7 @@ export function PublicProductsCatalog({ products }: { products: PublicProduct[] 
             <ShoppingBag aria-hidden="true" className="h-4 w-4" />
             {busy ? "Procesando" : totalPesos > 0 ? "Comprar" : "Confirmar compra"}
           </button>
-          {message ? <p className="text-sm font-semibold text-red-600 dark:text-red-300">{message}</p> : null}
+          {message ? <p className={`text-sm font-semibold ${message.includes("confirmada") ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-300"}`}>{message}</p> : null}
         </form>
       </div>
     </section>

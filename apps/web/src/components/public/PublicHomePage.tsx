@@ -35,7 +35,7 @@ export async function PublicHomePage() {
     );
   }
 
-  const { business: publicBusiness, services, slotsByService, intakeFormsByService } = bookingData;
+  const { business: publicBusiness, services, portfolioItems, products, promotions, slotsByService, intakeFormsByService } = bookingData;
   const protocol = headerStore.get("x-forwarded-proto") ?? "https";
   const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
   const installHref = host ? `${protocol}://${host}/install` : "/install";
@@ -78,6 +78,11 @@ export async function PublicHomePage() {
               slotsByService={slotsByService}
               intakeFormsByService={intakeFormsByService}
               serviceImageFallbackUrl={publicBusiness.publicAppIconUrl}
+              inquiriesEnabled={publicBusiness.inquiriesEnabled}
+              portfolioItems={publicBusiness.portfolioEnabled ? portfolioItems : []}
+              products={publicBusiness.productsEnabled ? products : []}
+              promotions={publicBusiness.promotionsEnabled ? promotions : []}
+              giftCardsEnabled={publicBusiness.giftCardsEnabled}
             />
           </div>
           <StudioEquisCredit elevated={publicBusiness.publicBottomNavEnabled} />

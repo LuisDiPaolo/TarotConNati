@@ -11,7 +11,7 @@ create table portfolio_items (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (title = btrim(title)),
-  check (image_url is not null or instagram_url is not null)
+  check (active = false or image_url is not null or instagram_url is not null)
 );
 
 create trigger portfolio_items_set_updated_at before update on portfolio_items for each row execute function set_updated_at();

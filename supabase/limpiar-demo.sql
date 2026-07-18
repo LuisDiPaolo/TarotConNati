@@ -34,6 +34,9 @@ where business_id = (select id from public.business limit 1)
   );
 
 -- Trazas operativas generadas por pruebas/demo.
+delete from public.inquiries
+where business_id = (select id from public.business limit 1);
+
 delete from public.push_notification_records
 where business_id = (select id from public.business limit 1);
 
@@ -55,6 +58,12 @@ where business_id = (select id from public.business limit 1);
 
 -- Pagos, solicitudes y turnos.
 delete from public.payments
+where business_id = (select id from public.business limit 1);
+
+delete from public.product_order_items
+where business_id = (select id from public.business limit 1);
+
+delete from public.product_orders
 where business_id = (select id from public.business limit 1);
 
 delete from public.service_requests
@@ -85,6 +94,12 @@ delete from public.coupons
 where business_id = (select id from public.business limit 1);
 
 delete from public.promotions
+where business_id = (select id from public.business limit 1);
+
+delete from public.portfolio_items
+where business_id = (select id from public.business limit 1);
+
+delete from public.products
 where business_id = (select id from public.business limit 1);
 
 -- Clientes y servicios van al final porque son referenciados por lo anterior.

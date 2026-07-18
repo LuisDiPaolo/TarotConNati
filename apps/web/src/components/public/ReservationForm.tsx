@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, ImageIcon, Loader2, X } from "lucide-react";
+import { CalendarCheck, ImageIcon, Loader2, TicketPercent, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
 import { syncCurrentPushSubscription } from "@/lib/pwa/push-client";
@@ -13,6 +13,13 @@ type ReservationFormProps = {
 };
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
+
+type CouponPreview = {
+  code: string;
+  description: string | null;
+  discountPesos: number;
+  finalTotalPesos: number;
+};
 
 type IntakeResponseValue = string | number | boolean | string[];
 
@@ -33,6 +40,17 @@ function getPaymentRequirementLabel(service: PublicService) {
   if (service.paymentMode === "full") return `Pago total por adelantado: ${service.priceLabel}`;
   if (service.paymentMode === "deposit" && service.depositPesos > 0) return `Sena para reservar: ${service.depositLabel}`;
   return "Sin cobro online al reservar";
+}
+
+function getServiceCheckoutSubtotal(service: PublicService | undefined) {
+  if (!service) return 0;
+  if (service.paymentMode === "full") return service.pricePesos;
+  if (service.paymentMode === "deposit") return service.depositPesos;
+  return 0;
+}
+
+function formatARS(value: number) {
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(value);
 }
 
 function persistPublicHistoryItem(item: StoredHistoryItem) {
@@ -113,11 +131,22 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
   const [panelOpen, setPanelOpen] = useState(false);
   const [state, setState] = useState<SubmitState>("idle");
   const [message, setMessage] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponPreview, setCouponPreview] = useState<CouponPreview | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+  const [couponMessage, setCouponMessage] = useState("");
 
   const activeService = useMemo(() => services.find((service) => service.id === serviceId), [serviceId, services]);
   const canReserveAutomatically = activeService?.schedulingPolicy === "scheduled";
   const activeIntakeForms = intakeFormsByService[serviceId] ?? [];
   const slots = slotsByService[serviceId] ?? [];
+  const checkoutSubtotalPesos = getServiceCheckoutSubtotal(activeService);
+  const checkoutTotalPesos = couponPreview ? couponPreview.finalTotalPesos : checkoutSubtotalPesos;
+
+  useEffect(() => {
+    setCouponPreview(null);
+    setCouponMessage("");
+  }, [serviceId, startsAt, couponCode]);
 
   useEffect(() => {
     if (!panelOpen) return;
@@ -159,7 +188,42 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
     setStartsAt(slotsByService[nextServiceId]?.[0]?.startsAt ?? "");
     setState("idle");
     setMessage("");
+    setCouponCode("");
+    setCouponPreview(null);
+    setCouponMessage("");
     setPanelOpen(true);
+  }
+
+  async function validateCoupon() {
+    const code = couponCode.trim();
+    if (!code || couponBusy || checkoutSubtotalPesos <= 0 || !canReserveAutomatically) return;
+
+    setCouponBusy(true);
+    setCouponMessage("");
+    const params = new URLSearchParams({
+      code,
+      scope: "services",
+      subtotalPesos: String(checkoutSubtotalPesos),
+      quantity: "1",
+    });
+    if (startsAt) params.set("targetDate", startsAt.slice(0, 10));
+
+    const response = await fetch(`/api/coupons/validate?${params.toString()}`, { cache: "no-store" }).catch(() => null);
+    const payload = await response?.json().catch(() => null) as { data?: CouponPreview; error?: { message?: string } } | null;
+
+    setCouponBusy(false);
+    if (!response?.ok || !payload?.data) {
+      setCouponPreview(null);
+      setCouponMessage(payload?.error?.message ?? "No se pudo aplicar el cupon.");
+      return;
+    }
+
+    setCouponPreview({
+      code: payload.data.code,
+      description: payload.data.description,
+      discountPesos: payload.data.discountPesos,
+      finalTotalPesos: payload.data.finalTotalPesos,
+    });
   }
 
   async function submitReservation(formData: FormData) {
@@ -181,6 +245,7 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
       body: JSON.stringify(canReserveAutomatically ? {
         serviceId,
         startsAt,
+        couponCode: couponPreview?.code ?? couponCode,
         customer,
         intakeResponses,
       } : {
@@ -357,6 +422,29 @@ export function ReservationForm({ services, slotsByService, intakeFormsByService
                   </div>
                 )}
               </section>
+
+              {canReserveAutomatically && checkoutSubtotalPesos > 0 ? (
+                <section className="booking-panel-section grid gap-3">
+                  <div className="flex items-center gap-2 text-sm font-bold">
+                    <TicketPercent aria-hidden="true" className="h-4 w-4 text-primary" />
+                    Cupon o descuento
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                    <input className="input-control uppercase" maxLength={40} placeholder="CODIGO" value={couponCode} onChange={(event) => setCouponCode(event.target.value)} />
+                    <button className="secondary-action justify-center" disabled={couponBusy || !couponCode.trim()} type="button" onClick={() => void validateCoupon()}>
+                      {couponBusy ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : null}
+                      Aplicar
+                    </button>
+                  </div>
+                  {couponPreview ? <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{couponPreview.code} aplicado: -{formatARS(couponPreview.discountPesos)}</p> : null}
+                  {couponMessage ? <p className="text-sm font-semibold text-red-600 dark:text-red-300">{couponMessage}</p> : null}
+                  <div className="grid gap-2 rounded-lg bg-slate-950/[0.03] p-3 text-sm dark:bg-white/5">
+                    <div className="flex items-center justify-between gap-3"><span>Subtotal</span><strong>{formatARS(checkoutSubtotalPesos)}</strong></div>
+                    {couponPreview ? <div className="flex items-center justify-between gap-3 text-emerald-700 dark:text-emerald-300"><span>Descuento</span><strong>-{formatARS(couponPreview.discountPesos)}</strong></div> : null}
+                    <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-2 text-base dark:border-white/10"><span>Total a pagar</span><strong>{formatARS(checkoutTotalPesos)}</strong></div>
+                  </div>
+                </section>
+              ) : null}
 
               <section className="booking-panel-section grid gap-3">
                 <div className="grid gap-3 sm:grid-cols-2">

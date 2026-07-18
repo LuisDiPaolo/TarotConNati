@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       title: input.title,
       description: input.description || null,
       category: input.category || null,
-      image_url: input.imageUrl || null,
+      image_url: null,
       instagram_url: input.instagramUrl || null,
       active: input.active,
       sort_order: input.sortOrder,

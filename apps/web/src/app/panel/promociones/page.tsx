@@ -1,16 +1,21 @@
 import { Tags } from "lucide-react";
+import { CouponsManager } from "@/components/panel/CouponsManager";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { PanelSetupRequired } from "@/components/panel/PanelSetupRequired";
 import { PromotionsManager } from "@/components/panel/PromotionsManager";
 import { getPanelBusinessSettings } from "@/lib/operations/panel-settings";
+import { getPanelCoupons } from "@/lib/operations/panel-coupons";
 import { getPanelPromotions } from "@/lib/operations/panel-promotions";
 import { requirePanelSession } from "@/lib/panel/auth";
 
 export default async function PanelPromotionsPage() {
   await requirePanelSession();
   const business = await getPanelBusinessSettings();
-  const { enabled, promotions } = business ? await getPanelPromotions() : { enabled: false, promotions: [] };
+  const [{ enabled, promotions }, { enabled: couponsEnabled, coupons }] = business
+    ? await Promise.all([getPanelPromotions(), getPanelCoupons()])
+    : [{ enabled: false, promotions: [] }, { enabled: false, coupons: [] }];
   const activeCount = promotions.filter((promotion) => promotion.active).length;
+  const activeCouponCount = coupons.filter((coupon) => coupon.active).length;
 
   return (
     <PanelShell>
@@ -23,7 +28,7 @@ export default async function PanelPromotionsPage() {
 
       {!business ? (
         <PanelSetupRequired text="Crea el negocio para poder cargar promociones que van a aparecer en la pagina publica." />
-      ) : enabled ? (
+      ) : enabled || couponsEnabled ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">
             <article className="surface p-5">
@@ -36,9 +41,15 @@ export default async function PanelPromotionsPage() {
               <h2 className="mt-4 text-lg font-bold">Publicadas</h2>
               <p className="mt-2 text-3xl font-black">{activeCount}</p>
             </article>
+            <article className="surface p-5 md:col-span-2">
+              <Tags aria-hidden="true" className="h-6 w-6 text-accent" />
+              <h2 className="mt-4 text-lg font-bold">Cupones activos</h2>
+              <p className="mt-2 text-3xl font-black">{activeCouponCount}</p>
+            </article>
           </div>
 
-          <PromotionsManager promotions={promotions} />
+          {enabled ? <PromotionsManager promotions={promotions} /> : null}
+          {couponsEnabled ? <CouponsManager coupons={coupons} /> : null}
         </>
       ) : (
         <section className="surface p-6 sm:p-8">

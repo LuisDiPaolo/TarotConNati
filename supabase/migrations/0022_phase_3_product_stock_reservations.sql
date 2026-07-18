@@ -26,7 +26,7 @@ begin
   from product_orders
   where id = p_order_id
     and business_id = p_business_id
-    and status = 'pending_payment'
+    and status in ('pending_payment', 'stock_conflict', 'cancelled')
   for update;
 
   if not found then
@@ -38,8 +38,7 @@ begin
     from product_order_items
     where business_id = p_business_id
       and order_id = p_order_id
-      and stock_reserved_at is null
-      and stock_released_at is null
+      and (stock_reserved_at is null or stock_released_at is not null)
       and stock_decremented_at is null
     group by product_id
   loop
@@ -64,8 +63,7 @@ begin
     from product_order_items
     where business_id = p_business_id
       and order_id = p_order_id
-      and stock_reserved_at is null
-      and stock_released_at is null
+      and (stock_reserved_at is null or stock_released_at is not null)
       and stock_decremented_at is null
     group by product_id
   loop
@@ -88,13 +86,12 @@ begin
     where business_id = p_business_id
       and order_id = p_order_id
       and product_id = item_group.product_id
-      and stock_reserved_at is null
-      and stock_released_at is null
+      and (stock_reserved_at is null or stock_released_at is not null)
       and stock_decremented_at is null;
   end loop;
 
   update product_orders
-  set stock_reserved_at = coalesce(stock_reserved_at, now()),
+  set stock_reserved_at = now(),
       stock_reservation_expires_at = p_expires_at,
       stock_released_at = null
   where id = p_order_id
@@ -110,6 +107,8 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  reservation_result jsonb;
 begin
   if auth.role() = 'authenticated' and current_admin_business_id() is distinct from p_business_id then
     return jsonb_build_object('ok', false, 'code', 'unauthorized');
@@ -123,6 +122,20 @@ begin
 
   if not found then
     return jsonb_build_object('ok', false, 'code', 'order_not_found');
+  end if;
+
+  if exists (
+    select 1
+    from product_order_items
+    where business_id = p_business_id
+      and order_id = p_order_id
+      and (stock_reserved_at is null or stock_released_at is not null)
+      and stock_decremented_at is null
+  ) then
+    reservation_result := reserve_product_order_stock(p_business_id, p_order_id, now() + interval '1 minute');
+    if coalesce((reservation_result ->> 'ok')::boolean, false) is not true then
+      return reservation_result;
+    end if;
   end if;
 
   update product_order_items
@@ -171,9 +184,10 @@ begin
     group by product_id
   loop
     update products
-    set stock_quantity = coalesce(stock_quantity, 0) + item_group.quantity
+    set stock_quantity = stock_quantity + item_group.quantity
     where id = item_group.product_id
-      and business_id = p_business_id;
+      and business_id = p_business_id
+      and stock_quantity is not null;
   end loop;
 
   update product_order_items

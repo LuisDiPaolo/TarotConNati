@@ -38,6 +38,12 @@ function enforceRateLimit(key: string) {
   return true;
 }
 
+function couponErrorCode(code: string) {
+  if (code === "feature_disabled") return "FEATURE_NOT_ENABLED";
+  if (code === "internal_error") return "INTERNAL_ERROR";
+  return "COUPON_NOT_AVAILABLE";
+}
+
 function overlaps(candidate: { startsAt: Date; endsAt: Date }, existing: Array<{ starts_at: string; ends_at: string; calendar_starts_at?: string | null; calendar_ends_at?: string | null }>) {
   return existing.some((appointment) => {
     const startsAt = new Date(appointment.calendar_starts_at ?? appointment.starts_at);
@@ -137,7 +143,7 @@ export async function POST(request: NextRequest) {
 
   if (couponResult && !couponResult.ok) {
     const status = couponResult.code === "feature_disabled" ? 403 : couponResult.code === "internal_error" ? 500 : 404;
-    return apiError(status, couponResult.code.toUpperCase(), couponResult.message);
+    return apiError(status, couponErrorCode(couponResult.code), couponResult.message);
   }
 
   const coupon = couponResult?.ok ? couponResult.data.coupon : null;
@@ -190,7 +196,10 @@ export async function POST(request: NextRequest) {
       response: item.response,
     })));
 
-    if (intakeError) return apiError(500, "VALIDATION_ERROR", "No se pudo guardar la informacion adicional.");
+    if (intakeError) {
+      await supabase.from("appointments").update({ status: "cancelled" }).eq("id", appointment.id).eq("business_id", business.id);
+      return apiError(500, "VALIDATION_ERROR", "No se pudo guardar la informacion adicional.");
+    }
   }
 
   const couponExpiresAt = new Date(Date.now() + 30 * 60_000).toISOString();

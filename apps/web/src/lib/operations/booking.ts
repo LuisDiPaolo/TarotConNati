@@ -4,7 +4,7 @@ import { calculateAppointmentEnd, formatARS, resolveEffectiveSchedulesForDate } 
 import { buildBrandAssetUrl } from "@/lib/storage/public-url";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { ResolvedBusiness } from "@/lib/business/resolve";
-import type { PublicBookingData, PublicIntakeForm, PublicService, PublicSlot } from "@/lib/operations/booking.types";
+import type { PublicBookingData, PublicIntakeForm, PublicPortfolioItem, PublicProduct, PublicPromotion, PublicService, PublicSlot } from "@/lib/operations/booking.types";
 
 type BusinessRow = {
   id: string;
@@ -73,6 +73,37 @@ type AppointmentRow = {
   ends_at: string;
   calendar_starts_at: string | null;
   calendar_ends_at: string | null;
+};
+
+type PromotionRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  discount_type: "percent" | "fixed_amount";
+  discount_value: number;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
+type ProductRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  image_url: string | null;
+  price_pesos: number;
+  stock_quantity: number | null;
+  sort_order: number;
+};
+
+type PortfolioRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  image_url: string | null;
+  instagram_url: string | null;
+  sort_order: number;
 };
 
 type IntakeFormLinkRow = {
@@ -180,11 +211,41 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
   const business = await getBusiness(resolvedBusiness.id);
   if (!business) return null;
 
+  const [{ data: inquiriesEnabled }, { data: portfolioEnabled }, { data: productsEnabled }, { data: promotionsEnabled }, { data: giftCardsEnabled }] = await Promise.all([
+    supabase.rpc("has_feature", {
+      p_business_id: business.id,
+      p_feature_key: "inquiries_enabled",
+    }),
+    supabase.rpc("has_feature", {
+      p_business_id: business.id,
+      p_feature_key: "portfolio_enabled",
+    }),
+    supabase.rpc("has_feature", {
+      p_business_id: business.id,
+      p_feature_key: "products_enabled",
+    }),
+    supabase.rpc("has_feature", {
+      p_business_id: business.id,
+      p_feature_key: "promotions_enabled",
+    }),
+    supabase.rpc("has_feature", {
+      p_business_id: business.id,
+      p_feature_key: "gift_cards_enabled",
+    }),
+  ]);
+
   const now = new Date();
+  if (productsEnabled) {
+    await supabase.rpc("release_expired_product_order_stock", {
+      p_business_id: business.id,
+      p_now: now.toISOString(),
+    });
+  }
+
   const todayParts = getLocalDateParts(now, business.timezone);
   const untilParts = getLocalDateParts(new Date(now.getTime() + 13 * 24 * 60 * 60_000), business.timezone);
 
-  const [{ data: servicesData }, { data: schedulesData }, { data: overridesData }, { data: appointmentsData }, { data: intakeLinksData }] = await Promise.all([
+  const [{ data: servicesData }, { data: schedulesData }, { data: overridesData }, { data: appointmentsData }, { data: intakeLinksData }, { data: portfolioData }, { data: productsData }, { data: promotionsData }] = await Promise.all([
     supabase
       .from("services")
       .select("id, name, description, category, image_url, service_modality, scheduling_policy, duration_minutes, buffer_before_minutes, buffer_after_minutes, blocks_calendar, arrival_instructions, virtual_instructions, requires_manual_confirmation, price_pesos, deposit_pesos, payment_mode, sort_order")
@@ -215,6 +276,35 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
       .select("service_id, intake_forms(id, name, description, active, deleted_at, intake_form_fields(field_key, label, help_text, field_type, required, options, sort_order))")
       .eq("business_id", business.id)
       .eq("active", true),
+    portfolioEnabled
+      ? supabase
+        .from("portfolio_items")
+        .select("id, title, description, category, image_url, instagram_url, sort_order")
+        .eq("business_id", business.id)
+        .eq("active", true)
+        .or("image_url.not.is.null,instagram_url.not.is.null")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    productsEnabled
+      ? supabase
+        .from("products")
+        .select("id, name, description, category, image_url, price_pesos, stock_quantity, sort_order")
+        .eq("business_id", business.id)
+        .eq("active", true)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    promotionsEnabled
+      ? supabase
+        .from("promotions")
+        .select("id, title, description, discount_type, discount_value, starts_at, ends_at")
+        .eq("business_id", business.id)
+        .eq("active", true)
+        .or(`starts_at.is.null,starts_at.lte.${now.toISOString()}`)
+        .or(`ends_at.is.null,ends_at.gte.${now.toISOString()}`)
+        .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
 
   const services = ((servicesData ?? []) as ServiceRow[]).map((service) => ({
@@ -238,6 +328,43 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
     priceLabel: toMoneyLabel(service.price_pesos),
     depositLabel: toMoneyLabel(service.deposit_pesos),
   }));
+
+  const products: PublicProduct[] = ((productsData ?? []) as ProductRow[])
+    .filter((product) => product.stock_quantity === null || product.stock_quantity > 0)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((product) => ({
+      id: product.id,
+      name: product.name,
+      description: product.description ?? "",
+      category: product.category ?? "",
+      imageUrl: buildBrandAssetUrl(product.image_url),
+      pricePesos: product.price_pesos,
+      priceLabel: toMoneyLabel(product.price_pesos),
+      stockQuantity: product.stock_quantity,
+    }));
+
+  const promotions: PublicPromotion[] = ((promotionsData ?? []) as PromotionRow[]).map((promotion) => ({
+    id: promotion.id,
+    title: promotion.title,
+    description: promotion.description ?? "",
+    discountType: promotion.discount_type,
+    discountValue: promotion.discount_value,
+    discountLabel: promotion.discount_type === "percent" ? `${promotion.discount_value}%` : toMoneyLabel(promotion.discount_value),
+    startsAt: promotion.starts_at ?? "",
+    endsAt: promotion.ends_at ?? "",
+  }));
+
+  const portfolioItems: PublicPortfolioItem[] = ((portfolioData ?? []) as PortfolioRow[])
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description ?? "",
+      category: item.category ?? "",
+      imageUrl: buildBrandAssetUrl(item.image_url),
+      instagramUrl: item.instagram_url ?? "",
+    }))
+    .filter((item) => Boolean(item.imageUrl || item.instagramUrl));
 
   const intakeFormsByService: Record<string, PublicIntakeForm[]> = {};
   for (const link of (intakeLinksData ?? []) as unknown as IntakeFormLinkRow[]) {
@@ -366,8 +493,16 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
       logoDarkUrl: buildBrandAssetUrl(business.logo_dark_url),
       publicAppIconUrl: buildBrandAssetUrl(business.public_app_icon_url),
       publicBottomNavEnabled: business.public_bottom_nav_enabled ?? false,
+      inquiriesEnabled: Boolean(inquiriesEnabled),
+      portfolioEnabled: Boolean(portfolioEnabled),
+      productsEnabled: Boolean(productsEnabled),
+      promotionsEnabled: Boolean(promotionsEnabled),
+      giftCardsEnabled: Boolean(giftCardsEnabled),
     },
     services,
+    portfolioItems,
+    products,
+    promotions,
     slotsByService,
     intakeFormsByService,
   };

@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(apiError("RATE_LIMITED", "Demasiados intentos de compra. Proba de nuevo en unos minutos."), { status: 429 });
   }
 
-  if (!process.env.MP_ACCESS_TOKEN) {
+  const accessToken = process.env.MP_ACCESS_TOKEN;
+  if (!accessToken) {
     return NextResponse.json(apiError("PAYMENT_PROVIDER_NOT_CONFIGURED", "El pago online no esta configurado para gift cards."), { status: 503 });
   }
 
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
   try {
     const origin = getRequestBaseUrl(request);
     const preference = await createMercadoPagoPreference({
-      accessToken: process.env.MP_ACCESS_TOKEN,
+      accessToken,
       title: `Gift card - ${service.name}`,
       quantity: 1,
       unitPrice: service.price_pesos,

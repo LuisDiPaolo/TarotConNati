@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageIcon, Instagram, Plus, Save, Trash2, Upload } from "lucide-react";
+import { ImageIcon, Instagram, Music2, Plus, Save, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { BrandAssetCropper, type BrandAssetCropConfig } from "@/components/panel/BrandAssetCropper";
 import type { PanelPortfolioItem } from "@/lib/operations/panel-portfolio";
@@ -33,7 +33,7 @@ function emptyPortfolioItem(): DraftPortfolioItem {
     category: "",
     imageUrl: "",
     instagramUrl: "",
-    active: true,
+    active: false,
     sortOrder: 0,
     isNew: true,
   };
@@ -65,9 +65,9 @@ export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
       return;
     }
 
-    if (!row.imageUrl.trim() && !row.instagramUrl.trim()) {
+    if (row.active && !row.imageUrl.trim() && !row.instagramUrl.trim()) {
       setMessageTone("error");
-      setMessage("Carga una imagen o un enlace de Instagram.");
+      setMessage("Carga una imagen o un enlace de Instagram/TikTok antes de publicarlo.");
       return;
     }
 
@@ -183,7 +183,7 @@ export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
               ) : (
                 <span className="flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center text-sm font-semibold text-slate-500 dark:text-slate-300">
                   <ImageIcon aria-hidden="true" className="h-8 w-8" />
-                  Imagen de portfolio
+                  Imagen o post
                 </span>
               )}
               <button
@@ -235,10 +235,11 @@ export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
                 <textarea className="input-control min-h-24 resize-y" value={row.description} onChange={(event) => updateRow(row.draftId, { description: event.target.value })} placeholder="Texto breve opcional para contextualizar la imagen" />
               </label>
               <label className="grid gap-2 text-sm font-semibold">
-                Link de Instagram
+                Link de Instagram o TikTok
                 <span className="relative">
                   <Instagram aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input className="input-control pl-9" value={row.instagramUrl} onChange={(event) => updateRow(row.draftId, { instagramUrl: event.target.value })} placeholder="https://www.instagram.com/p/..." />
+                  <Music2 aria-hidden="true" className="pointer-events-none absolute left-8 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input className="input-control pl-14" value={row.instagramUrl} onChange={(event) => updateRow(row.draftId, { instagramUrl: event.target.value })} placeholder="https://www.instagram.com/reel/..." />
                 </span>
               </label>
               <label className="inline-flex items-center gap-3 text-sm font-semibold">
