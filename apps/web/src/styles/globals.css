@@ -622,29 +622,46 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   align-items: center;
   display: flex;
   justify-content: center;
-  margin-top: 22px;
+  margin-top: 24px;
   padding: 0;
 }
 
+.studio-equis-credit--elevated {
+  padding-bottom: calc(var(--safe-bottom) + var(--bottom-nav-height) + 10px);
+}
+
 @media (max-width: 767px) {
+  .studio-equis-credit {
+    margin-top: 28px;
+  }
+
   .studio-equis-credit--elevated {
-    padding-bottom: calc(var(--safe-bottom) + var(--bottom-nav-height) + 10px);
+    padding-bottom: calc(var(--safe-bottom) + var(--bottom-nav-height) + 6px);
   }
 }
 
+.studio-equis-credit__row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 96px) 48px minmax(0, 96px);
+  justify-content: center;
+}
+
 .studio-equis-credit-button {
-  background: rgba(8, 15, 8, 0.72);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  background: rgba(8, 15, 8, 0.78);
+  border: 0;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
   cursor: pointer;
+  height: 48px;
   transform-origin: center;
-  transition: border-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+  transition: opacity 160ms ease, transform 160ms ease;
+  width: 48px;
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
 }
 
 .studio-equis-credit-button:hover {
-  border-color: rgb(var(--brand-accent) / 0.46);
   opacity: 0.94;
   transform: translateY(-1px);
 }
@@ -653,9 +670,43 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   transform: scale(0.96);
 }
 
-.studio-equis-credit-button:focus-visible {
+.studio-equis-credit-button:focus-visible,
+.studio-equis-credit__link:focus-visible {
   outline: 2px solid rgb(var(--brand-accent) / 0.7);
   outline-offset: 3px;
+}
+
+.studio-equis-credit__text {
+  color: rgb(var(--color-muted));
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.1;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  transform: translateX(4px);
+  transition: opacity 180ms ease, transform 180ms ease;
+  white-space: nowrap;
+}
+
+.studio-equis-credit__text--left {
+  text-align: right;
+  transform: translateX(-4px);
+}
+
+.studio-equis-credit__link {
+  color: rgb(var(--color-foreground));
+  pointer-events: none;
+  text-align: left;
+}
+
+.studio-equis-credit--expanded .studio-equis-credit__text,
+.studio-equis-credit--expanded .studio-equis-credit__link {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
 }
 
 .theme-toggle {
