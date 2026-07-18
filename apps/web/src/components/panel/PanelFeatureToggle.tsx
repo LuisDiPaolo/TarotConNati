@@ -52,7 +52,7 @@ export function PanelFeatureToggle({ featureKey, label, enabled }: PanelFeatureT
     <div className="inline-flex items-center gap-2">
       <div className="leading-tight">
         <p className="whitespace-nowrap text-sm font-bold">{label}</p>
-        <p className={`text-xs font-bold ${isEnabled ? "text-emerald-600 dark:text-emerald-300" : "text-red-600 dark:text-red-300"}`}>{statusText}</p>
+        <p className="text-xs font-semibold text-muted">{statusText}</p>
         {error ? <p className="mt-1 text-xs font-bold text-red-500">{error}</p> : null}
       </div>
       {isSaving || isPending ? <Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin text-muted" /> : null}
@@ -60,7 +60,7 @@ export function PanelFeatureToggle({ featureKey, label, enabled }: PanelFeatureT
         aria-busy={isSaving || isPending}
         aria-checked={isEnabled}
         aria-label={`${actionText} ${label}`}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 ${isEnabled ? "bg-emerald-500 focus-visible:ring-emerald-500" : "bg-red-500 focus-visible:ring-red-500"}`}
+        className="relative h-7 w-14 shrink-0 rounded-full border border-border bg-muted/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
         disabled={isSaving || isPending}
         onClick={() => updateFeature(!isEnabled)}
         role="switch"
@@ -69,7 +69,7 @@ export function PanelFeatureToggle({ featureKey, label, enabled }: PanelFeatureT
       >
         <span
           aria-hidden="true"
-          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${isEnabled ? "translate-x-5" : "translate-x-0"}`}
+          className={`absolute left-1 top-1 h-5 w-5 rounded-full shadow-sm transition-transform ${isEnabled ? "translate-x-7 bg-accent" : "translate-x-0 bg-muted"}`}
         />
       </button>
     </div>
