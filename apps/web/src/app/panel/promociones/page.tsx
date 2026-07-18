@@ -26,7 +26,7 @@ export default async function PanelPromotionsPage() {
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Promociones</h1>
         </div>
         {business ? (
-          <div className="grid w-full gap-3 sm:w-auto sm:min-w-72">
+          <div className="flex flex-col items-start gap-3 sm:items-end">
             <PanelFeatureToggle enabled={enabled} featureKey="promotions_enabled" label="Promociones" />
             <PanelFeatureToggle enabled={couponsEnabled} featureKey="coupons_enabled" label="Cupones y descuentos" />
           </div>

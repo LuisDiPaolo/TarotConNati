@@ -49,37 +49,29 @@ export function PanelFeatureToggle({ featureKey, label, enabled }: PanelFeatureT
   const actionText = isEnabled ? "Desactivar" : "Activar";
 
   return (
-    <div className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-white/85 px-3 py-2.5 shadow-sm dark:bg-white/[0.04] sm:min-w-72">
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-black">{label}</p>
-          <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black ${isEnabled ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-red-500/10 text-red-700 dark:text-red-300"}`}
-          >
-            {statusText}
-          </span>
-        </div>
+    <div className="inline-flex items-center gap-2">
+      <div className="leading-tight">
+        <p className="whitespace-nowrap text-sm font-bold">{label}</p>
+        <p className={`text-xs font-bold ${isEnabled ? "text-emerald-600 dark:text-emerald-300" : "text-red-600 dark:text-red-300"}`}>{statusText}</p>
         {error ? <p className="mt-1 text-xs font-bold text-red-500">{error}</p> : null}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        {isSaving || isPending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin text-muted" /> : null}
-        <button
-          aria-busy={isSaving || isPending}
-          aria-checked={isEnabled}
-          aria-label={`${actionText} ${label}`}
-          className={`relative h-7 w-12 rounded-full shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 ${isEnabled ? "bg-emerald-500 focus-visible:ring-emerald-500" : "bg-red-500 focus-visible:ring-red-500"}`}
-          disabled={isSaving || isPending}
-          onClick={() => updateFeature(!isEnabled)}
-          role="switch"
-          title={`${label}: ${statusText}`}
-          type="button"
-        >
-          <span
-            aria-hidden="true"
-            className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-md transition-transform ${isEnabled ? "translate-x-6" : "translate-x-1"}`}
-          />
-        </button>
-      </div>
+      {isSaving || isPending ? <Loader2 aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin text-muted" /> : null}
+      <button
+        aria-busy={isSaving || isPending}
+        aria-checked={isEnabled}
+        aria-label={`${actionText} ${label}`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 ${isEnabled ? "bg-emerald-500 focus-visible:ring-emerald-500" : "bg-red-500 focus-visible:ring-red-500"}`}
+        disabled={isSaving || isPending}
+        onClick={() => updateFeature(!isEnabled)}
+        role="switch"
+        title={`${label}: ${statusText}`}
+        type="button"
+      >
+        <span
+          aria-hidden="true"
+          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${isEnabled ? "translate-x-5" : "translate-x-0"}`}
+        />
+      </button>
     </div>
   );
 }
