@@ -644,36 +644,42 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(0, 96px) 48px minmax(0, 96px);
+  grid-template-columns: 124px 44px 124px;
   justify-content: center;
 }
 
 .studio-equis-credit-button {
-  background: rgba(8, 15, 8, 0.78);
+  background: rgba(8, 15, 8, 0.8);
   border: 0;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.22),
+    0 0 18px rgb(var(--brand-accent) / 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
   cursor: pointer;
-  height: 48px;
+  height: 44px;
   transform-origin: center;
-  transition: opacity 160ms ease, transform 160ms ease;
-  width: 48px;
+  transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  width: 44px;
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
 }
 
-.studio-equis-credit-button:hover {
-  opacity: 0.94;
+.studio-equis-credit__row:hover .studio-equis-credit-button {
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.24),
+    0 0 22px rgb(var(--brand-accent) / 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  opacity: 0.96;
   transform: translateY(-1px);
 }
 
-.studio-equis-credit-button:active {
+.studio-equis-credit__row:active .studio-equis-credit-button {
   transform: scale(0.96);
 }
 
-.studio-equis-credit-button:focus-visible,
-.studio-equis-credit__link:focus-visible {
+.studio-equis-credit__row:focus-visible {
   outline: 2px solid rgb(var(--brand-accent) / 0.7);
-  outline-offset: 3px;
+  outline-offset: 5px;
 }
 
 .studio-equis-credit__text {
@@ -683,23 +689,20 @@ html[data-surface-mode="desktop"] .app-bottom-nav__surface {
   letter-spacing: 0;
   line-height: 1.1;
   opacity: 0;
-  overflow: hidden;
   pointer-events: none;
-  text-overflow: ellipsis;
-  transform: translateX(4px);
+  transform: translateX(12px);
   transition: opacity 180ms ease, transform 180ms ease;
   white-space: nowrap;
 }
 
 .studio-equis-credit__text--left {
   text-align: right;
-  transform: translateX(-4px);
 }
 
 .studio-equis-credit__link {
   color: rgb(var(--color-foreground));
-  pointer-events: none;
   text-align: left;
+  transform: translateX(-12px);
 }
 
 .studio-equis-credit--expanded .studio-equis-credit__text,
