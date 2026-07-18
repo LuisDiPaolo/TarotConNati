@@ -19,7 +19,7 @@ export default async function PanelInquiriesPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Consultas</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Bandeja de contacto</h1>
         </div>
-        <PanelFeatureToggle enabled={enabled} featureKey="inquiries_enabled" label="Modulo consultas" />
+        <PanelFeatureToggle enabled={enabled} featureKey="inquiries_enabled" label="Consultas" />
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">

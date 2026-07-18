@@ -27,8 +27,8 @@ export default async function PanelPromotionsPage() {
         </div>
         {business ? (
           <div className="grid w-full gap-3 sm:w-auto sm:min-w-72">
-            <PanelFeatureToggle enabled={enabled} featureKey="promotions_enabled" label="Modulo promociones" />
-            <PanelFeatureToggle enabled={couponsEnabled} featureKey="coupons_enabled" label="Modulo cupones" />
+            <PanelFeatureToggle enabled={enabled} featureKey="promotions_enabled" label="Promociones" />
+            <PanelFeatureToggle enabled={couponsEnabled} featureKey="coupons_enabled" label="Cupones y descuentos" />
           </div>
         ) : null}
       </header>
@@ -60,7 +60,7 @@ export default async function PanelPromotionsPage() {
         </>
       ) : (
         <section className="surface p-6 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Modulo no habilitado</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Seccion desactivada</p>
           <h2 className="mt-3 text-2xl font-black">Promociones</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
             Este negocio todavia no tiene activo el modulo de promociones. Cuando se habilite, vas a poder publicar descuentos y precios especiales con fechas de vigencia.

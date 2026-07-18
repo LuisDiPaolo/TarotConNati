@@ -31,7 +31,7 @@ export default async function PanelNotificationsPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Notificaciones</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Avisos push</h1>
         </div>
-        <PanelFeatureToggle enabled={alertsEnabled} featureKey="push_campaigns_enabled" label="Modulo alertas push" />
+        <PanelFeatureToggle enabled={alertsEnabled} featureKey="push_campaigns_enabled" label="Alertas push" />
       </header>
 
       {alertsEnabled ? (
@@ -39,7 +39,7 @@ export default async function PanelNotificationsPage() {
       ) : (
         <section className="surface p-6 sm:p-8">
           <Bell aria-hidden="true" className="h-8 w-8 text-accent" />
-          <h2 className="mt-4 text-xl font-black">Modulo no habilitado</h2>
+          <h2 className="mt-4 text-xl font-black">Seccion desactivada</h2>
           <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-muted">Activa alertas push para enviar avisos inmediatos o programados a clientes suscriptos.</p>
         </section>
       )}

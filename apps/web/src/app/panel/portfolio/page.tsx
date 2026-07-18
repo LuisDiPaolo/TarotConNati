@@ -20,7 +20,7 @@ export default async function PanelPortfolioPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Presencia</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Portfolio</h1>
         </div>
-        {business ? <PanelFeatureToggle enabled={enabled} featureKey="portfolio_enabled" label="Modulo portfolio" /> : null}
+        {business ? <PanelFeatureToggle enabled={enabled} featureKey="portfolio_enabled" label="Portfolio" /> : null}
       </header>
 
       {!business ? (
@@ -49,7 +49,7 @@ export default async function PanelPortfolioPage() {
         </>
       ) : (
         <section className="surface p-6 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Modulo no habilitado</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Seccion desactivada</p>
           <h2 className="mt-3 text-2xl font-black">Portfolio profesional</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
             Este negocio todavia no tiene activo el modulo de portfolio. Cuando se habilite, vas a poder cargar trabajos, resultados y publicaciones para mostrarlos en la web publica.

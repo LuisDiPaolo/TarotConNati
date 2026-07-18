@@ -21,7 +21,7 @@ export default async function PanelProductsPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Comercio</p>
           <h1 className="mt-2 text-3xl font-black sm:text-5xl">Productos</h1>
         </div>
-        {business ? <PanelFeatureToggle enabled={enabled} featureKey="products_enabled" label="Modulo productos" /> : null}
+        {business ? <PanelFeatureToggle enabled={enabled} featureKey="products_enabled" label="Productos" /> : null}
       </header>
 
       {!business ? (
@@ -50,7 +50,7 @@ export default async function PanelProductsPage() {
         </>
       ) : (
         <section className="surface p-6 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Modulo no habilitado</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Seccion desactivada</p>
           <h2 className="mt-3 text-2xl font-black">Productos simples</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
             Este negocio todavia no tiene activo el modulo de productos. Cuando se habilite, vas a poder vender productos con pago total y retiro en el negocio.
