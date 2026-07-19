@@ -45,7 +45,7 @@ export default async function PanelPortfolioPage() {
             </article>
           </div>
 
-          <PortfolioManager items={items} />
+          <PortfolioManager items={items} sectionTitle={business.portfolioSectionTitle} />
         </>
       ) : (
         <section className="surface p-6 sm:p-8">

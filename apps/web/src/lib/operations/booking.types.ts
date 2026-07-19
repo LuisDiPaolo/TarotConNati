@@ -88,6 +88,7 @@ export type PublicBookingData = {
     logoDarkUrl: string;
     publicAppIconUrl: string;
     publicBottomNavEnabled: boolean;
+    portfolioSectionTitle: string;
     inquiriesEnabled: boolean;
     portfolioEnabled: boolean;
     productsEnabled: boolean;

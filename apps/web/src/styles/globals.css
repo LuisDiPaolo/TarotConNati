@@ -1185,10 +1185,23 @@ body.booking-panel-open {
 .portfolio-social-frame iframe {
   border: 0;
   display: block;
-  height: 100% !important;
 }
 
 .portfolio-social-frame--tiktok {
+  aspect-ratio: 9 / 16;
+}
+
+.portfolio-social-frame--tiktok iframe {
+  height: 100% !important;
+}
+
+.portfolio-social-frame--lightbox {
+  aspect-ratio: auto;
+  height: auto;
+  overflow: visible;
+}
+
+.portfolio-social-frame--lightbox.portfolio-social-frame--tiktok {
   aspect-ratio: 9 / 16;
 }
 

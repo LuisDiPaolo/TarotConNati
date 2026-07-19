@@ -80,6 +80,7 @@ export async function PublicHomePage() {
               serviceImageFallbackUrl={publicBusiness.publicAppIconUrl}
               inquiriesEnabled={publicBusiness.inquiriesEnabled}
               portfolioItems={publicBusiness.portfolioEnabled ? portfolioItems : []}
+              portfolioSectionTitle={publicBusiness.portfolioSectionTitle}
               products={publicBusiness.productsEnabled ? products : []}
               promotions={publicBusiness.promotionsEnabled ? promotions : []}
               giftCardsEnabled={publicBusiness.giftCardsEnabled}

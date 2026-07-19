@@ -57,6 +57,7 @@ type PublicTabbedExperienceProps = {
   bottomNavigationEnabled: boolean;
   inquiriesEnabled: boolean;
   portfolioItems: PublicPortfolioItem[];
+  portfolioSectionTitle: string;
   products: PublicProduct[];
   promotions: PublicPromotion[];
   giftCardsEnabled: boolean;
@@ -187,7 +188,7 @@ function PublicBottomNav({ activeTab, onChange }: { activeTab: PublicTab; onChan
   );
 }
 
-export function PublicTabbedExperience({ description, services, slotsByService, intakeFormsByService, serviceImageFallbackUrl, bottomNavigationEnabled, inquiriesEnabled, portfolioItems, products, promotions, giftCardsEnabled }: PublicTabbedExperienceProps) {
+export function PublicTabbedExperience({ description, services, slotsByService, intakeFormsByService, serviceImageFallbackUrl, bottomNavigationEnabled, inquiriesEnabled, portfolioItems, portfolioSectionTitle, products, promotions, giftCardsEnabled }: PublicTabbedExperienceProps) {
   const [activeTab, setActiveTab] = useState<PublicTab>("services");
   const [history, setHistory] = useState<PublicHistoryItem[]>([]);
   const [notifications, setNotifications] = useState<PublicNotificationItem[]>([]);
@@ -287,7 +288,7 @@ export function PublicTabbedExperience({ description, services, slotsByService, 
       <ReservationForm services={services} slotsByService={slotsByService} intakeFormsByService={intakeFormsByService} serviceImageFallbackUrl={serviceImageFallbackUrl} />
       <PublicProductsCatalog products={products} />
       {giftCardsEnabled ? <PublicGiftCards services={services} /> : null}
-      <PublicPortfolioGallery items={portfolioItems} />
+      <PublicPortfolioGallery items={portfolioItems} sectionTitle={portfolioSectionTitle} />
       {inquiriesEnabled ? <PublicInquiryForm /> : null}
     </div>
   );

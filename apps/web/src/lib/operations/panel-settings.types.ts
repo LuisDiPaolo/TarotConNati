@@ -17,6 +17,7 @@ export type PanelBusinessSettings = {
   defaultThemeMode: "light" | "brand" | "dark";
   publicBottomNavEnabled: boolean;
   notificationsEnabled: boolean;
+  portfolioSectionTitle: string;
   logoUrl: string;
   logoLightUrl: string;
   logoDarkUrl: string;

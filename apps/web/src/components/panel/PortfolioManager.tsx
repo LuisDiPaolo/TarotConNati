@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageIcon, Instagram, Music2, Plus, Save, Trash2, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { BrandAssetCropper, type BrandAssetCropConfig } from "@/components/panel/BrandAssetCropper";
 import type { PanelPortfolioItem } from "@/lib/operations/panel-portfolio";
@@ -39,9 +40,12 @@ function emptyPortfolioItem(): DraftPortfolioItem {
   };
 }
 
-export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
+export function PortfolioManager({ items, sectionTitle }: { items: PanelPortfolioItem[]; sectionTitle: string }) {
+  const router = useRouter();
   const fileInputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const [rows, setRows] = useState<DraftPortfolioItem[]>(items.map((item) => ({ ...item, draftId: item.id })));
+  const [publicSectionTitle, setPublicSectionTitle] = useState(sectionTitle || "Trabajos y resultados");
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"success" | "error">("success");
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -52,6 +56,30 @@ export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
 
   function updateRow(draftId: string, patch: Partial<DraftPortfolioItem>) {
     setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...patch } : row));
+  }
+
+  async function saveSectionSettings() {
+    if (settingsSaving || savingId || deletingId || imageUploadingId) return;
+    setSettingsSaving(true);
+    setMessage("");
+    setMessageTone("success");
+
+    const response = await fetch("/api/panel/portfolio-settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: publicSectionTitle }),
+    }).catch(() => null);
+
+    if (!response?.ok) {
+      setSettingsSaving(false);
+      setMessageTone("error");
+      setMessage("No se pudo guardar el titulo publico de portfolio.");
+      return;
+    }
+
+    setSettingsSaving(false);
+    setMessage("Titulo publico actualizado.");
+    router.refresh();
   }
 
   async function saveRow(row: DraftPortfolioItem) {
@@ -166,6 +194,23 @@ export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
           Agregar item
         </button>
       </div>
+
+      <section className="surface grid gap-3 p-5">
+        <div>
+          <h3 className="text-base font-black">Titulo publico de la seccion</h3>
+          <p className="mt-1 text-sm text-muted">Define como aparece esta seccion en la web: trabajos, redes sociales, informacion o el nombre que use el negocio.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <label className="grid gap-2 text-sm font-semibold">
+            Titulo visible
+            <input className="input-control" maxLength={80} value={publicSectionTitle} onChange={(event) => setPublicSectionTitle(event.target.value)} placeholder="Ej: Nuestras redes sociales" />
+          </label>
+          <button className="primary-action justify-center" type="button" disabled={settingsSaving || savingId !== null || deletingId !== null || imageUploadingId !== null} onClick={() => void saveSectionSettings()}>
+            <Save aria-hidden="true" className="h-4 w-4" />
+            {settingsSaving ? "Guardando" : "Guardar titulo"}
+          </button>
+        </div>
+      </section>
 
       {rows.map((row) => (
         <article className="surface grid gap-5 p-5" key={row.draftId}>

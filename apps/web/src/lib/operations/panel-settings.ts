@@ -20,7 +20,7 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
 
   const { data, error } = await supabase
     .from("business")
-    .select("id, name, slug, description, public_domain, whatsapp_phone, public_app_name, panel_app_name, public_short_name, panel_short_name, onboarding_status, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, public_bottom_nav_enabled, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
+    .select("id, name, slug, description, public_domain, whatsapp_phone, public_app_name, panel_app_name, public_short_name, panel_short_name, onboarding_status, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, public_bottom_nav_enabled, portfolio_section_title, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
     .eq("id", businessId)
     .maybeSingle();
 
@@ -52,6 +52,7 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
     defaultThemeMode: data.default_theme_mode ?? "light",
     publicBottomNavEnabled: data.public_bottom_nav_enabled ?? false,
     notificationsEnabled: pushFeature?.enabled !== false,
+    portfolioSectionTitle: data.portfolio_section_title ?? "Trabajos y resultados",
     logoUrl: buildBrandAssetUrl(data.logo_url),
     logoLightUrl: buildBrandAssetUrl(data.logo_light_url),
     logoDarkUrl: buildBrandAssetUrl(data.logo_dark_url),

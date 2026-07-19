@@ -21,6 +21,10 @@ const optionalSocialUrlSchema = z.string().trim().url().max(500).optional().or(z
   }
 }, "Usa un link directo de post/reel de Instagram o video de TikTok.");
 
+export const portfolioSectionSettingsSchema = z.object({
+  title: z.string().trim().min(1).max(80),
+});
+
 export const portfolioItemSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string().trim().max(120).optional().or(z.literal("")),
