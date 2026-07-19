@@ -18,13 +18,24 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
   const businessId = await getCurrentPanelBusinessId(supabase);
   if (!businessId) return null;
 
+  const baseBusinessSelect = "id, name, slug, description, public_domain, whatsapp_phone, public_app_name, panel_app_name, public_short_name, panel_short_name, onboarding_status, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, public_bottom_nav_enabled, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url";
   const { data, error } = await supabase
     .from("business")
-    .select("id, name, slug, description, public_domain, whatsapp_phone, public_app_name, panel_app_name, public_short_name, panel_short_name, onboarding_status, brand_primary, brand_accent, theme_background, brand_radius, default_theme_mode, public_bottom_nav_enabled, portfolio_section_title, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, panel_app_icon_url, maskable_icon_url, apple_touch_icon_url")
+    .select(`${baseBusinessSelect}, portfolio_section_title`)
     .eq("id", businessId)
     .maybeSingle();
 
-  if (error || !data) return null;
+  let businessData = data ? { ...data } : null;
+  if (!businessData && error?.message?.includes("portfolio_section_title")) {
+    const fallback = await supabase
+      .from("business")
+      .select(baseBusinessSelect)
+      .eq("id", businessId)
+      .maybeSingle();
+    if (fallback.data) businessData = { ...fallback.data, portfolio_section_title: null };
+  }
+
+  if (!businessData) return null;
 
   const { data: pushFeature } = await supabase
     .from("features")
@@ -34,32 +45,32 @@ export async function getPanelBusinessSettings(): Promise<PanelBusinessSettings 
     .maybeSingle();
 
   return {
-    id: data.id,
-    name: data.name,
-    slug: data.slug,
-    description: data.description ?? "",
-    whatsappPhone: data.whatsapp_phone ?? "",
-    publicDomain: getConfiguredPublicDomain() || data.public_domain || "",
-    publicAppName: data.public_app_name ?? "",
-    panelAppName: data.panel_app_name ?? "",
-    publicShortName: data.public_short_name ?? "",
-    panelShortName: data.panel_short_name ?? "",
-    onboardingStatus: (data.onboarding_status ?? "incomplete") as PanelBusinessSettings["onboardingStatus"],
-    brandPrimary: data.brand_primary,
-    brandAccent: data.brand_accent,
-    themeBackground: data.theme_background ?? data.brand_primary,
-    brandRadius: data.brand_radius,
-    defaultThemeMode: data.default_theme_mode ?? "light",
-    publicBottomNavEnabled: data.public_bottom_nav_enabled ?? false,
+    id: businessData.id,
+    name: businessData.name,
+    slug: businessData.slug,
+    description: businessData.description ?? "",
+    whatsappPhone: businessData.whatsapp_phone ?? "",
+    publicDomain: getConfiguredPublicDomain() || businessData.public_domain || "",
+    publicAppName: businessData.public_app_name ?? "",
+    panelAppName: businessData.panel_app_name ?? "",
+    publicShortName: businessData.public_short_name ?? "",
+    panelShortName: businessData.panel_short_name ?? "",
+    onboardingStatus: (businessData.onboarding_status ?? "incomplete") as PanelBusinessSettings["onboardingStatus"],
+    brandPrimary: businessData.brand_primary,
+    brandAccent: businessData.brand_accent,
+    themeBackground: businessData.theme_background ?? businessData.brand_primary,
+    brandRadius: businessData.brand_radius,
+    defaultThemeMode: businessData.default_theme_mode ?? "light",
+    publicBottomNavEnabled: businessData.public_bottom_nav_enabled ?? false,
     notificationsEnabled: pushFeature?.enabled !== false,
-    portfolioSectionTitle: data.portfolio_section_title ?? "Trabajos y resultados",
-    logoUrl: buildBrandAssetUrl(data.logo_url),
-    logoLightUrl: buildBrandAssetUrl(data.logo_light_url),
-    logoDarkUrl: buildBrandAssetUrl(data.logo_dark_url),
-    publicAppIconUrl: buildBrandAssetUrl(data.public_app_icon_url),
-    panelAppIconUrl: buildBrandAssetUrl(data.panel_app_icon_url),
-    maskableIconUrl: buildBrandAssetUrl(data.maskable_icon_url),
-    appleTouchIconUrl: buildBrandAssetUrl(data.apple_touch_icon_url),
+    portfolioSectionTitle: businessData.portfolio_section_title ?? "Trabajos y resultados",
+    logoUrl: buildBrandAssetUrl(businessData.logo_url),
+    logoLightUrl: buildBrandAssetUrl(businessData.logo_light_url),
+    logoDarkUrl: buildBrandAssetUrl(businessData.logo_dark_url),
+    publicAppIconUrl: buildBrandAssetUrl(businessData.public_app_icon_url),
+    panelAppIconUrl: buildBrandAssetUrl(businessData.panel_app_icon_url),
+    maskableIconUrl: buildBrandAssetUrl(businessData.maskable_icon_url),
+    appleTouchIconUrl: buildBrandAssetUrl(businessData.apple_touch_icon_url),
   };
 }
 

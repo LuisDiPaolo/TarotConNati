@@ -2,6 +2,7 @@
 
 import { ExternalLink, Images, Instagram, Music2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { PublicPortfolioItem } from "@/lib/operations/booking.types";
 
 type SocialProvider = "instagram" | "tiktok" | "unknown";
@@ -47,23 +48,6 @@ function getTikTokVideoId(value: string) {
   return match?.[1] ?? "";
 }
 
-function getSocialSummary(value: string) {
-  const provider = getSocialProvider(value);
-  if (provider === "instagram") {
-    const permalink = getInstagramPermalink(value);
-    const parts = permalink ? new URL(permalink).pathname.split("/").filter(Boolean) : [];
-    const type = parts[0] === "reel" ? "Reel" : parts[0] === "tv" ? "Video" : "Post";
-    return { provider, label: "Instagram", type, code: parts[1] ?? "" };
-  }
-
-  if (provider === "tiktok") {
-    const code = getTikTokVideoId(value);
-    return { provider, label: "TikTok", type: "Video", code };
-  }
-
-  return { provider, label: "Publicacion", type: "Link", code: "" };
-}
-
 function loadScriptOnce(id: string, src: string, onLoad?: () => void) {
   const existing = document.getElementById(id) as HTMLScriptElement | null;
   if (existing) {
@@ -79,12 +63,12 @@ function loadScriptOnce(id: string, src: string, onLoad?: () => void) {
   document.body.appendChild(script);
 }
 
-function SocialEmbed({ url, title, mode = "card" }: { url: string; title: string; mode?: "card" | "lightbox" }) {
+function SocialEmbed({ url, title, mode = "preview" }: { url: string; title: string; mode?: "preview" | "lightbox" }) {
   const provider = getSocialProvider(url);
   const tikTokVideoId = provider === "tiktok" ? getTikTokVideoId(url) : "";
   const frameClassName = [
     "portfolio-social-frame",
-    mode === "lightbox" ? "portfolio-social-frame--lightbox" : "",
+    mode === "preview" ? "portfolio-social-frame--preview" : "portfolio-social-frame--lightbox",
     provider === "tiktok" ? "portfolio-social-frame--tiktok" : "",
   ].filter(Boolean).join(" ");
 
@@ -127,6 +111,44 @@ function SocialEmbed({ url, title, mode = "card" }: { url: string; title: string
   );
 }
 
+function PortfolioLightbox({ item, onClose }: { item: PublicPortfolioItem; onClose: () => void }) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    window.instgrm?.Embeds?.process?.();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose, item.instagramUrl]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[120] flex min-h-dvh items-center justify-center bg-black/90 p-3 text-white backdrop-blur-md sm:p-6" onClick={onClose} role="presentation">
+      <div className="relative flex max-h-[92dvh] w-full max-w-[680px] flex-col" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-white/55">Modo cine</p>
+            {item.title ? <h3 className="mt-1 truncate text-base font-black text-white">{item.title}</h3> : null}
+          </div>
+          <button aria-label="Cerrar" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/12 text-white shadow-xl backdrop-blur-md transition hover:bg-white/20" onClick={onClose} type="button">
+            <X aria-hidden="true" className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="max-h-[84dvh] overflow-auto rounded-xl bg-black shadow-2xl ring-1 ring-white/15">
+          <SocialEmbed mode="lightbox" title={item.title} url={item.instagramUrl} />
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function PublicPortfolioGallery({ items, sectionTitle }: { items: PublicPortfolioItem[]; sectionTitle: string }) {
   const [activeEmbedItem, setActiveEmbedItem] = useState<PublicPortfolioItem | null>(null);
 
@@ -166,8 +188,8 @@ export function PublicPortfolioGallery({ items, sectionTitle }: { items: PublicP
                     <img alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" src={item.imageUrl} />
                   </div>
                 ) : hasEmbed ? (
-                  <div className="grid h-full place-items-center text-slate-400">
-                    <SocialFallback url={item.instagramUrl} />
+                  <div className="h-full w-full overflow-hidden bg-black">
+                    <SocialEmbed title={item.title} url={item.instagramUrl} />
                   </div>
                 ) : (
                   <div className="grid h-full place-items-center text-slate-400">
@@ -175,10 +197,11 @@ export function PublicPortfolioGallery({ items, sectionTitle }: { items: PublicP
                   </div>
                 )}
                 {item.instagramUrl ? (
-                  <span className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-slate-950/80 text-white shadow-lg backdrop-blur-md">
+                  <span className="pointer-events-none absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-slate-950/80 text-white shadow-lg backdrop-blur-md">
                     <ProviderIcon aria-hidden="true" className="h-4 w-4" />
                   </span>
                 ) : null}
+                {hasEmbed ? <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" /> : null}
               </div>
               {hasText ? (
                 <div className="grid gap-2 p-4">
@@ -208,39 +231,8 @@ export function PublicPortfolioGallery({ items, sectionTitle }: { items: PublicP
         })}
       </div>
 
-      {activeEmbedItem ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4 backdrop-blur-sm" onClick={() => setActiveEmbedItem(null)} role="presentation">
-          <div className="relative max-h-[90vh] w-full max-w-[560px] overflow-auto rounded-xl bg-white p-3 shadow-2xl dark:bg-slate-950" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
-            <button aria-label="Cerrar" className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-slate-950/80 text-white shadow-lg backdrop-blur-md transition hover:bg-slate-800" onClick={() => setActiveEmbedItem(null)} type="button">
-              <X aria-hidden="true" className="h-5 w-5" />
-            </button>
-            <SocialEmbed mode="lightbox" title={activeEmbedItem.title} url={activeEmbedItem.instagramUrl} />
-          </div>
-        </div>
-      ) : null}
+      {activeEmbedItem ? <PortfolioLightbox item={activeEmbedItem} onClose={() => setActiveEmbedItem(null)} /> : null}
     </section>
-  );
-}
-
-function SocialFallback({ url }: { url: string }) {
-  const summary = getSocialSummary(url);
-  const Icon = summary.provider === "tiktok" ? Music2 : Instagram;
-  const code = summary.code ? summary.code.slice(0, 10) : "";
-
-  return (
-    <span className="flex h-full w-full flex-col justify-between bg-gradient-to-br from-slate-950 via-slate-800 to-slate-700 p-4 text-white">
-      <span className="flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-xs font-black backdrop-blur">
-          <Icon aria-hidden="true" className="h-4 w-4" />
-          {summary.label}
-        </span>
-        <span className="rounded-full bg-white/12 px-3 py-1.5 text-xs font-black backdrop-blur">{summary.type}</span>
-      </span>
-      <span className="grid gap-2 text-left">
-        <span className="text-2xl font-black leading-none">Ver publicacion</span>
-        {code ? <span className="max-w-full truncate text-xs font-bold uppercase tracking-[0.18em] text-white/70">{code}</span> : null}
-      </span>
-    </span>
   );
 }
 

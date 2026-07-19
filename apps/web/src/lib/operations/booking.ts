@@ -197,14 +197,26 @@ function calculateCalendarRange(input: { startsAt: Date; durationMinutes: number
 
 async function getBusiness(businessId: string) {
   const supabase = createSupabaseAdminClient();
+  const baseSelect = "id, name, slug, description, timezone, currency, locale, brand_primary, brand_accent, brand_radius, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, public_bottom_nav_enabled";
   const { data, error } = await supabase
     .from("business")
-    .select("id, name, slug, description, timezone, currency, locale, brand_primary, brand_accent, brand_radius, logo_url, logo_light_url, logo_dark_url, public_app_icon_url, public_bottom_nav_enabled, portfolio_section_title")
+    .select(`${baseSelect}, portfolio_section_title`)
     .eq("id", businessId)
     .maybeSingle();
 
-  if (error || !data) return null;
-  return data as BusinessRow;
+  if (data) return data as BusinessRow;
+
+  const missingPortfolioTitleColumn = error?.message?.includes("portfolio_section_title");
+  if (!missingPortfolioTitleColumn) return null;
+
+  const fallback = await supabase
+    .from("business")
+    .select(baseSelect)
+    .eq("id", businessId)
+    .maybeSingle();
+
+  if (fallback.error || !fallback.data) return null;
+  return { ...fallback.data, portfolio_section_title: null } as BusinessRow;
 }
 
 export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): Promise<PublicBookingData | null> {

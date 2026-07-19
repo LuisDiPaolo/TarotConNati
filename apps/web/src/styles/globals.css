@@ -1167,9 +1167,6 @@ body.booking-panel-open {
 }
 
 .portfolio-social-frame {
-  aspect-ratio: 4 / 5;
-  height: 100%;
-  overflow: hidden;
   width: 100%;
 }
 
@@ -1187,6 +1184,21 @@ body.booking-panel-open {
   display: block;
 }
 
+.portfolio-social-frame--preview {
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.portfolio-social-frame--preview blockquote,
+.portfolio-social-frame--preview iframe {
+  min-height: 100% !important;
+}
+
+.portfolio-social-frame--preview iframe {
+  height: 100% !important;
+}
+
 .portfolio-social-frame--tiktok {
   aspect-ratio: 9 / 16;
 }
@@ -1196,7 +1208,6 @@ body.booking-panel-open {
 }
 
 .portfolio-social-frame--lightbox {
-  aspect-ratio: auto;
   height: auto;
   overflow: visible;
 }
