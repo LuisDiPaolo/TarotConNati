@@ -3,12 +3,17 @@ import { z } from "zod";
 const allowedInstagramHosts = new Set(["instagram.com", "www.instagram.com"]);
 const allowedTikTokHosts = new Set(["tiktok.com", "www.tiktok.com", "m.tiktok.com"]);
 
+function hasInstagramPostPath(pathname: string) {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts.some((part, index) => ["p", "reel", "tv"].includes(part) && Boolean(parts[index + 1]));
+}
+
 const optionalSocialUrlSchema = z.string().trim().url().max(500).optional().or(z.literal("")).refine((value) => {
   if (!value) return true;
   try {
     const url = new URL(value);
     const host = url.hostname.toLowerCase();
-    if (allowedInstagramHosts.has(host)) return /^\/(p|reel|tv)\//.test(url.pathname);
+    if (allowedInstagramHosts.has(host)) return hasInstagramPostPath(url.pathname);
     if (allowedTikTokHosts.has(host)) return /\/video\/\d+/.test(url.pathname);
     return false;
   } catch {

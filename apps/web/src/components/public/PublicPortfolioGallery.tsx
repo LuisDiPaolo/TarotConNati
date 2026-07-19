@@ -16,12 +16,30 @@ function getSocialProvider(value: string): SocialProvider {
   if (!value) return "unknown";
   try {
     const host = new URL(value).hostname.toLowerCase();
-    if (host.endsWith("instagram.com")) return "instagram";
+    if (host.endsWith("instagram.com")) return getInstagramPermalink(value) ? "instagram" : "unknown";
     if (host.endsWith("tiktok.com")) return "tiktok";
   } catch {
     return "unknown";
   }
   return "unknown";
+}
+
+function getInstagramPermalink(value: string) {
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    if (!host.endsWith("instagram.com")) return "";
+
+    const parts = url.pathname.split("/").filter(Boolean);
+    const typeIndex = parts.findIndex((part) => ["p", "reel", "tv"].includes(part));
+    const type = parts[typeIndex];
+    const code = parts[typeIndex + 1];
+    if (!type || !code) return "";
+
+    return `https://www.instagram.com/${type}/${code}/`;
+  } catch {
+    return "";
+  }
 }
 
 function getTikTokVideoId(value: string) {
@@ -49,14 +67,16 @@ function SocialEmbed({ url, title }: { url: string; title: string }) {
   const tikTokVideoId = provider === "tiktok" ? getTikTokVideoId(url) : "";
 
   if (provider === "instagram") {
+    const instagramUrl = getInstagramPermalink(url);
+
     return (
       <blockquote
         className="instagram-media !m-0 !min-w-0 !w-full"
         data-instgrm-captioned=""
-        data-instgrm-permalink={url}
+        data-instgrm-permalink={instagramUrl}
         data-instgrm-version="14"
       >
-        <a href={url} rel="noopener noreferrer" target="_blank">{title}</a>
+        <a href={instagramUrl} rel="noopener noreferrer" target="_blank">{title}</a>
       </blockquote>
     );
   }

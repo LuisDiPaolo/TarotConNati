@@ -239,7 +239,7 @@ export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
                 <span className="relative">
                   <Instagram aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Music2 aria-hidden="true" className="pointer-events-none absolute left-8 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input className="input-control pl-14" value={row.instagramUrl} onChange={(event) => updateRow(row.draftId, { instagramUrl: event.target.value })} placeholder="https://www.instagram.com/reel/..." />
+                  <input className="input-control pl-14" value={row.instagramUrl} onChange={(event) => updateRow(row.draftId, { instagramUrl: event.target.value })} placeholder="https://www.instagram.com/p/..." />
                 </span>
               </label>
               <label className="inline-flex items-center gap-3 text-sm font-semibold">
