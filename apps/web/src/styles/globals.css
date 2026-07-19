@@ -1166,6 +1166,26 @@ body.booking-panel-open {
   }
 }
 
+.portfolio-social-frame {
+  aspect-ratio: 4 / 5;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+}
+
+.portfolio-social-frame blockquote,
+.portfolio-social-frame iframe,
+.portfolio-social-frame section {
+  margin: 0 !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.portfolio-social-frame iframe {
+  height: 100% !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .studio-equis-credit-button {
     animation: none !important;

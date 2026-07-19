@@ -70,24 +70,27 @@ function SocialEmbed({ url, title }: { url: string; title: string }) {
     const instagramUrl = getInstagramPermalink(url);
 
     return (
-      <blockquote
-        className="instagram-media !m-0 !min-w-0 !w-full"
-        data-instgrm-captioned=""
-        data-instgrm-permalink={instagramUrl}
-        data-instgrm-version="14"
-      >
-        <a href={instagramUrl} rel="noopener noreferrer" target="_blank">{title}</a>
-      </blockquote>
+      <div className="portfolio-social-frame">
+        <blockquote
+          className="instagram-media !m-0 !min-w-0 !w-full"
+          data-instgrm-permalink={instagramUrl}
+          data-instgrm-version="14"
+        >
+          <a href={instagramUrl} rel="noopener noreferrer" target="_blank">{title}</a>
+        </blockquote>
+      </div>
     );
   }
 
   if (provider === "tiktok" && tikTokVideoId) {
     return (
-      <blockquote className="tiktok-embed !m-0 !min-w-0 !w-full" cite={url} data-video-id={tikTokVideoId}>
-        <section>
-          <a href={url} rel="noopener noreferrer" target="_blank">{title}</a>
-        </section>
-      </blockquote>
+      <div className="portfolio-social-frame">
+        <blockquote className="tiktok-embed !m-0 !min-w-0 !w-full" cite={url} data-video-id={tikTokVideoId}>
+          <section>
+            <a href={url} rel="noopener noreferrer" target="_blank">{title}</a>
+          </section>
+        </blockquote>
+      </div>
     );
   }
 
@@ -132,20 +135,20 @@ export function PublicPortfolioGallery({ items }: { items: PublicPortfolioItem[]
           const ProviderIcon = provider === "tiktok" ? Music2 : Instagram;
           const content = (
             <article className="group h-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg dark:border-white/10 dark:bg-white/5">
-              <div className="relative min-h-[260px] overflow-hidden bg-slate-100 dark:bg-white/5">
+              <div className="relative aspect-[4/5] overflow-hidden bg-slate-100 dark:bg-white/5">
                 {hasEmbed ? (
                   <SocialEmbed title={item.title} url={item.instagramUrl} />
                 ) : item.imageUrl ? (
-                  <div className="aspect-[4/5] overflow-hidden">
+                  <div className="h-full w-full overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" src={item.imageUrl} />
                   </div>
                 ) : (
-                  <div className="grid min-h-[260px] place-items-center text-slate-400">
+                  <div className="grid h-full place-items-center text-slate-400">
                     <InstagramFallback />
                   </div>
                 )}
-                {item.instagramUrl ? (
+                {item.instagramUrl && !hasEmbed ? (
                   <span className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-slate-950/80 text-white shadow-lg backdrop-blur-md">
                     <ProviderIcon aria-hidden="true" className="h-4 w-4" />
                   </span>
