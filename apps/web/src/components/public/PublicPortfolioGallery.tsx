@@ -121,7 +121,7 @@ function PortfolioLightbox({ item, onClose }: { item: PublicPortfolioItem; onClo
     }
 
     window.addEventListener("keydown", closeOnEscape);
-    window.instgrm?.Embeds?.process?.();
+    requestAnimationFrame(() => window.instgrm?.Embeds?.process?.());
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
@@ -130,19 +130,11 @@ function PortfolioLightbox({ item, onClose }: { item: PublicPortfolioItem; onClo
 
   return createPortal(
     <div className="fixed inset-0 z-[120] flex min-h-dvh items-center justify-center bg-black/90 p-3 text-white backdrop-blur-md sm:p-6" onClick={onClose} role="presentation">
-      <div className="relative flex max-h-[92dvh] w-full max-w-[680px] flex-col" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-white/55">Modo cine</p>
-            {item.title ? <h3 className="mt-1 truncate text-base font-black text-white">{item.title}</h3> : null}
-          </div>
-          <button aria-label="Cerrar" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/12 text-white shadow-xl backdrop-blur-md transition hover:bg-white/20" onClick={onClose} type="button">
-            <X aria-hidden="true" className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="max-h-[84dvh] overflow-auto rounded-xl bg-black shadow-2xl ring-1 ring-white/15">
-          <SocialEmbed mode="lightbox" title={item.title} url={item.instagramUrl} />
-        </div>
+      <button aria-label="Cerrar" className="fixed right-4 top-4 z-[121] grid h-11 w-11 place-items-center rounded-full bg-white/12 text-white shadow-xl backdrop-blur-md transition hover:bg-white/20" onClick={onClose} type="button">
+        <X aria-hidden="true" className="h-5 w-5" />
+      </button>
+      <div className="portfolio-lightbox-content" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+        <SocialEmbed mode="lightbox" title={item.title} url={item.instagramUrl} />
       </div>
     </div>,
     document.body,

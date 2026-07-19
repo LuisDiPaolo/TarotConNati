@@ -1174,9 +1174,7 @@ body.booking-panel-open {
 .portfolio-social-frame iframe,
 .portfolio-social-frame section {
   margin: 0 !important;
-  max-width: none !important;
   min-width: 0 !important;
-  width: 100% !important;
 }
 
 .portfolio-social-frame iframe {
@@ -1188,6 +1186,14 @@ body.booking-panel-open {
   height: 100%;
   overflow: hidden;
   pointer-events: none;
+  background: #000;
+}
+
+.portfolio-social-frame--preview blockquote,
+.portfolio-social-frame--preview iframe,
+.portfolio-social-frame--preview section {
+  max-width: none !important;
+  width: 100% !important;
 }
 
 .portfolio-social-frame--preview blockquote,
@@ -1199,21 +1205,48 @@ body.booking-panel-open {
   height: 100% !important;
 }
 
+.portfolio-lightbox-content {
+  max-height: 92dvh;
+  width: min(100%, 680px);
+  overflow: auto;
+  border-radius: 12px;
+  background: #000;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.55);
+}
+
+.portfolio-social-frame--lightbox {
+  display: grid;
+  justify-items: center;
+  height: auto;
+  overflow: visible;
+  width: 100%;
+  background: #000;
+}
+
+.portfolio-social-frame--lightbox blockquote,
+.portfolio-social-frame--lightbox iframe,
+.portfolio-social-frame--lightbox section {
+  max-width: 540px !important;
+  width: 100% !important;
+}
+
 .portfolio-social-frame--tiktok {
   aspect-ratio: 9 / 16;
+  background: #000;
 }
 
 .portfolio-social-frame--tiktok iframe {
   height: 100% !important;
 }
 
-.portfolio-social-frame--lightbox {
-  height: auto;
-  overflow: visible;
-}
-
 .portfolio-social-frame--lightbox.portfolio-social-frame--tiktok {
   aspect-ratio: 9 / 16;
+  max-height: 88dvh;
+  max-width: min(100%, 440px);
+}
+
+.portfolio-social-frame--lightbox.portfolio-social-frame--tiktok iframe {
+  background: #000;
 }
 
 @media (prefers-reduced-motion: reduce) {
