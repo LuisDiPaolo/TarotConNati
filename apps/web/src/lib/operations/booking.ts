@@ -358,7 +358,7 @@ export async function getPublicBookingData(resolvedBusiness: ResolvedBusiness): 
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((item) => ({
       id: item.id,
-      title: item.title,
+      title: item.title ?? "",
       description: item.description ?? "",
       category: item.category ?? "",
       imageUrl: buildBrandAssetUrl(item.image_url),

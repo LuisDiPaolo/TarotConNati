@@ -59,12 +59,6 @@ export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
     setMessage("");
     setMessageTone("success");
 
-    if (row.title.trim().length < 2) {
-      setMessageTone("error");
-      setMessage("Escribi un titulo antes de guardar.");
-      return;
-    }
-
     if (row.active && !row.imageUrl.trim() && !row.instagramUrl.trim()) {
       setMessageTone("error");
       setMessage("Carga una imagen o un enlace de Instagram/TikTok antes de publicarlo.");
@@ -218,7 +212,7 @@ export function PortfolioManager({ items }: { items: PanelPortfolioItem[] }) {
             <div className="grid gap-3">
               <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px]">
                 <label className="grid gap-2 text-sm font-semibold">
-                  Titulo
+                  Titulo opcional
                   <input className="input-control" value={row.title} onChange={(event) => updateRow(row.draftId, { title: event.target.value })} placeholder="Ej: Trabajo terminado" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold">

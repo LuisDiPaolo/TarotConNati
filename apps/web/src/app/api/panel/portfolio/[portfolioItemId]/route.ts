@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ p
   const { error } = await supabase
     .from("portfolio_items")
     .update({
-      title: input.title,
+      title: input.title || null,
       description: input.description || null,
       category: input.category || null,
       instagram_url: input.instagramUrl || null,

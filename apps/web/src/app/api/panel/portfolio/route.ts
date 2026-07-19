@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     .from("portfolio_items")
     .insert({
       business_id: businessId,
-      title: input.title,
+      title: input.title || null,
       description: input.description || null,
       category: input.category || null,
       image_url: null,

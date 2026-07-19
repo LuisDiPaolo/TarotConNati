@@ -23,7 +23,7 @@ const optionalSocialUrlSchema = z.string().trim().url().max(500).optional().or(z
 
 export const portfolioItemSchema = z.object({
   id: z.string().uuid().optional(),
-  title: z.string().trim().min(2).max(120),
+  title: z.string().trim().max(120).optional().or(z.literal("")),
   description: z.string().trim().max(500).optional().or(z.literal("")),
   category: z.string().trim().max(80).optional().or(z.literal("")),
   imageUrl: z.string().trim().max(800).optional().or(z.literal("")),

@@ -17,7 +17,7 @@ export type PanelPortfolioItem = {
 
 type PortfolioQueryRow = {
   id: string;
-  title: string;
+  title: string | null;
   description: string | null;
   category: string | null;
   image_url: string | null;
@@ -29,7 +29,7 @@ type PortfolioQueryRow = {
 function mapPortfolioRow(row: PortfolioQueryRow): PanelPortfolioItem {
   return {
     id: row.id,
-    title: row.title,
+    title: row.title ?? "",
     description: row.description ?? "",
     category: row.category ?? "",
     imageUrl: buildBrandAssetUrl(row.image_url),

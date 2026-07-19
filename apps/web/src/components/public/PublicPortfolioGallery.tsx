@@ -76,7 +76,7 @@ function SocialEmbed({ url, title }: { url: string; title: string }) {
           data-instgrm-permalink={instagramUrl}
           data-instgrm-version="14"
         >
-          <a href={instagramUrl} rel="noopener noreferrer" target="_blank">{title}</a>
+          <a href={instagramUrl} rel="noopener noreferrer" target="_blank">{title || "Instagram"}</a>
         </blockquote>
       </div>
     );
@@ -84,12 +84,13 @@ function SocialEmbed({ url, title }: { url: string; title: string }) {
 
   if (provider === "tiktok" && tikTokVideoId) {
     return (
-      <div className="portfolio-social-frame">
-        <blockquote className="tiktok-embed !m-0 !min-w-0 !w-full" cite={url} data-video-id={tikTokVideoId}>
-          <section>
-            <a href={url} rel="noopener noreferrer" target="_blank">{title}</a>
-          </section>
-        </blockquote>
+      <div className="portfolio-social-frame portfolio-social-frame--tiktok">
+        <iframe
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          src={`https://www.tiktok.com/embed/v2/${tikTokVideoId}`}
+          title={title || "TikTok"}
+        />
       </div>
     );
   }
@@ -107,13 +108,11 @@ function SocialEmbed({ url, title }: { url: string; title: string }) {
 export function PublicPortfolioGallery({ items }: { items: PublicPortfolioItem[] }) {
   useEffect(() => {
     const hasInstagram = items.some((item) => getSocialProvider(item.instagramUrl) === "instagram");
-    const hasTikTok = items.some((item) => getSocialProvider(item.instagramUrl) === "tiktok" && getTikTokVideoId(item.instagramUrl));
 
     if (hasInstagram) {
       loadScriptOnce("instagram-embed-script", "https://www.instagram.com/embed.js", () => window.instgrm?.Embeds?.process?.());
       window.instgrm?.Embeds?.process?.();
     }
-    if (hasTikTok) loadScriptOnce("tiktok-embed-script", "https://www.tiktok.com/embed.js");
   }, [items]);
 
   if (items.length === 0) return null;
@@ -133,9 +132,11 @@ export function PublicPortfolioGallery({ items }: { items: PublicPortfolioItem[]
           const provider = getSocialProvider(item.instagramUrl);
           const hasEmbed = provider === "instagram" || provider === "tiktok";
           const ProviderIcon = provider === "tiktok" ? Music2 : Instagram;
+          const hasText = Boolean(item.category || item.title || item.description);
+          const mediaAspectClass = provider === "tiktok" ? "aspect-[9/16]" : "aspect-[4/5]";
           const content = (
             <article className="group h-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg dark:border-white/10 dark:bg-white/5">
-              <div className="relative aspect-[4/5] overflow-hidden bg-slate-100 dark:bg-white/5">
+              <div className={`relative ${mediaAspectClass} overflow-hidden bg-slate-100 dark:bg-white/5`}>
                 {hasEmbed ? (
                   <SocialEmbed title={item.title} url={item.instagramUrl} />
                 ) : item.imageUrl ? (
@@ -154,16 +155,18 @@ export function PublicPortfolioGallery({ items }: { items: PublicPortfolioItem[]
                   </span>
                 ) : null}
               </div>
-              <div className="grid gap-2 p-4">
-                {item.category ? <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">{item.category}</p> : null}
-                <h3 className="text-lg font-black leading-tight">{item.title}</h3>
-                {item.description ? <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{item.description}</p> : null}
-              </div>
+              {hasText ? (
+                <div className="grid gap-2 p-4">
+                  {item.category ? <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">{item.category}</p> : null}
+                  {item.title ? <h3 className="text-lg font-black leading-tight">{item.title}</h3> : null}
+                  {item.description ? <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{item.description}</p> : null}
+                </div>
+              ) : null}
             </article>
           );
 
           return item.instagramUrl && !hasEmbed ? (
-            <a aria-label={`Abrir ${item.title}`} className="block" href={item.instagramUrl} key={item.id} rel="noopener noreferrer" target="_blank">
+            <a aria-label={`Abrir ${item.title || "publicacion"}`} className="block" href={item.instagramUrl} key={item.id} rel="noopener noreferrer" target="_blank">
               {content}
             </a>
           ) : (
