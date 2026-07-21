@@ -33,6 +33,7 @@ export const createPanelAppointmentSchema = z.object({
   startsAt: z.string().datetime({ offset: true }),
   status: z.enum(["pending", "confirmed"]).default("confirmed"),
   customer: publicCustomerSchema,
+  inquiryId: z.string().uuid().optional(),
 });
 
 export const updateAppointmentStatusSchema = z.object({

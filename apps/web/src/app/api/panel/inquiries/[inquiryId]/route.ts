@@ -3,9 +3,11 @@ import { apiError, updateInquirySchema } from "@/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const allowedTransitions: Record<string, string[]> = {
-  new: ["read", "routed_whatsapp", "archived"],
-  read: ["new", "routed_whatsapp", "archived"],
-  routed_whatsapp: ["read", "archived"],
+  new: ["read", "answered_panel", "answered_whatsapp", "archived"],
+  read: ["new", "answered_panel", "answered_whatsapp", "archived"],
+  answered_panel: ["read", "answered_whatsapp", "converted", "archived"],
+  answered_whatsapp: ["read", "answered_panel", "converted", "archived"],
+  converted: ["archived"],
   archived: ["new", "read"],
 };
 
@@ -53,23 +55,52 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json(apiError("NOT_FOUND", "Consulta no encontrada."), { status: 404 });
   }
 
-  const currentStatus = String(inquiry.status);
+  const currentStatus = String(inquiry.status) === "routed_whatsapp" ? "answered_whatsapp" : String(inquiry.status);
   const nextStatus = parsed.data.status;
   if (currentStatus !== nextStatus && !allowedTransitions[currentStatus]?.includes(nextStatus)) {
     return NextResponse.json(apiError("VALIDATION_ERROR", "Transicion de estado no permitida."), { status: 400 });
   }
 
   const now = new Date().toISOString();
+  const patch: Record<string, string | null> = {
+    status: nextStatus,
+    admin_notes: parsed.data.adminNotes || null,
+  };
+
+  if (["read", "answered_panel", "answered_whatsapp", "converted", "archived"].includes(nextStatus)) {
+    patch.read_at = now;
+  }
+
+  if (nextStatus === "answered_panel" || nextStatus === "answered_whatsapp") {
+    patch.answered_at = now;
+    patch.answered_channel = nextStatus === "answered_whatsapp" ? "whatsapp" : "panel";
+  }
+
+  if (nextStatus === "archived") patch.archived_at = now;
+  if (nextStatus === "new") {
+    patch.read_at = null;
+    patch.archived_at = null;
+  }
+
   const { error: updateError } = await supabase
     .from("inquiries")
-    .update({
-      status: nextStatus,
-      admin_notes: parsed.data.adminNotes || null,
-      routed_whatsapp_at: nextStatus === "routed_whatsapp" ? now : null,
-      archived_at: nextStatus === "archived" ? now : null,
-    })
+    .update(patch)
     .eq("id", inquiryId)
     .eq("business_id", businessId);
+
+  if (updateError && nextStatus === "answered_whatsapp") {
+    const legacy = await supabase
+      .from("inquiries")
+      .update({
+        status: "routed_whatsapp",
+        admin_notes: parsed.data.adminNotes || null,
+        routed_whatsapp_at: now,
+      })
+      .eq("id", inquiryId)
+      .eq("business_id", businessId);
+
+    if (!legacy.error) return NextResponse.json({ data: { ok: true } }, { headers: { "Cache-Control": "no-store" } });
+  }
 
   if (updateError) {
     return NextResponse.json(apiError("VALIDATION_ERROR", "No se pudo actualizar la consulta."), { status: 400 });

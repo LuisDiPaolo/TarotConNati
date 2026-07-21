@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const inquirySourceSchema = z.enum(["contact_form", "booking_question", "product_question"]);
-export const inquiryStatusSchema = z.enum(["new", "read", "routed_whatsapp", "archived"]);
+export const inquiryStatusSchema = z.enum(["new", "read", "answered_panel", "answered_whatsapp", "converted", "archived"]);
 
 export const publicInquirySchema = z.object({
   name: z.string().trim().min(2).max(120),

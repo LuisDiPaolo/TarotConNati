@@ -77,5 +77,19 @@ export async function POST(request: NextRequest) {
 
   if (appointmentError || !appointment) return apiError(400, "VALIDATION_ERROR", "No se pudo crear el turno.");
 
+  if (input.inquiryId) {
+    const now = new Date().toISOString();
+    await supabase
+      .from("inquiries")
+      .update({
+        status: "converted",
+        appointment_id: appointment.id,
+        converted_at: now,
+        read_at: now,
+      })
+      .eq("id", input.inquiryId)
+      .eq("business_id", businessId);
+  }
+
   return NextResponse.json({ id: appointment.id });
 }
