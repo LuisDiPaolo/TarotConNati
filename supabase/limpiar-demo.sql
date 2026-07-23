@@ -37,6 +37,9 @@ where business_id = (select id from public.business limit 1)
 delete from public.inquiries
 where business_id = (select id from public.business limit 1);
 
+delete from public.push_alert_campaigns
+where business_id = (select id from public.business limit 1);
+
 delete from public.push_notification_records
 where business_id = (select id from public.business limit 1);
 
@@ -57,6 +60,12 @@ delete from public.appointment_intake_responses
 where business_id = (select id from public.business limit 1);
 
 -- Pagos, solicitudes y turnos.
+delete from public.coupon_redemptions
+where business_id = (select id from public.business limit 1);
+
+delete from public.gift_cards
+where business_id = (select id from public.business limit 1);
+
 delete from public.payments
 where business_id = (select id from public.business limit 1);
 

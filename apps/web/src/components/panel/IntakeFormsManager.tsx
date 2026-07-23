@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { IntakeFieldInput } from "@/shared";
 import type { PanelIntakeFormSettings, PanelServiceSettings } from "@/lib/operations/panel-settings.types";
@@ -89,6 +89,8 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"success" | "error">("success");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DraftForm | null>(null);
 
   function updateForm(draftId: string, patch: Partial<DraftForm>) {
     setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...patch } : row));
@@ -116,7 +118,7 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
   }
 
   async function saveForm(row: DraftForm) {
-    if (savingId) return;
+    if (savingId || deletingId) return;
     setMessage("");
     setMessageTone("success");
     setSavingId(row.draftId);
@@ -158,10 +160,35 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
     setMessage("Formulario guardado.");
   }
 
+  async function confirmDeleteForm() {
+    if (!deleteTarget || savingId || deletingId) return;
+    setMessage("");
+    setMessageTone("success");
+    if (deleteTarget.isNew || !deleteTarget.id) {
+      setRows((current) => current.filter((row) => row.draftId !== deleteTarget.draftId));
+      setDeleteTarget(null);
+      return;
+    }
+
+    setDeletingId(deleteTarget.draftId);
+    const response = await fetch(`/api/panel/intake-forms/${deleteTarget.id}`, { method: "DELETE" }).catch(() => null);
+    if (!response?.ok) {
+      setDeletingId(null);
+      setMessageTone("error");
+      setMessage("No se pudo borrar el formulario.");
+      return;
+    }
+
+    setRows((current) => current.filter((row) => row.id !== deleteTarget.id));
+    setDeleteTarget(null);
+    setDeletingId(null);
+    setMessage("Formulario borrado.");
+  }
+
   return (
     <div className="grid gap-4">
       <div className="flex justify-end">
-        <button className="primary-action" type="button" disabled={savingId !== null} onClick={() => setRows((current) => [...current, emptyForm()])}>
+        <button className="primary-action" type="button" disabled={savingId !== null || deletingId !== null} onClick={() => setRows((current) => [...current, emptyForm()])}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Agregar formulario
         </button>
@@ -242,8 +269,12 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
             ))}
           </section>
 
-          <div className="flex justify-end">
-            <button className="primary-action" type="button" disabled={savingId !== null} onClick={() => saveForm(row)}>
+          <div className="flex flex-wrap justify-end gap-2">
+            <button className="secondary-action" type="button" disabled={savingId !== null || deletingId !== null} onClick={() => setDeleteTarget(row)}>
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+              Borrar formulario
+            </button>
+            <button className="primary-action" type="button" disabled={savingId !== null || deletingId !== null} onClick={() => saveForm(row)}>
               <Save aria-hidden="true" className="h-4 w-4" />
               {savingId === row.draftId ? "Guardando" : "Guardar formulario"}
             </button>
@@ -252,6 +283,30 @@ export function IntakeFormsManager({ forms, services }: { forms: PanelIntakeForm
       ))}
 
       {message ? <p className={messageTone === "error" ? "text-sm font-semibold text-red-600" : "text-sm font-semibold text-emerald-600"}>{message}</p> : null}
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-[120] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-form-title">
+          <button aria-label="Cancelar borrado" className="absolute inset-0 cursor-default bg-black/55" disabled={deletingId === deleteTarget.draftId} type="button" onClick={() => setDeleteTarget(null)} />
+          <div className="surface relative z-10 w-full max-w-md p-5 shadow-2xl">
+            <div className="flex gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
+                <AlertTriangle aria-hidden="true" className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 id="delete-form-title" className="text-lg font-black">Borrar formulario</h2>
+                <p className="mt-2 text-sm leading-6 text-muted">Vas a quitar {deleteTarget.name || "este formulario"} de los servicios asociados. Las respuestas ya recibidas se conservan en el historial.</p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button className="secondary-action w-full sm:w-auto" type="button" disabled={deletingId === deleteTarget.draftId} onClick={() => setDeleteTarget(null)}>Cancelar</button>
+              <button className="danger-action w-full sm:w-auto" type="button" disabled={deletingId === deleteTarget.draftId} onClick={() => void confirmDeleteForm()}>
+                <Trash2 aria-hidden="true" className="h-4 w-4" />
+                {deletingId === deleteTarget.draftId ? "Borrando" : "Borrar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

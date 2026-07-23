@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Save } from "lucide-react";
+import { AlertTriangle, Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { PanelScheduleSettings } from "@/lib/operations/panel-settings.types";
 
@@ -26,13 +26,15 @@ export function ScheduleManager({ schedules }: { schedules: PanelScheduleSetting
   const [rows, setRows] = useState<DraftSchedule[]>(schedules.map((schedule) => ({ ...schedule, draftId: schedule.id })));
   const [message, setMessage] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DraftSchedule | null>(null);
 
   function updateRow(draftId: string, patch: Partial<DraftSchedule>) {
     setRows((current) => current.map((row) => row.draftId === draftId ? { ...row, ...patch } : row));
   }
 
   async function saveRow(row: DraftSchedule) {
-    if (savingId) return;
+    if (savingId || deletingId) return;
     setMessage("");
     setSavingId(row.draftId);
     const payload = {
@@ -63,10 +65,33 @@ export function ScheduleManager({ schedules }: { schedules: PanelScheduleSetting
     setMessage("Horario guardado.");
   }
 
+  async function confirmDeleteRow() {
+    if (!deleteTarget || savingId || deletingId) return;
+    setMessage("");
+    if (deleteTarget.isNew || !deleteTarget.id) {
+      setRows((current) => current.filter((row) => row.draftId !== deleteTarget.draftId));
+      setDeleteTarget(null);
+      return;
+    }
+
+    setDeletingId(deleteTarget.draftId);
+    const response = await fetch(`/api/panel/schedules/${deleteTarget.id}`, { method: "DELETE" }).catch(() => null);
+    if (!response?.ok) {
+      setDeletingId(null);
+      setMessage("No se pudo borrar el horario.");
+      return;
+    }
+
+    setRows((current) => current.filter((row) => row.id !== deleteTarget.id));
+    setDeleteTarget(null);
+    setDeletingId(null);
+    setMessage("Horario borrado.");
+  }
+
   return (
     <div className="grid gap-4">
       <div className="flex justify-end">
-        <button className="primary-action" type="button" disabled={savingId !== null} onClick={() => setRows((current) => [...current, emptySchedule()])}>
+        <button className="primary-action" type="button" disabled={savingId !== null || deletingId !== null} onClick={() => setRows((current) => [...current, emptySchedule()])}>
           <Plus aria-hidden="true" className="h-4 w-4" />
           Agregar horario
         </button>
@@ -109,9 +134,14 @@ export function ScheduleManager({ schedules }: { schedules: PanelScheduleSetting
                   <input type="checkbox" checked={row.active} onChange={(event) => updateRow(row.draftId, { active: event.target.checked })} />
                 </td>
                 <td className="rounded-r-xl px-3 py-2 text-right">
-                  <button className="icon-action" type="button" disabled={savingId !== null} onClick={() => saveRow(row)} aria-label="Guardar horario">
-                    <Save aria-hidden="true" className="h-4 w-4" />
-                  </button>
+                  <div className="flex justify-end gap-2">
+                    <button className="icon-action" type="button" disabled={savingId !== null || deletingId !== null} onClick={() => saveRow(row)} aria-label="Guardar horario">
+                      <Save aria-hidden="true" className="h-4 w-4" />
+                    </button>
+                    <button className="icon-action danger-icon-action" type="button" disabled={savingId !== null || deletingId !== null} onClick={() => setDeleteTarget(row)} aria-label="Borrar horario">
+                      <Trash2 aria-hidden="true" className="h-4 w-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -120,6 +150,30 @@ export function ScheduleManager({ schedules }: { schedules: PanelScheduleSetting
       </div>
 
       {message ? <p className={message.startsWith("No") ? "text-sm font-semibold text-red-600" : "text-sm font-semibold text-emerald-600"}>{message}</p> : null}
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-[120] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-schedule-title">
+          <button aria-label="Cancelar borrado" className="absolute inset-0 cursor-default bg-black/55" disabled={deletingId === deleteTarget.draftId} type="button" onClick={() => setDeleteTarget(null)} />
+          <div className="surface relative z-10 w-full max-w-md p-5 shadow-2xl">
+            <div className="flex gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
+                <AlertTriangle aria-hidden="true" className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 id="delete-schedule-title" className="text-lg font-black">Borrar horario</h2>
+                <p className="mt-2 text-sm leading-6 text-muted">Vas a quitar esta fila de agenda semanal. Los turnos ya creados no se modifican.</p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button className="secondary-action w-full sm:w-auto" type="button" disabled={deletingId === deleteTarget.draftId} onClick={() => setDeleteTarget(null)}>Cancelar</button>
+              <button className="danger-action w-full sm:w-auto" type="button" disabled={deletingId === deleteTarget.draftId} onClick={() => void confirmDeleteRow()}>
+                <Trash2 aria-hidden="true" className="h-4 w-4" />
+                {deletingId === deleteTarget.draftId ? "Borrando" : "Borrar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
